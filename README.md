@@ -148,4 +148,4 @@ Voir CLAUDE.md §Note pour les stagiaires pour le détail.
 
 ---
 
-_Repo monorepo géré avec pnpm 10. Maintainer : [@Abdou](https://github.com/Abdou) (CTO)._
+_Repo monorepo géré avec pnpm 10. Maintainer : [@Adminabd](https://github.com/Adminabd) (CTO)._

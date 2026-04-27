@@ -5,17 +5,17 @@
 # qui touchent les fichiers concernés.
 
 # Par défaut : CTO review tout
-*  @Abdou
+*  @Adminabd
 
 # Sécurité, auth, DB, infra → CTO obligatoire (label needs-cto-review aussi)
-/supabase/                @Abdou
-/.github/                  @Abdou
-/app/_layout.tsx           @Abdou
-/src/lib/supabase.ts       @Abdou
-/src/lib/sentry.ts         @Abdou
-/src/lib/env.ts            @Abdou
-/babel.config.js           @Abdou
-/metro.config.js           @Abdou
-/eslint.config.js          @Abdou
-/tsconfig.json             @Abdou
-/eas.json                  @Abdou
+/supabase/                @Adminabd
+/.github/                  @Adminabd
+/app/_layout.tsx           @Adminabd
+/src/lib/supabase.ts       @Adminabd
+/src/lib/sentry.ts         @Adminabd
+/src/lib/env.ts            @Adminabd
+/babel.config.js           @Adminabd
+/metro.config.js           @Adminabd
+/eslint.config.js          @Adminabd
+/tsconfig.json             @Adminabd
+/eas.json                  @Adminabd
