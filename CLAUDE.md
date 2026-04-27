@@ -148,9 +148,18 @@ refactor(profile): extraire le hook useProfileForm
 
 ### Branches
 - `main` — toujours déployable, **protégée**, push direct interdit
-- `dev` — intégration continue (cible des PR features)
+- `dev` — intégration continue (cible des PR features), **protégée** (pas de force-push)
 - `feature/EX-XX-short-description` — une branche par ticket
 - `fix/description` — correction urgente
+
+### Config git recommandée (à lancer après le `git clone`)
+
+```bash
+# Évite les rebase/merge implicites quand `git pull` rencontre une divergence.
+# git refusera plutôt et demandera d'expliciter (--rebase ou --no-rebase).
+# Sans ça, on peut accidentellement ressusciter de vieux commits d'un précédent rebase.
+git config pull.ff only
+```
 
 ### PR Rules
 - **1 approbation minimum** requise
