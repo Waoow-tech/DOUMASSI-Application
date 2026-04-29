@@ -10,6 +10,13 @@ module.exports = defineConfig([
   ...expoConfig,
 
   {
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: './tsconfig.json',
+        },
+      },
+    },
     rules: {
       // Pas de console.log en prod — utiliser le wrapper logger (cf CLAUDE.md règle 6)
       // console.warn/error tolérés en attendant le wrapper Sentry
