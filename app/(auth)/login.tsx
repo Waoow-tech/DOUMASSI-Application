@@ -63,7 +63,7 @@ export default function LoginScreen() {
         <YStack
           width="100%"
           borderWidth={1}
-          borderColor="$borderColor"
+          borderColor="black"
           borderRadius="$6"
           padding="$5"
           gap="$4"
@@ -199,7 +199,7 @@ export default function LoginScreen() {
             <Text
               id="login-forgot-password-link"
               fontSize={14}
-              color="$accentNeon"
+              color="white"
               textAlign="center"
               marginTop="$1"
               pressStyle={{ opacity: 0.7 }}
