@@ -7,6 +7,11 @@ export const fr = {
     tagline: 'DOUMASSI',
   },
   auth: {
+    google: {
+      continueWithGoogle: 'Continue with Google',
+      callbackInProgress: 'Signing you in…',
+      callbackError: 'Google sign-in failed. Please try again.',
+    },
     forgotPassword: {
       title: 'Forgot your\npassword?',
       subtitle:
