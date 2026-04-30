@@ -1,17 +1,35 @@
-// Schéma de validation pour le formulaire de connexion.
-// Utilise Zod pour valider l'identifiant (email ou téléphone) et le mot de passe.
-// Ticket E2-01 — Sprint 1 Auth & Onboarding.
-
 import { z } from 'zod';
 
-/**
- * Schéma de validation pour le login.
- * - identifier : accepte un email ou un numéro de téléphone (min 3 caractères).
- * - password : min 8 caractères.
- */
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const PHONE_REGEX = /^\+?\d{8,15}$/;
+
+export function normalizePhoneIdentifier(identifier: string) {
+  return identifier.trim().replace(/[\s().-]/g, '');
+}
+
+export function getLoginIdentifierType(identifier: string) {
+  const trimmedIdentifier = identifier.trim();
+
+  if (EMAIL_REGEX.test(trimmedIdentifier.toLowerCase())) {
+    return 'email';
+  }
+
+  if (PHONE_REGEX.test(normalizePhoneIdentifier(trimmedIdentifier))) {
+    return 'phone';
+  }
+
+  return null;
+}
+
 export const loginSchema = z.object({
-  identifier: z.string().min(3, 'Identifiant requis (min. 3 caractères)'),
-  password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+  identifier: z
+    .string()
+    .trim()
+    .min(3, 'Identifier is required')
+    .refine((value) => getLoginIdentifierType(value) !== null, {
+      message: 'Enter a valid email or phone number',
+    }),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
