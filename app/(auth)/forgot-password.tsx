@@ -1,15 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Button, Input, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Button, Input, Spinner, Text, YStack } from 'tamagui';
 
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
 } from '@/features/auth/schemas/passwordResetSchema';
 import { supabase } from '@/lib/supabase';
+
+const logoSource = require('../../assets/Logo-Doumassi.png') as number;
+
 export default function ForgotPasswordScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -40,42 +43,47 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <YStack flex={1} backgroundColor="$background" padding="$5" justifyContent="center" gap="$5">
-      <Text fontSize={44} fontWeight="900" color="$color">
-        Doumassi
-      </Text>
+    <YStack flex={1} backgroundColor="$background" padding="$5" alignItems="center">
+      <YStack alignItems="center" marginTop="$4" marginBottom="$8">
+        <Image
+          source={logoSource}
+          style={{ width: 72, height: 72 }}
+          contentFit="contain"
+          accessibilityLabel="Logo DOUMASSI"
+        />
+      </YStack>
 
-      <YStack gap="$2">
-        <Text fontSize={32} fontWeight="800" color="$color">
-          Forgot your password?
+      <YStack
+        width="100%"
+        maxWidth={380}
+        borderWidth={1}
+        borderColor="$color"
+        borderRadius="$8"
+        padding="$6"
+        gap="$4"
+        alignItems="center"
+      >
+        <Text fontSize={28} fontWeight="800" color="$color" textAlign="center" lineHeight={34}>
+          Forgot your{'\n'}password?
         </Text>
 
-        <Text fontSize={16} color="$placeholderColor" lineHeight={24}>
+        <Text fontSize={15} color="$placeholderColor" lineHeight={21} textAlign="center">
           No worries! Enter your email address and we’ll send you instructions to reset your
           password.
         </Text>
-      </YStack>
 
-      <YStack gap="$2">
-        <Controller
-          control={form.control}
-          name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <XStack
-              alignItems="center"
-              borderWidth={1}
-              borderColor="$borderColor"
-              borderRadius="$4"
-              height={56}
-              paddingHorizontal="$3"
-              gap="$3"
-            >
-              <Mail size={20} color="#FF006E" />
+        <YStack width="100%" gap="$2">
+          <Controller
+            control={form.control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
               <Input
-                flex={1}
-                borderWidth={0}
+                height={52}
+                borderWidth={1}
+                borderColor="$borderColor"
+                borderRadius="$4"
                 backgroundColor="transparent"
-                placeholder="Email"
+                placeholder="Email address"
                 placeholderTextColor="$placeholderColor"
                 value={value}
                 onChangeText={onChange}
@@ -83,39 +91,47 @@ export default function ForgotPasswordScreen() {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 color="$color"
+                paddingHorizontal="$4"
               />
-            </XStack>
-          )}
-        />
+            )}
+          />
 
-        {form.formState.errors.email?.message ? (
-          <Text fontSize={12} color="$danger">
-            {form.formState.errors.email.message}
+          {form.formState.errors.email?.message ? (
+            <Text fontSize={12} color="$danger">
+              {form.formState.errors.email.message}
+            </Text>
+          ) : null}
+        </YStack>
+
+        {message ? (
+          <Text fontSize={13} color="$color" textAlign="center">
+            {message}
           </Text>
         ) : null}
+
+        <Button
+          width="100%"
+          onPress={form.handleSubmit(onSubmit)}
+          disabled={isLoading}
+          height={50}
+          borderRadius="$4"
+          backgroundColor="$color"
+          color="$background"
+          fontWeight="800"
+          marginTop="$1"
+        >
+          {isLoading ? <Spinner size="small" color="$background" /> : 'Send Reset Instructions'}
+        </Button>
+
+        <Button
+          backgroundColor="transparent"
+          color="$color"
+          fontWeight="700"
+          onPress={() => router.replace('/login')}
+        >
+          Back to Login
+        </Button>
       </YStack>
-
-      {message ? (
-        <Text fontSize={14} color="$color" textAlign="center">
-          {message}
-        </Text>
-      ) : null}
-
-      <Button
-        onPress={form.handleSubmit(onSubmit)}
-        disabled={isLoading}
-        height={48}
-        borderRadius="$4"
-        backgroundColor="$color"
-        color="$background"
-        fontWeight="700"
-      >
-        {isLoading ? <Spinner size="small" color="$background" /> : 'Send reset link'}
-      </Button>
-
-      <Button backgroundColor="transparent" color="$color" onPress={() => router.back()}>
-        Back to login
-      </Button>
     </YStack>
   );
 }
