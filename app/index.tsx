@@ -30,13 +30,7 @@ export default function Splash() {
   return (
     <Animated.View style={{ flex: 1, opacity }}>
       <YStack flex={1} backgroundColor="$background" alignItems="center" justifyContent="center">
-        <Text
-          fontSize={56}
-          fontWeight="700"
-          color="$accentNeon"
-          letterSpacing={4}
-          fontFamily="$body"
-        >
+        <Text fontSize={56} fontWeight="700" color="white" letterSpacing={4} fontFamily="$body">
           {t.splash.tagline}
         </Text>
       </YStack>

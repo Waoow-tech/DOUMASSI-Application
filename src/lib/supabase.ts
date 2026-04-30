@@ -18,7 +18,7 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       // Sur mobile, pas de redirect URL à parser
-      detectSessionInUrl: false,
+      detectSessionInUrl: true,
     },
   }
 );
