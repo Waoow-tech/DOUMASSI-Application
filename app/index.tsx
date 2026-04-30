@@ -1,31 +1,48 @@
-// Écran Splash applicatif (premier écran après le boot natif).
-// Ticket E1-17 — warmup Sprint 0.
-// Affiche "DOUMASSI" en vert néon pendant 1s, fade-out sur 1s, puis redirige vers login.
-
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated } from 'react-native';
 import { Text, YStack } from 'tamagui';
 
+import { FeedScreen } from '@/features/feed/screens/FeedScreen';
 import { t } from '@/i18n';
+import { supabase } from '@/lib/supabase';
 
-export default function Splash() {
+export default function Index() {
   const opacity = useRef(new Animated.Value(1)).current;
+  const [canShowFeed, setCanShowFeed] = useState(false);
 
   useEffect(() => {
-    // Attend 1s d'affichage, puis lance le fade-out sur 1s (total ≈ 2s)
+    let isMounted = true;
+
     const timer = setTimeout(() => {
       Animated.timing(opacity, {
         toValue: 0,
         duration: 1000,
         useNativeDriver: true,
-      }).start(() => {
-        router.replace('/(auth)/login');
+      }).start(async () => {
+        const { data } = await supabase.auth.getSession();
+
+        if (!isMounted) return;
+
+        if (data.session) {
+          setCanShowFeed(true);
+          return;
+        }
+
+        router.replace('/login');
       });
     }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+      opacity.stopAnimation();
+    };
   }, [opacity]);
+
+  if (canShowFeed) {
+    return <FeedScreen />;
+  }
 
   return (
     <Animated.View style={{ flex: 1, opacity }}>

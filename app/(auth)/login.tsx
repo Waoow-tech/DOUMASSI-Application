@@ -202,7 +202,7 @@ export default function LoginScreen() {
           </Button>
 
           {/* Lien "Forgot your password ?" */}
-          <Link href="/(auth)/forgot-password" asChild>
+          <Link href="/forgot-password" asChild>
             <Text
               id="login-forgot-password-link"
               fontSize={14}
