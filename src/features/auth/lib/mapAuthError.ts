@@ -1,0 +1,26 @@
+// Mappe les erreurs Supabase Auth vers des messages FR utilisateur.
+// Supabase renvoie des messages anglais bruts ("email rate limit exceeded"…).
+// On les normalise pour afficher un texte cohérent et compréhensible.
+
+import { t } from '@/i18n';
+
+const e = t.auth.errors;
+
+export function mapAuthError(message: string | undefined | null): string {
+  if (!message) return e.unknown;
+
+  const lower = message.toLowerCase();
+
+  if (lower.includes('rate limit')) return e.rateLimit;
+  if (lower.includes('invalid email') || lower.includes('valid email')) return e.invalidEmail;
+  if (lower.includes('user not found') || lower.includes('no user')) return e.userNotFound;
+  if (lower.includes('expired') || lower.includes('invalid token') || lower.includes('jwt'))
+    return e.expiredLink;
+  if (lower.includes('weak password') || lower.includes('should be at least'))
+    return e.weakPassword;
+  if (lower.includes('same as the old') || lower.includes('different from the old'))
+    return e.samePassword;
+  if (lower.includes('network') || lower.includes('fetch')) return e.network;
+
+  return e.unknown;
+}
