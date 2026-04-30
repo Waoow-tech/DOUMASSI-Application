@@ -10,7 +10,9 @@ import { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui';
 
+import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
+import { t } from '@/i18n';
 
 const logoSource = require('../../assets/Logo-Doumassi.png') as number;
 
@@ -33,6 +35,11 @@ function DoumassLogo() {
 
 export default function LoginScreen() {
   const { form, isLoading, loginError, onSubmit } = useLogin();
+  const {
+    signIn: signInWithGoogle,
+    isLoading: isGoogleLoading,
+    errorMessage: googleError,
+  } = useGoogleAuth();
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -230,6 +237,47 @@ export default function LoginScreen() {
           >
             Create an account
           </Button>
+
+          {/* Séparateur "or" */}
+          <XStack alignItems="center" gap="$3" marginTop="$2">
+            <YStack flex={1} height={1} backgroundColor="$borderColor" />
+            <Text fontSize={12} color="$placeholderColor" fontWeight="600">
+              or
+            </Text>
+            <YStack flex={1} height={1} backgroundColor="$borderColor" />
+          </XStack>
+
+          {/* Bouton "Continue with Google" */}
+          <Button
+            id="login-google-button"
+            onPress={signInWithGoogle}
+            disabled={isGoogleLoading}
+            backgroundColor="white"
+            color="black"
+            borderRadius="$4"
+            height={48}
+            fontWeight="700"
+            fontSize={15}
+            pressStyle={{ opacity: 0.85, scale: 0.98 }}
+            icon={
+              <Text fontSize={18} fontWeight="700" color="#4285F4">
+                G
+              </Text>
+            }
+          >
+            {isGoogleLoading ? (
+              <Spinner size="small" color="black" />
+            ) : (
+              t.auth.google.continueWithGoogle
+            )}
+          </Button>
+
+          {/* Erreur OAuth Google */}
+          {googleError ? (
+            <Text fontSize={13} color="$danger" textAlign="center">
+              {googleError}
+            </Text>
+          ) : null}
         </YStack>
       </YStack>
     </ScrollView>
