@@ -1,15 +1,17 @@
+// Écran Splash applicatif (premier écran après le boot natif).
+// Ticket E1-17 + E2-03 — affiche "DOUMASSI" 1s, fade-out 1s,
+// puis redirige vers /feed si session active, /login sinon.
+
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated } from 'react-native';
 import { Text, YStack } from 'tamagui';
 
-import { FeedScreen } from '@/features/feed/screens/FeedScreen';
 import { t } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 
-export default function Index() {
+export default function Splash() {
   const opacity = useRef(new Animated.Value(1)).current;
-  const [canShowFeed, setCanShowFeed] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -24,12 +26,7 @@ export default function Index() {
 
         if (!isMounted) return;
 
-        if (data.session) {
-          setCanShowFeed(true);
-          return;
-        }
-
-        router.replace('/login');
+        router.replace(data.session ? '/feed' : '/login');
       });
     }, 1000);
 
@@ -39,10 +36,6 @@ export default function Index() {
       opacity.stopAnimation();
     };
   }, [opacity]);
-
-  if (canShowFeed) {
-    return <FeedScreen />;
-  }
 
   return (
     <Animated.View style={{ flex: 1, opacity }}>

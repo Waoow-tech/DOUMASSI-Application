@@ -25,11 +25,11 @@ export const loginSchema = z.object({
   identifier: z
     .string()
     .trim()
-    .min(3, 'Identifiant requis')
+    .min(3, 'Identifier is required')
     .refine((value) => getLoginIdentifierType(value) !== null, {
-      message: 'Entrez un email ou un numéro de téléphone valide',
+      message: 'Enter a valid email or phone number',
     }),
-  password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;

@@ -1,8 +1,17 @@
+// Hook custom pour la logique de connexion email OU téléphone.
+// Détecte le type d'identifiant via regex, choisit le bon credential Supabase,
+// puis redirige vers /feed après succès.
+//
+// Ticket E2-01 — Sprint 1 Auth & Onboarding (login screen).
+// Ticket E2-03 — Sprint 1 Auth & Onboarding (email/phone + session SecureStore).
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { mapAuthError } from '@/features/auth/lib/mapAuthError';
+import { t } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -34,7 +43,7 @@ export function useLogin() {
       const identifier = values.identifier.trim();
 
       if (!identifierType) {
-        setLoginError('Entrez un email ou un numéro de téléphone valide');
+        setLoginError(t.auth.errors.invalidIdentifier);
         return;
       }
 
@@ -43,19 +52,21 @@ export function useLogin() {
           ? { email: identifier.toLowerCase(), password: values.password }
           : { phone: normalizePhoneIdentifier(identifier), password: values.password };
 
+      logger.debug('Tentative de connexion', { type: identifierType });
+
       const { error } = await supabase.auth.signInWithPassword(credentials);
 
       if (error) {
         logger.warn('Échec de connexion Supabase', { message: error.message });
-        setLoginError(error.message);
+        setLoginError(mapAuthError(error.message));
         return;
       }
 
       logger.info('Connexion réussie');
-      router.replace('/');
+      router.replace('/feed');
     } catch (err: unknown) {
       logger.error('Erreur inattendue lors du login', err);
-      setLoginError('Une erreur inattendue est survenue. Réessayez.');
+      setLoginError(t.auth.errors.unknown);
     } finally {
       setIsLoading(false);
     }

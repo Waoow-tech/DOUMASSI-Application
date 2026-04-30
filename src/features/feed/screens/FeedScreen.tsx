@@ -1,7 +1,12 @@
+// Écran d'accueil post-login — placeholder MVP.
+// Sera enrichi avec le vrai feed (FlashList + posts) lors des Sprints 3-4.
+// Ticket E2-03 — Sprint 1 Auth & Onboarding.
+
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Button, ScrollView, Spinner, Text, YStack } from 'tamagui';
 
+import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
 export function FeedScreen() {
@@ -9,8 +14,17 @@ export function FeedScreen() {
 
   const signOut = async () => {
     setIsSigningOut(true);
-    await supabase.auth.signOut();
-    router.replace('/login');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        logger.warn('Échec signOut', { message: error.message });
+      }
+      router.replace('/login');
+    } catch (err: unknown) {
+      logger.error('Erreur inattendue lors du signOut', err);
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -21,11 +35,11 @@ export function FeedScreen() {
         </Text>
 
         <Text fontSize={15} color="$placeholderColor">
-          Bienvenue sur DOUMASSI.
+          Welcome to DOUMASSI.
         </Text>
 
         <Button onPress={signOut} disabled={isSigningOut}>
-          {isSigningOut ? <Spinner size="small" /> : 'Déconnexion'}
+          {isSigningOut ? <Spinner size="small" /> : 'Sign out'}
         </Button>
       </YStack>
     </ScrollView>

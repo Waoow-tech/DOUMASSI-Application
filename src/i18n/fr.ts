@@ -33,6 +33,10 @@ export const fr = {
         'This reset link is invalid or has expired. Request a new one from the login screen.',
     },
     errors: {
+      // Login
+      invalidCredentials: 'Wrong email/phone or password.',
+      emailNotConfirmed: 'Please confirm your email before logging in.',
+      invalidIdentifier: 'Enter a valid email or phone number.',
       // Password / signup
       weakPassword: 'Password is too weak (8 characters minimum).',
       samePassword: 'New password must be different from the previous one.',
