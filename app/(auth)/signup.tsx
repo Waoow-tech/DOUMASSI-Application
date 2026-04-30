@@ -23,8 +23,8 @@ import {
   YStack,
 } from 'tamagui';
 
+import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
 import { useSignup } from '@/features/auth/hooks/useSignup';
-import { logger } from '@/lib/logger';
 
 const logoSource = require('../../assets/Logo-Doumassi.png') as number;
 
@@ -193,6 +193,11 @@ export default function SignupScreen() {
     pickAvatar,
     onSubmit,
   } = useSignup();
+  const {
+    signIn: signInWithGoogle,
+    isLoading: isGoogleLoading,
+    errorMessage: googleError,
+  } = useGoogleAuth();
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -456,10 +461,11 @@ export default function SignupScreen() {
                 {/* Séparateur Google */}
                 <Separator text="Or log in with" />
 
-                {/* Bouton Google (mock — OAuth pas implémenté MVP) */}
+                {/* Bouton Google — OAuth via useGoogleAuth (E2-05) */}
                 <Button
                   id="signup-google-button"
-                  onPress={() => logger.debug('Google OAuth — non implémenté MVP')}
+                  onPress={signInWithGoogle}
+                  disabled={isGoogleLoading}
                   backgroundColor="transparent"
                   borderWidth={1}
                   borderColor="$borderColor"
@@ -471,13 +477,24 @@ export default function SignupScreen() {
                     borderColor: '$borderColorHover',
                   }}
                 >
-                  <XStack alignItems="center" gap="$2.5">
-                    <GoogleLogo size={20} />
-                    <Text fontSize={14} fontWeight="600" color="$color">
-                      Google
-                    </Text>
-                  </XStack>
+                  {isGoogleLoading ? (
+                    <Spinner size="small" color="$color" />
+                  ) : (
+                    <XStack alignItems="center" gap="$2.5">
+                      <GoogleLogo size={20} />
+                      <Text fontSize={14} fontWeight="600" color="$color">
+                        Google
+                      </Text>
+                    </XStack>
+                  )}
                 </Button>
+
+                {/* Erreur OAuth Google */}
+                {googleError ? (
+                  <Text fontSize={12} color="$danger" textAlign="center" marginTop="$1">
+                    {googleError}
+                  </Text>
+                ) : null}
 
                 {/* Lien vers login */}
                 <XStack justifyContent="center" gap="$1.5" marginTop="$1">
