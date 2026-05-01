@@ -14,6 +14,10 @@ export function mapAuthError(message: string | undefined | null): string {
   if (lower.includes('rate limit')) return e.rateLimit;
   if (lower.includes('already registered') || lower.includes('already been registered'))
     return e.emailAlreadyUsed;
+  if (lower.includes('invalid login credentials') || lower.includes('invalid credentials'))
+    return e.invalidCredentials;
+  if (lower.includes('email not confirmed') || lower.includes('not confirmed'))
+    return e.emailNotConfirmed;
   if (lower.includes('invalid email') || lower.includes('valid email')) return e.invalidEmail;
   if (lower.includes('user not found') || lower.includes('no user')) return e.userNotFound;
   if (lower.includes('expired') || lower.includes('invalid token') || lower.includes('jwt'))
