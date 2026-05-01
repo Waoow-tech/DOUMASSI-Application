@@ -65,7 +65,7 @@ function DoumassLogo() {
 // APRÈS
 function AvatarPlaceholder({ onPress, uri }: { onPress: () => void; uri: string | null }) {
   return (
-    <YStack alignItems="center" gap="$3" marginVertical="$4">
+    <YStack alignItems="center" gap="$2" marginVertical="$2">
       {/* Wrapper relatif — taille du cercle, gère le onPress global */}
       <YStack
         width={100}
@@ -191,6 +191,7 @@ export default function SignupScreen() {
     goToStep1,
     goToStep2,
     pickAvatar,
+    skipStep2,
     onSubmit,
   } = useSignup();
   const {
@@ -200,6 +201,7 @@ export default function SignupScreen() {
   } = useGoogleAuth();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   /**
    * Handler birthday avec auto-format.
@@ -217,11 +219,13 @@ export default function SignupScreen() {
       <ScrollView
         flex={1}
         backgroundColor="$background"
+        scrollEnabled={step === 1}
         contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: 'center',
+          justifyContent: step === 1 ? 'center' : 'flex-start',
           paddingHorizontal: 24,
-          paddingVertical: 24,
+          paddingTop: step === 2 ? 32 : 24,
+          paddingBottom: 24,
         }}
         keyboardShouldPersistTaps="handled"
       >
@@ -442,6 +446,60 @@ export default function SignupScreen() {
                   ) : null}
                 </YStack>
 
+                {/* Champ : Confirm Password */}
+                <YStack gap="$1">
+                  <Controller
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <XStack
+                        borderWidth={1}
+                        borderColor="$borderColor"
+                        borderRadius="$4"
+                        alignItems="center"
+                        height={44}
+                        backgroundColor="transparent"
+                      >
+                        <Input
+                          id="signup-confirm-password-input"
+                          placeholder="Confirm password"
+                          placeholderTextColor="$placeholderColor"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          secureTextEntry={!showConfirmPassword}
+                          autoCapitalize="none"
+                          autoComplete="new-password"
+                          borderWidth={0}
+                          backgroundColor="transparent"
+                          color="$color"
+                          fontSize={14}
+                          flex={1}
+                          height={44}
+                          paddingHorizontal="$3"
+                        />
+                        <YStack
+                          paddingRight="$3"
+                          onPress={() => setShowConfirmPassword((prev) => !prev)}
+                          cursor="pointer"
+                          pressStyle={{ opacity: 0.6 }}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff size={20} color="#A0A0A0" />
+                          ) : (
+                            <Eye size={20} color="#A0A0A0" />
+                          )}
+                        </YStack>
+                      </XStack>
+                    )}
+                  />
+                  {form.formState.errors.confirmPassword?.message ? (
+                    <Text fontSize={11} color="$danger" paddingLeft="$1">
+                      {form.formState.errors.confirmPassword.message}
+                    </Text>
+                  ) : null}
+                </YStack>
+
                 {/* Bouton "Create an account" → passe à step 2 */}
                 <Button
                   id="signup-step1-button"
@@ -523,8 +581,13 @@ export default function SignupScreen() {
           {/* ============================================================= */}
           {step === 2 && (
             <>
-              {/* Header avec flèche retour */}
-              <XStack width="100%" alignItems="center" marginBottom="$2">
+              {/* Header: back arrow (left) + Skip button (right) */}
+              <XStack
+                width="100%"
+                alignItems="center"
+                justifyContent="space-between"
+                marginBottom="$2"
+              >
                 <YStack
                   onPress={goToStep1}
                   pressStyle={{ opacity: 0.6 }}
@@ -533,6 +596,20 @@ export default function SignupScreen() {
                 >
                   <ArrowLeft size={24} color="#FFFFFF" />
                 </YStack>
+
+                <YStack
+                  onPress={skipStep2}
+                  pressStyle={{ opacity: 0.8, scale: 0.96 }}
+                  cursor="pointer"
+                  backgroundColor="$danger"
+                  paddingHorizontal="$3"
+                  paddingVertical="$1.5"
+                  borderRadius="$4"
+                >
+                  <Text fontSize={13} fontWeight="700" color="#FFFFFF">
+                    Skip
+                  </Text>
+                </YStack>
               </XStack>
 
               <YStack
@@ -540,8 +617,8 @@ export default function SignupScreen() {
                 borderWidth={1}
                 borderColor="black"
                 borderRadius="$6"
-                padding="$5"
-                gap="$4"
+                padding="$4"
+                gap="$2.5"
                 alignItems="center"
               >
                 {/* Avatar placeholder avec bouton "+" */}
@@ -570,7 +647,7 @@ export default function SignupScreen() {
                         fontSize={14}
                         paddingHorizontal="$3"
                         paddingVertical="$3"
-                        minHeight={120}
+                        minHeight={90}
                         textAlignVertical="top"
                       />
                     )}
@@ -578,6 +655,57 @@ export default function SignupScreen() {
                   {form.formState.errors.bio?.message ? (
                     <Text fontSize={12} color="$danger" paddingLeft="$1">
                       {form.formState.errors.bio.message}
+                    </Text>
+                  ) : null}
+                </YStack>
+
+                {/* Champ : Gender */}
+                <YStack gap="$2" width="100%">
+                  <Text fontSize={14} fontWeight="600" color="$color">
+                    Gender
+                  </Text>
+                  <Controller
+                    control={form.control}
+                    name="gender"
+                    render={({ field: { onChange, value } }) => (
+                      <XStack gap="$4" flexWrap="wrap">
+                        {['male', 'female', 'other'].map((g) => (
+                          <XStack
+                            key={g}
+                            alignItems="center"
+                            gap="$2"
+                            onPress={() => onChange(g)}
+                            cursor="pointer"
+                          >
+                            <YStack
+                              width={20}
+                              height={20}
+                              borderRadius={10}
+                              borderWidth={2}
+                              borderColor={value === g ? '$color' : '$borderColor'}
+                              alignItems="center"
+                              justifyContent="center"
+                            >
+                              {value === g && (
+                                <YStack
+                                  width={10}
+                                  height={10}
+                                  borderRadius={5}
+                                  backgroundColor="$color"
+                                />
+                              )}
+                            </YStack>
+                            <Text fontSize={14} color="$color" textTransform="capitalize">
+                              {g}
+                            </Text>
+                          </XStack>
+                        ))}
+                      </XStack>
+                    )}
+                  />
+                  {form.formState.errors.gender?.message ? (
+                    <Text fontSize={12} color="$danger" paddingLeft="$1">
+                      {form.formState.errors.gender.message}
                     </Text>
                   ) : null}
                 </YStack>

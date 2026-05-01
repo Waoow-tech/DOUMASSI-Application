@@ -36,6 +36,7 @@ export const fr = {
       // Password / signup
       weakPassword: 'Password is too weak (8 characters minimum).',
       samePassword: 'New password must be different from the previous one.',
+      emailAlreadyUsed: 'An account with this email already exists. Try logging in instead.',
       // Email / rate limit
       rateLimit: 'Too many attempts. Please try again in a few minutes.',
       invalidEmail: 'Invalid email address.',
