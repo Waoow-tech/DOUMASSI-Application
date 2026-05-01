@@ -41,9 +41,6 @@ export const fr = {
       invalidCredentials: 'Wrong email/phone or password.',
       emailNotConfirmed: 'Please confirm your email before logging in.',
       invalidIdentifier: 'Enter a valid email or phone number.',
-      // Password / signup
-      weakPassword: 'Password is too weak (8 characters minimum).',
-      samePassword: 'New password must be different from the previous one.',
       // Email / rate limit
       rateLimit: 'Too many attempts. Please try again in a few minutes.',
       invalidEmail: 'Invalid email address.',
