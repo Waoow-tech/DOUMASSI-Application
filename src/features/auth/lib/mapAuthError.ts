@@ -12,6 +12,8 @@ export function mapAuthError(message: string | undefined | null): string {
   const lower = message.toLowerCase();
 
   if (lower.includes('rate limit')) return e.rateLimit;
+  if (lower.includes('already registered') || lower.includes('already been registered'))
+    return e.emailAlreadyUsed;
   if (lower.includes('invalid login credentials') || lower.includes('invalid credentials'))
     return e.invalidCredentials;
   if (lower.includes('email not confirmed') || lower.includes('not confirmed'))

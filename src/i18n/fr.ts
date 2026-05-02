@@ -33,13 +33,14 @@ export const fr = {
         'This reset link is invalid or has expired. Request a new one from the login screen.',
     },
     errors: {
+      // Password / signup
+      weakPassword: 'Password is too weak (8 characters minimum).',
+      samePassword: 'New password must be different from the previous one.',
+      emailAlreadyUsed: 'An account with this email already exists. Try logging in instead.',
       // Login
       invalidCredentials: 'Wrong email/phone or password.',
       emailNotConfirmed: 'Please confirm your email before logging in.',
       invalidIdentifier: 'Enter a valid email or phone number.',
-      // Password / signup
-      weakPassword: 'Password is too weak (8 characters minimum).',
-      samePassword: 'New password must be different from the previous one.',
       // Email / rate limit
       rateLimit: 'Too many attempts. Please try again in a few minutes.',
       invalidEmail: 'Invalid email address.',

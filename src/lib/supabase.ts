@@ -40,6 +40,7 @@ export const supabase = createClient(
       storage: authStorage,
       autoRefreshToken: true,
       persistSession: true,
+      // Sur mobile, pas de redirect URL à parser
       detectSessionInUrl: false,
     },
   }
