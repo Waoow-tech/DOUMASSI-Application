@@ -1,14 +1,15 @@
 // Écran Splash applicatif (premier écran après le boot natif).
-// Affiche "DOUMASSI" 1s, fade-out 1s, puis redirige selon useAuthGuard :
+// Affiche "DOUMASSI" 1s, fade-out 600ms, puis redirige selon useAuthGuard :
 //   - unauthenticated → /welcome
 //   - incomplete      → /onboarding
 //   - complete        → /feed
-// Garde le splash visible tant que l'auth est en cours pour éviter les flashs.
+// Garde le splash visible tant que (1) le délai min n'est pas écoulé ET
+// (2) l'auth est en cours de check, pour éviter les flashs.
 //
 // Ticket E1-17 (splash) + E2-07 (guard logic).
 
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated } from 'react-native';
 import { Text, YStack } from 'tamagui';
 
@@ -18,29 +19,20 @@ import { t } from '@/i18n';
 export default function Splash() {
   const opacity = useRef(new Animated.Value(1)).current;
   const status = useAuthGuard();
-  const minDisplayElapsed = useRef(false);
+  const [minElapsed, setMinElapsed] = useState(false);
+  const hasRedirected = useRef(false);
 
+  // Délai minimum d'affichage (état pour déclencher le useEffect de redirect)
   useEffect(() => {
-    // Affiche le splash au moins 1s pour ne pas qu'il "flashe".
-    const timer = setTimeout(() => {
-      minDisplayElapsed.current = true;
-      maybeRedirect();
-    }, 1000);
-
+    const timer = setTimeout(() => setMinElapsed(true), 1000);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // À chaque changement de status, tente de rediriger
-  // (uniquement après le délai minimum + une fois le check terminé).
+  // Redirect dès que les 2 conditions sont remplies (1) délai écoulé (2) status connu
   useEffect(() => {
-    maybeRedirect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
-
-  const maybeRedirect = () => {
-    if (!minDisplayElapsed.current) return;
-    if (status === 'loading') return;
+    if (!minElapsed || status === 'loading') return;
+    if (hasRedirected.current) return;
+    hasRedirected.current = true;
 
     Animated.timing(opacity, {
       toValue: 0,
@@ -59,7 +51,7 @@ export default function Splash() {
           break;
       }
     });
-  };
+  }, [minElapsed, status, opacity]);
 
   return (
     <Animated.View style={{ flex: 1, opacity }}>
