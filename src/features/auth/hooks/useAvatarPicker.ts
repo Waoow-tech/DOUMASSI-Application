@@ -1,5 +1,5 @@
-// Hook dédié à la sélection et l'upload d'avatar vers Supabase Storage.
-// Séparé de useSignup pour respecter le principe de responsabilité unique.
+// Hook for picking and uploading an avatar to Supabase Storage.
+// Separated from useSignup to respect single responsibility.
 // Ticket E2-02 — Sprint 1 Auth & Onboarding.
 
 import * as FileSystem from 'expo-file-system';
@@ -13,8 +13,8 @@ export function useAvatarPicker() {
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
 
   /**
-   * Ouvre le sélecteur d'images (galerie) pour choisir un avatar.
-   * Crop carré 1:1, qualité 0.8 pour limiter la taille.
+   * Open the image picker (gallery) to choose an avatar.
+   * Square crop 1:1, quality 0.8 to keep file size reasonable.
    */
   const pickAvatar = async () => {
     const { status: existingStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -26,7 +26,7 @@ export function useAvatarPicker() {
     }
 
     if (finalStatus !== 'granted') {
-      logger.warn("Permission galerie refusée par l'utilisateur");
+      logger.warn('Gallery permission denied by user');
       return;
     }
 
@@ -45,13 +45,13 @@ export function useAvatarPicker() {
 
       setAvatarUri(asset.uri);
     } catch (err) {
-      logger.error('[AVATAR] Erreur launchImageLibraryAsync:', err);
+      logger.error('launchImageLibraryAsync failed', err);
     }
   };
 
   /**
-   * Upload l'avatar vers Supabase Storage (bucket "avatars").
-   * Retourne l'URL publique ou undefined si pas d'avatar / échec.
+   * Upload the avatar to Supabase Storage (bucket "avatars").
+   * Returns the public URL or undefined if no avatar / upload failed.
    */
   const uploadAvatar = async (userId: string): Promise<string | undefined> => {
     if (!avatarUri) return undefined;
@@ -59,7 +59,7 @@ export function useAvatarPicker() {
     try {
       const fileInfo = await FileSystem.getInfoAsync(avatarUri);
       if (!fileInfo.exists) {
-        logger.warn("[UPLOAD] Fichier introuvable à l'URI:", avatarUri);
+        logger.warn('Avatar file not found at URI', { uri: avatarUri });
         return undefined;
       }
 
@@ -88,14 +88,14 @@ export function useAvatarPicker() {
         });
 
       if (uploadError) {
-        logger.error('[UPLOAD] Erreur upload:', uploadError.message);
+        logger.error('Avatar upload failed', { message: uploadError.message });
         return undefined;
       }
 
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
       return urlData.publicUrl;
     } catch (err) {
-      logger.error('[UPLOAD] Erreur inattendue uploadAvatar:', err);
+      logger.error('Unexpected error in uploadAvatar', err);
       return undefined;
     }
   };

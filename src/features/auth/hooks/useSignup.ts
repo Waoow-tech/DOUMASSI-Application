@@ -131,8 +131,8 @@ export function useSignup() {
         }
       }
 
-      logger.info('Signup successful — redirecting to home feed');
-      router.replace('/(tabs)');
+      logger.info('Signup successful — redirecting to feed');
+      router.replace('/feed');
     } catch (err: unknown) {
       logger.error('Unexpected signup error', err);
       setSignupError(mapAuthError(null));
