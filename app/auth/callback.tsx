@@ -1,6 +1,16 @@
 // Écran de callback OAuth — destination du deep link doumassi://auth/callback.
-// Capte les tokens (access_token + refresh_token) du fragment de l'URL,
-// établit la session Supabase, puis redirige vers l'accueil.
+// Capture les tokens (access_token + refresh_token) du fragment de l'URL,
+// établit la session Supabase, puis redirige vers /feed.
+//
+// 3 stratégies en parallèle (la première qui réussit l'emporte) :
+//   1) Linking.getInitialURL — cas cold start (l'app a été ouverte par le deep link)
+//   2) Linking.addEventListener('url') — cas warm (l'app était déjà ouverte)
+//   3) supabase.auth.onAuthStateChange — fallback si Supabase a quand même capté
+//      la session via un autre mécanisme (rehydratation, refresh token, etc.)
+//
+// Timeout de 10s : si rien ne se passe, on retourne sur Welcome avec une erreur.
+// NOTE: en l'état, le retour du deep link doumassi:// depuis Chrome Android peut
+// échouer (limitation OS). Un ticket de fix utilisera expo-web-browser.
 //
 // Ticket E2-05 — Sprint 1 Auth & Onboarding.
 
@@ -37,49 +47,74 @@ export default function AuthCallbackScreen() {
 
   useEffect(() => {
     let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const finishWithError = () => {
+      if (cancelled) return;
+      logger.warn('Auth callback failed — redirecting to welcome');
+      setErrorMessage(t.auth.google.callbackError);
+      setTimeout(() => {
+        if (!cancelled) router.replace('/(auth)/welcome');
+      }, 1500);
+    };
+
+    const finishWithSuccess = () => {
+      if (cancelled) return;
+      if (timeoutId) clearTimeout(timeoutId);
+      logger.info('Auth callback success — redirecting to feed');
+      router.replace('/feed');
+    };
 
     const consumeUrl = async (url: string | null) => {
       if (!url || cancelled) return;
 
       const tokens = extractTokensFromUrl(url);
-      if (!tokens) {
-        logger.warn('Deep link auth/callback sans tokens valides', { url });
-        if (!cancelled) {
-          setErrorMessage(t.auth.google.callbackError);
-          setTimeout(() => router.replace('/(auth)/login'), 1500);
-        }
-        return;
-      }
+      if (!tokens) return;
 
       const { error } = await supabase.auth.setSession({
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
       });
 
+      if (cancelled) return;
+
       if (error) {
-        logger.warn('setSession a échoué après callback OAuth', { message: error.message });
-        if (!cancelled) {
-          setErrorMessage(t.auth.google.callbackError);
-          setTimeout(() => router.replace('/(auth)/login'), 1500);
-        }
+        logger.warn('setSession failed', { message: error.message });
+        finishWithError();
         return;
       }
 
-      logger.info('Session établie après OAuth Google');
-      if (!cancelled) {
-        router.replace('/');
-      }
+      finishWithSuccess();
     };
 
-    // Cas 1 : l'app a été ouverte directement par le deep link (cold start)
-    Linking.getInitialURL().then(consumeUrl);
+    // Stratégie 1 : URL initiale (cold start)
+    Linking.getInitialURL().then((url) => {
+      void consumeUrl(url);
+    });
 
-    // Cas 2 : l'app était déjà en arrière-plan, le deep link arrive en cours
-    const subscription = Linking.addEventListener('url', ({ url }) => consumeUrl(url));
+    // Stratégie 2 : URL entrante (warm)
+    const linkingSub = Linking.addEventListener('url', ({ url }) => {
+      void consumeUrl(url);
+    });
+
+    // Stratégie 3 : auth state change (Supabase peut établir la session autrement)
+    const { data: authSub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled || !session) return;
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+        finishWithSuccess();
+      }
+    });
+
+    // Timeout : si rien n'arrive dans 10s, on abandonne
+    timeoutId = setTimeout(() => {
+      finishWithError();
+    }, 10_000);
 
     return () => {
       cancelled = true;
-      subscription.remove();
+      if (timeoutId) clearTimeout(timeoutId);
+      linkingSub.remove();
+      authSub.subscription.unsubscribe();
     };
   }, []);
 

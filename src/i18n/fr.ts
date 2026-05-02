@@ -7,6 +7,17 @@ export const fr = {
     tagline: 'DOUMASSI',
   },
   auth: {
+    welcome: {
+      tagline: 'The French super-app.',
+      signIn: 'Sign in',
+      createAccount: 'Create an account',
+    },
+    onboarding: {
+      placeholderTitle: 'Almost there!',
+      placeholderSubtitle:
+        'Complete your profile to start using DOUMASSI.\nThe full onboarding flow is coming soon.',
+      continueToFeed: 'Skip for now',
+    },
     google: {
       continueWithGoogle: 'Continue with Google',
       callbackInProgress: 'Signing you in…',

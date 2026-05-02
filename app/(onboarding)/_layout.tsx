@@ -1,19 +1,19 @@
-// Layout du groupe (feed) — écrans authentifiés (post-login).
+// Layout du groupe (onboarding) — étapes de complétion de profil.
 // Bloque l'accès si :
 //   - pas de session → redirect /welcome
-//   - profil incomplet → redirect /onboarding
+//   - profil déjà complet → redirect /feed (évite de re-onboarder un user déjà setup)
 //
-// Ticket E2-03 (création) + E2-07 (guard de session).
+// Sera rempli par les tickets E2-08 (pseudo), E2-09 (avatar), E2-10 (cover), E2-11 (intérêts).
+// Ticket E2-07 — Sprint 1 Auth & Onboarding (squelette + guard).
 
 import { Redirect, Stack } from 'expo-router';
 
 import GuardLoader from '@/components/GuardLoader';
 import { useAuthGuard } from '@/features/auth/hooks/useAuthGuard';
 
-export default function FeedLayout() {
+export default function OnboardingLayout() {
   const status = useAuthGuard();
 
-  // Pendant le check (cold start), on affiche un loader pour éviter le flash.
   if (status === 'loading') {
     return <GuardLoader />;
   }
@@ -22,8 +22,8 @@ export default function FeedLayout() {
     return <Redirect href="/(auth)/welcome" />;
   }
 
-  if (status === 'incomplete') {
-    return <Redirect href="/(onboarding)" />;
+  if (status === 'complete') {
+    return <Redirect href="/feed" />;
   }
 
   return (

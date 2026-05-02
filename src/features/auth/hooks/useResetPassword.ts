@@ -125,7 +125,7 @@ export function useResetPassword() {
       // Redirection vers login après une courte pause (laisse le succès s'afficher).
       setTimeout(() => {
         supabase.auth.signOut().finally(() => {
-          router.replace('/(auth)/login');
+          router.replace('/(auth)/welcome');
         });
       }, 1500);
     } catch (err: unknown) {

@@ -1,41 +1,57 @@
 // Écran Splash applicatif (premier écran après le boot natif).
-// Ticket E1-17 + E2-03 — affiche "DOUMASSI" 1s, fade-out 1s,
-// puis redirige vers /feed si session active, /login sinon.
+// Affiche "DOUMASSI" 1s, fade-out 600ms, puis redirige selon useAuthGuard :
+//   - unauthenticated → /welcome
+//   - incomplete      → /onboarding
+//   - complete        → /feed
+// Garde le splash visible tant que (1) le délai min n'est pas écoulé ET
+// (2) l'auth est en cours de check, pour éviter les flashs.
+//
+// Ticket E1-17 (splash) + E2-07 (guard logic).
 
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated } from 'react-native';
 import { Text, YStack } from 'tamagui';
 
+import { useAuthGuard } from '@/features/auth/hooks/useAuthGuard';
 import { t } from '@/i18n';
-import { supabase } from '@/lib/supabase';
 
 export default function Splash() {
   const opacity = useRef(new Animated.Value(1)).current;
+  const status = useAuthGuard();
+  const [minElapsed, setMinElapsed] = useState(false);
+  const hasRedirected = useRef(false);
 
+  // Délai minimum d'affichage (état pour déclencher le useEffect de redirect)
   useEffect(() => {
-    let isMounted = true;
+    const timer = setTimeout(() => setMinElapsed(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
-    const timer = setTimeout(() => {
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 1000,
-        useNativeDriver: true,
-      }).start(async () => {
-        const { data } = await supabase.auth.getSession();
+  // Redirect dès que les 2 conditions sont remplies (1) délai écoulé (2) status connu
+  useEffect(() => {
+    if (!minElapsed || status === 'loading') return;
+    if (hasRedirected.current) return;
+    hasRedirected.current = true;
 
-        if (!isMounted) return;
-
-        router.replace(data.session ? '/feed' : '/login');
-      });
-    }, 1000);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-      opacity.stopAnimation();
-    };
-  }, [opacity]);
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 600,
+      useNativeDriver: true,
+    }).start(() => {
+      switch (status) {
+        case 'unauthenticated':
+          router.replace('/(auth)/welcome');
+          break;
+        case 'incomplete':
+          router.replace('/(onboarding)');
+          break;
+        case 'complete':
+          router.replace('/feed');
+          break;
+      }
+    });
+  }, [minElapsed, status, opacity]);
 
   return (
     <Animated.View style={{ flex: 1, opacity }}>
