@@ -19,7 +19,7 @@ export function FeedScreen() {
       if (error) {
         logger.warn('Échec signOut', { message: error.message });
       }
-      router.replace('/login');
+      router.replace('/(auth)/welcome');
     } catch (err: unknown) {
       logger.error('Erreur inattendue lors du signOut', err);
     } finally {

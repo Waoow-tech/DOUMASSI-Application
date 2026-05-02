@@ -46,7 +46,7 @@ export default function AuthCallbackScreen() {
         logger.warn('Deep link auth/callback sans tokens valides', { url });
         if (!cancelled) {
           setErrorMessage(t.auth.google.callbackError);
-          setTimeout(() => router.replace('/(auth)/login'), 1500);
+          setTimeout(() => router.replace('/(auth)/welcome'), 1500);
         }
         return;
       }
@@ -60,14 +60,14 @@ export default function AuthCallbackScreen() {
         logger.warn('setSession a échoué après callback OAuth', { message: error.message });
         if (!cancelled) {
           setErrorMessage(t.auth.google.callbackError);
-          setTimeout(() => router.replace('/(auth)/login'), 1500);
+          setTimeout(() => router.replace('/(auth)/welcome'), 1500);
         }
         return;
       }
 
       logger.info('Session établie après OAuth Google');
       if (!cancelled) {
-        router.replace('/');
+        router.replace('/feed');
       }
     };
 
