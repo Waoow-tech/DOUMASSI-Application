@@ -18,6 +18,15 @@ export const fr = {
         'Complete your profile to start using DOUMASSI.\nThe full onboarding flow is coming soon.',
       continueToFeed: 'Skip for now',
     },
+    settings: {
+      title: 'Settings',
+      logoutSection: 'Account',
+      logoutButton: 'Sign out',
+      logoutConfirmTitle: 'Sign out?',
+      logoutConfirmMessage: 'You will be signed out of your DOUMASSI account on this device.',
+      logoutConfirmCancel: 'Cancel',
+      logoutConfirmAction: 'Sign out',
+    },
     google: {
       continueWithGoogle: 'Continue with Google',
       callbackInProgress: 'Signing you in…',

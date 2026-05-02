@@ -4,31 +4,14 @@
 // Ticket E2-07 — Sprint 1 Auth & Onboarding.
 
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Button, Spinner, Text, YStack } from 'tamagui';
 
+import { useLogout } from '@/features/auth/hooks/useLogout';
 import { t } from '@/i18n';
-import { logger } from '@/lib/logger';
-import { supabase } from '@/lib/supabase';
 
 export default function OnboardingPlaceholder() {
   const copy = t.auth.onboarding;
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        logger.warn('Sign out failed', { message: error.message });
-      }
-      router.replace('/(auth)/welcome');
-    } catch (err: unknown) {
-      logger.error('Unexpected sign out error', err);
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
+  const { logout, isLoading: isSigningOut } = useLogout();
 
   return (
     <YStack
@@ -64,7 +47,7 @@ export default function OnboardingPlaceholder() {
 
       {/* Échappatoire pour sortir tant que les vrais steps onboarding n'existent pas */}
       <Button
-        onPress={handleSignOut}
+        onPress={() => void logout()}
         disabled={isSigningOut}
         backgroundColor="transparent"
         color="$placeholderColor"
