@@ -42,6 +42,7 @@ function extractTokensFromUrl(url: string): {
 
 export default function AuthCallbackScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [debugUrl, setDebugUrl] = useState<string>('(waiting...)');
 
   useEffect(() => {
     let cancelled = false;
@@ -64,15 +65,18 @@ export default function AuthCallbackScreen() {
     };
 
     const consumeUrl = async (url: string | null, source: string) => {
-      logger.debug('Auth callback consume URL', { source, hasUrl: !!url });
+      // En warn pour que Sentry capture en breadcrumb
+      logger.warn(`[CALLBACK] consume URL from ${source}`, { url });
       if (!url || cancelled) return;
+      setDebugUrl(`[${source}] ${url.slice(0, 200)}`);
 
       const tokens = extractTokensFromUrl(url);
       if (!tokens) {
-        logger.debug('URL has no tokens (probably initial launch URL)', { url });
+        logger.warn(`[CALLBACK] URL has no tokens fragment`, { url, source });
         return;
       }
 
+      logger.warn(`[CALLBACK] Tokens extracted, calling setSession`, { source });
       const { error } = await supabase.auth.setSession({
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
@@ -81,7 +85,7 @@ export default function AuthCallbackScreen() {
       if (cancelled) return;
 
       if (error) {
-        logger.warn('setSession failed', { message: error.message });
+        logger.warn('[CALLBACK] setSession failed', { message: error.message });
         finishWithError();
         return;
       }
@@ -91,6 +95,7 @@ export default function AuthCallbackScreen() {
 
     // Stratégie 1 : URL initiale (cold start)
     Linking.getInitialURL().then((url) => {
+      logger.warn(`[CALLBACK] getInitialURL resolved`, { url });
       void consumeUrl(url, 'getInitialURL');
     });
 
@@ -101,7 +106,7 @@ export default function AuthCallbackScreen() {
 
     // Stratégie 3 : auth state change (Supabase peut établir la session autrement)
     const { data: authSub } = supabase.auth.onAuthStateChange((event, session) => {
-      logger.debug('Auth state change in callback', { event, hasSession: !!session });
+      logger.warn(`[CALLBACK] Auth state change`, { event, hasSession: !!session });
       if (cancelled || !session) return;
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
         finishWithSuccess();
@@ -142,6 +147,17 @@ export default function AuthCallbackScreen() {
           </Text>
         </>
       )}
+
+      {/* Debug : URL captée. À retirer après diagnostic. */}
+      <Text
+        fontSize={10}
+        color="$placeholderColor"
+        textAlign="center"
+        marginTop="$4"
+        paddingHorizontal="$2"
+      >
+        {debugUrl}
+      </Text>
     </YStack>
   );
 }
