@@ -9,6 +9,8 @@
 //      la session via un autre mécanisme (rehydratation, refresh token, etc.)
 //
 // Timeout de 10s : si rien ne se passe, on retourne sur Welcome avec une erreur.
+// NOTE: en l'état, le retour du deep link doumassi:// depuis Chrome Android peut
+// échouer (limitation OS). Un ticket de fix utilisera expo-web-browser.
 //
 // Ticket E2-05 — Sprint 1 Auth & Onboarding.
 
@@ -42,7 +44,6 @@ function extractTokensFromUrl(url: string): {
 
 export default function AuthCallbackScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [debugUrl, setDebugUrl] = useState<string>('(waiting...)');
 
   useEffect(() => {
     let cancelled = false;
@@ -64,19 +65,12 @@ export default function AuthCallbackScreen() {
       router.replace('/feed');
     };
 
-    const consumeUrl = async (url: string | null, source: string) => {
-      // En warn pour que Sentry capture en breadcrumb
-      logger.warn(`[CALLBACK] consume URL from ${source}`, { url });
+    const consumeUrl = async (url: string | null) => {
       if (!url || cancelled) return;
-      setDebugUrl(`[${source}] ${url.slice(0, 200)}`);
 
       const tokens = extractTokensFromUrl(url);
-      if (!tokens) {
-        logger.warn(`[CALLBACK] URL has no tokens fragment`, { url, source });
-        return;
-      }
+      if (!tokens) return;
 
-      logger.warn(`[CALLBACK] Tokens extracted, calling setSession`, { source });
       const { error } = await supabase.auth.setSession({
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
@@ -85,7 +79,7 @@ export default function AuthCallbackScreen() {
       if (cancelled) return;
 
       if (error) {
-        logger.warn('[CALLBACK] setSession failed', { message: error.message });
+        logger.warn('setSession failed', { message: error.message });
         finishWithError();
         return;
       }
@@ -95,18 +89,16 @@ export default function AuthCallbackScreen() {
 
     // Stratégie 1 : URL initiale (cold start)
     Linking.getInitialURL().then((url) => {
-      logger.warn(`[CALLBACK] getInitialURL resolved`, { url });
-      void consumeUrl(url, 'getInitialURL');
+      void consumeUrl(url);
     });
 
     // Stratégie 2 : URL entrante (warm)
     const linkingSub = Linking.addEventListener('url', ({ url }) => {
-      void consumeUrl(url, 'addEventListener');
+      void consumeUrl(url);
     });
 
     // Stratégie 3 : auth state change (Supabase peut établir la session autrement)
     const { data: authSub } = supabase.auth.onAuthStateChange((event, session) => {
-      logger.warn(`[CALLBACK] Auth state change`, { event, hasSession: !!session });
       if (cancelled || !session) return;
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
         finishWithSuccess();
@@ -147,17 +139,6 @@ export default function AuthCallbackScreen() {
           </Text>
         </>
       )}
-
-      {/* Debug : URL captée. À retirer après diagnostic. */}
-      <Text
-        fontSize={10}
-        color="$placeholderColor"
-        textAlign="center"
-        marginTop="$4"
-        paddingHorizontal="$2"
-      >
-        {debugUrl}
-      </Text>
     </YStack>
   );
 }
