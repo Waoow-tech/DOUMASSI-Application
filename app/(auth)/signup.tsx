@@ -18,6 +18,8 @@ import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagu
 
 import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
 import { useSignup } from '@/features/auth/hooks/useSignup';
+import { useUsernameAvailability } from '@/features/auth/hooks/useUsernameAvailability';
+import { t } from '@/i18n';
 
 const logoSource = require('../../assets/Logo-Doumassi.png') as number;
 
@@ -96,6 +98,13 @@ export default function SignupScreen() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Live unicity check sur le username (debounce 500ms côté hook)
+  const usernameValue = form.watch('username');
+  const usernameStatus = useUsernameAvailability(usernameValue);
+  const usernameTaken = usernameStatus === 'taken';
+
+  const submitDisabled = isLoading || usernameStatus === 'checking' || usernameTaken;
 
   const handleBirthdayChange = useCallback((text: string, rhfOnChange: (value: string) => void) => {
     rhfOnChange(formatBirthdayInput(text));
@@ -188,7 +197,7 @@ export default function SignupScreen() {
                     onBlur={onBlur}
                     autoCapitalize="none"
                     borderWidth={1}
-                    borderColor="$borderColor"
+                    borderColor={usernameTaken ? '$danger' : '$borderColor'}
                     borderRadius="$4"
                     backgroundColor="transparent"
                     color="$color"
@@ -201,6 +210,22 @@ export default function SignupScreen() {
               {form.formState.errors.username?.message ? (
                 <Text fontSize={11} color="$danger" paddingLeft="$1">
                   {form.formState.errors.username.message}
+                </Text>
+              ) : usernameStatus === 'checking' ? (
+                <Text fontSize={11} color="$placeholderColor" paddingLeft="$1">
+                  {t.auth.signup.usernameChecking}
+                </Text>
+              ) : usernameStatus === 'available' ? (
+                <Text fontSize={11} color="$accentNeon" paddingLeft="$1">
+                  ✓ {t.auth.signup.usernameAvailable}
+                </Text>
+              ) : usernameStatus === 'taken' ? (
+                <Text fontSize={11} color="$danger" paddingLeft="$1">
+                  ✗ {t.auth.signup.usernameTaken}
+                </Text>
+              ) : usernameStatus === 'error' ? (
+                <Text fontSize={11} color="$placeholderColor" paddingLeft="$1">
+                  {t.auth.signup.usernameCheckError}
                 </Text>
               ) : null}
             </YStack>
@@ -391,7 +416,7 @@ export default function SignupScreen() {
             <Button
               id="signup-submit-button"
               onPress={onSubmit}
-              disabled={isLoading}
+              disabled={submitDisabled}
               backgroundColor="$color"
               color="$background"
               borderRadius="$4"
@@ -400,6 +425,7 @@ export default function SignupScreen() {
               fontSize={15}
               pressStyle={{ opacity: 0.85, scale: 0.98 }}
               marginTop="$1"
+              opacity={submitDisabled ? 0.5 : 1}
             >
               {isLoading ? <Spinner size="small" color="$background" /> : 'Create an account'}
             </Button>
