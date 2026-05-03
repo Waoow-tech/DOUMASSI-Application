@@ -12,6 +12,12 @@ export const fr = {
       signIn: 'Sign in',
       createAccount: 'Create an account',
     },
+    signup: {
+      usernameChecking: 'Checking…',
+      usernameAvailable: 'Available',
+      usernameTaken: 'Already taken',
+      usernameCheckError: 'Could not verify, please retry.',
+    },
     onboarding: {
       placeholderTitle: 'Almost there!',
       placeholderSubtitle:
