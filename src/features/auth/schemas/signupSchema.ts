@@ -1,21 +1,17 @@
-// Validation schema for the multi-step signup form.
+// Validation schema for the signup form (single page).
 // All error messages in English (consistent with UI language).
+//
+// Refactor E2-02b : retiré bio, gender, isProfessional, STEP_1_FIELDS
+// (ces champs vivent maintenant dans l'onboarding, pas dans le signup).
+// Le signup garde juste les champs essentiels à la création de compte
+// + username (pour vérifier l'unicité au moment de l'inscription).
+//
 // Ticket E2-02 — Sprint 1 Auth & Onboarding.
 
 import { z } from 'zod';
 
-/**
- * Zod schema — 2 steps.
- *
- * Step 1: fullName, username, email, birthday, password, confirmPassword
- * Step 2 (skippable): bio, gender, isProfessional
- *
- * Birthday format in input: DD/MM/YYYY.
- * Conversion to ISO (YYYY-MM-DD) happens in the hook before Supabase call.
- */
 export const signupSchema = z
   .object({
-    // --- Step 1 ---
     fullName: z.string().min(2, 'Full name must be at least 2 characters'),
 
     username: z
@@ -48,13 +44,6 @@ export const signupSchema = z
       .regex(/[0-9]/, 'Password must contain at least one number'),
 
     confirmPassword: z.string().min(1, 'Please confirm your password'),
-
-    // --- Step 2 (all have defaults — step is skippable) ---
-    bio: z.string().max(250, 'Bio cannot exceed 250 characters'),
-
-    gender: z.enum(['male', 'female', 'other', '']),
-
-    isProfessional: z.boolean(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -62,16 +51,3 @@ export const signupSchema = z
   });
 
 export type SignupFormValues = z.infer<typeof signupSchema>;
-
-/**
- * Step 1 field names — used by `form.trigger()`
- * to validate only step 1 before transitioning.
- */
-export const STEP_1_FIELDS: (keyof SignupFormValues)[] = [
-  'fullName',
-  'username',
-  'email',
-  'birthday',
-  'password',
-  'confirmPassword',
-];

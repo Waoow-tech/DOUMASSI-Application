@@ -1,27 +1,20 @@
-// Écran d'inscription multi-étapes — fidèle aux maquettes DOUMASSI.
-// Étape 1 : infos de base (5 champs) + Google OAuth mock + lien login.
-// Étape 2 : avatar mock + bio + toggle professionnel + soumission Supabase.
+// Écran d'inscription — page unique.
+// Champs : Full name, Username, Email/phone, Birthday, Password, Confirm password.
+// Bouton Google OAuth + lien vers login.
+//
+// Refactor E2-02b : suppression de la step 2 (avatar/bio/professional/gender)
+// — ces champs sont collectés dans l'onboarding (E2-09 + E2-10).
+//
 // Ticket E2-02 — Sprint 1 Auth & Onboarding.
-// Pas de StyleSheet.create — tout passe par les props Tamagui.
 
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
-import { ArrowLeft, Eye, EyeOff, Plus, User } from 'lucide-react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import {
-  Button,
-  Input,
-  ScrollView,
-  Spinner,
-  Switch,
-  Text,
-  TextArea,
-  XStack,
-  YStack,
-} from 'tamagui';
+import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui';
 
 import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
 import { useSignup } from '@/features/auth/hooks/useSignup';
@@ -29,25 +22,9 @@ import { useSignup } from '@/features/auth/hooks/useSignup';
 const logoSource = require('../../assets/Logo-Doumassi.png') as number;
 
 // ---------------------------------------------------------------------------
-// Composants internes (pas exportés — usage local uniquement)
+// Composants internes
 // ---------------------------------------------------------------------------
 
-/** Barre de progression visuelle 1/2 ou 2/2. */
-function ProgressBar({ step }: { step: 1 | 2 }) {
-  return (
-    <XStack width="100%" gap="$2">
-      <YStack flex={1} height={3} borderRadius="$full" backgroundColor="$color" />
-      <YStack
-        flex={1}
-        height={3}
-        borderRadius="$full"
-        backgroundColor={step >= 2 ? '$color' : '$borderColor'}
-      />
-    </XStack>
-  );
-}
-
-/** Logo DOUMASSI centré — taille réduite pour le signup. */
 function DoumassLogo() {
   return (
     <YStack alignItems="center" justifyContent="center" marginBottom="$2">
@@ -61,70 +38,6 @@ function DoumassLogo() {
   );
 }
 
-/** Placeholder avatar avec icône utilisateur + bouton rouge "+". */
-// APRÈS
-function AvatarPlaceholder({ onPress, uri }: { onPress: () => void; uri: string | null }) {
-  return (
-    <YStack alignItems="center" gap="$2" marginVertical="$2">
-      {/* Wrapper relatif — taille du cercle, gère le onPress global */}
-      <YStack
-        width={100}
-        height={100}
-        onPress={onPress}
-        pressStyle={{ opacity: 0.8 }}
-        cursor="pointer"
-      >
-        {/* Cercle avatar — overflow:hidden uniquement ici pour cropper l'image */}
-        <YStack
-          width={100}
-          height={100}
-          borderRadius={50}
-          backgroundColor="$surface"
-          alignItems="center"
-          justifyContent="center"
-          overflow="hidden"
-        >
-          {uri ? (
-            <Image
-              source={{ uri }}
-              style={{ width: 100, height: 100, borderRadius: 50 }}
-              contentFit="cover"
-              accessibilityLabel="Photo de profil sélectionnée"
-            />
-          ) : (
-            <User size={48} color="#A0A0A0" />
-          )}
-        </YStack>
-
-        {/* Badge "+" — sur le wrapper parent, PAS dans le cercle overflow:hidden */}
-        <YStack
-          position="absolute"
-          bottom={0}
-          right={0}
-          width={28}
-          height={28}
-          borderRadius={14}
-          backgroundColor="$danger"
-          alignItems="center"
-          justifyContent="center"
-          borderWidth={2}
-          borderColor="$background"
-        >
-          <Plus size={14} color="#FFFFFF" />
-        </YStack>
-      </YStack>
-
-      <Text fontSize={14} color="$textSecondary">
-        {uri ? 'Change profile picture' : 'Add a profile picture'}
-      </Text>
-    </YStack>
-  );
-}
-
-/**
- * Séparateur visuel avec texte centré.
- * Exemple : ————— Or log in with —————
- */
 function Separator({ text }: { text: string }) {
   return (
     <XStack alignItems="center" gap="$3" width="100%" marginVertical="$1">
@@ -137,10 +50,7 @@ function Separator({ text }: { text: string }) {
   );
 }
 
-/**
- * Logo Google coloré (4 couleurs officielles).
- * Utilise react-native-svg — déjà installé via lucide-react-native.
- */
+/** Logo Google coloré (4 couleurs officielles). */
 function GoogleLogo({ size = 20 }: { size?: number }) {
   return (
     <Svg viewBox="0 0 24 24" width={size} height={size}>
@@ -164,14 +74,9 @@ function GoogleLogo({ size = 20 }: { size?: number }) {
   );
 }
 
-/**
- * Auto-format birthday : insère les "/" automatiquement.
- * Exemple : 2301 → 23/01, 23012005 → 23/01/2005
- */
+/** Auto-format birthday : insère les "/" automatiquement. */
 function formatBirthdayInput(raw: string): string {
-  // Ne garder que les chiffres
   const digits = raw.replace(/\D/g, '').slice(0, 8);
-
   if (digits.length <= 2) return digits;
   if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
@@ -182,18 +87,7 @@ function formatBirthdayInput(raw: string): string {
 // ---------------------------------------------------------------------------
 
 export default function SignupScreen() {
-  const {
-    form,
-    step,
-    isLoading,
-    signupError,
-    avatarUri,
-    goToStep1,
-    goToStep2,
-    pickAvatar,
-    skipStep2,
-    onSubmit,
-  } = useSignup();
+  const { form, isLoading, signupError, onSubmit } = useSignup();
   const {
     signIn: signInWithGoogle,
     isLoading: isGoogleLoading,
@@ -203,10 +97,6 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  /**
-   * Handler birthday avec auto-format.
-   * On intercepte le onChangeText pour formater avant de passer à RHF.
-   */
   const handleBirthdayChange = useCallback((text: string, rhfOnChange: (value: string) => void) => {
     rhfOnChange(formatBirthdayInput(text));
   }, []);
@@ -219,552 +109,358 @@ export default function SignupScreen() {
       <ScrollView
         flex={1}
         backgroundColor="$background"
-        scrollEnabled={step === 1}
         contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: step === 1 ? 'center' : 'flex-start',
+          justifyContent: 'center',
           paddingHorizontal: 24,
-          paddingTop: step === 2 ? 32 : 24,
+          paddingTop: 24,
           paddingBottom: 24,
         }}
         keyboardShouldPersistTaps="handled"
       >
         <YStack alignItems="center" gap="$3" width="100%" maxWidth={400} alignSelf="center">
-          {/* Barre de progression */}
-          <ProgressBar step={step} />
+          <DoumassLogo />
 
-          {/* ============================================================= */}
-          {/* ÉTAPE 1 — Informations de base                                 */}
-          {/* ============================================================= */}
-          {step === 1 && (
-            <>
-              {/* Logo + titre */}
-              <DoumassLogo />
+          <YStack
+            width="100%"
+            borderWidth={1}
+            borderColor="black"
+            borderRadius="$6"
+            padding="$4"
+            gap="$2.5"
+          >
+            <Text
+              fontSize={24}
+              fontWeight="700"
+              color="$color"
+              textAlign="center"
+              fontFamily="$heading"
+              marginBottom="$1"
+            >
+              Create an account
+            </Text>
 
-              <YStack
-                width="100%"
-                borderWidth={1}
-                borderColor="black"
-                borderRadius="$6"
-                padding="$4"
-                gap="$2.5"
-              >
-                <Text
-                  fontSize={24}
-                  fontWeight="700"
-                  color="$color"
-                  textAlign="center"
-                  fontFamily="$heading"
-                  marginBottom="$1"
-                >
-                  Create an account
+            {/* Full name */}
+            <YStack gap="$1">
+              <Controller
+                control={form.control}
+                name="fullName"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    id="signup-fullname-input"
+                    placeholder="Full name"
+                    placeholderTextColor="$placeholderColor"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    autoCapitalize="words"
+                    autoComplete="name"
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius="$4"
+                    backgroundColor="transparent"
+                    color="$color"
+                    fontSize={14}
+                    height={44}
+                    paddingHorizontal="$3"
+                  />
+                )}
+              />
+              {form.formState.errors.fullName?.message ? (
+                <Text fontSize={11} color="$danger" paddingLeft="$1">
+                  {form.formState.errors.fullName.message}
                 </Text>
+              ) : null}
+            </YStack>
 
-                {/* Champ : Full name */}
-                <YStack gap="$1">
-                  <Controller
-                    control={form.control}
-                    name="fullName"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Input
-                        id="signup-fullname-input"
-                        placeholder="Full name"
-                        placeholderTextColor="$placeholderColor"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        autoCapitalize="words"
-                        autoComplete="name"
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        borderRadius="$4"
-                        backgroundColor="transparent"
-                        color="$color"
-                        fontSize={14}
-                        height={44}
-                        paddingHorizontal="$3"
-                      />
-                    )}
+            {/* Username */}
+            <YStack gap="$1">
+              <Controller
+                control={form.control}
+                name="username"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    id="signup-username-input"
+                    placeholder="Username"
+                    placeholderTextColor="$placeholderColor"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    autoCapitalize="none"
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius="$4"
+                    backgroundColor="transparent"
+                    color="$color"
+                    fontSize={14}
+                    height={44}
+                    paddingHorizontal="$3"
                   />
-                  {form.formState.errors.fullName?.message ? (
-                    <Text fontSize={11} color="$danger" paddingLeft="$1">
-                      {form.formState.errors.fullName.message}
-                    </Text>
-                  ) : null}
-                </YStack>
+                )}
+              />
+              {form.formState.errors.username?.message ? (
+                <Text fontSize={11} color="$danger" paddingLeft="$1">
+                  {form.formState.errors.username.message}
+                </Text>
+              ) : null}
+            </YStack>
 
-                {/* Champ : Username */}
-                <YStack gap="$1">
-                  <Controller
-                    control={form.control}
-                    name="username"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Input
-                        id="signup-username-input"
-                        placeholder="Username"
-                        placeholderTextColor="$placeholderColor"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        autoCapitalize="none"
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        borderRadius="$4"
-                        backgroundColor="transparent"
-                        color="$color"
-                        fontSize={14}
-                        height={44}
-                        paddingHorizontal="$3"
-                      />
-                    )}
+            {/* Email / phone */}
+            <YStack gap="$1">
+              <Controller
+                control={form.control}
+                name="email"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    id="signup-email-input"
+                    placeholder="Email or phone number"
+                    placeholderTextColor="$placeholderColor"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    keyboardType="email-address"
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius="$4"
+                    backgroundColor="transparent"
+                    color="$color"
+                    fontSize={14}
+                    height={44}
+                    paddingHorizontal="$3"
                   />
-                  {form.formState.errors.username?.message ? (
-                    <Text fontSize={11} color="$danger" paddingLeft="$1">
-                      {form.formState.errors.username.message}
-                    </Text>
-                  ) : null}
-                </YStack>
+                )}
+              />
+              {form.formState.errors.email?.message ? (
+                <Text fontSize={11} color="$danger" paddingLeft="$1">
+                  {form.formState.errors.email.message}
+                </Text>
+              ) : null}
+            </YStack>
 
-                {/* Champ : Email */}
-                <YStack gap="$1">
-                  <Controller
-                    control={form.control}
-                    name="email"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Input
-                        id="signup-email-input"
-                        placeholder="Email or phone number"
-                        placeholderTextColor="$placeholderColor"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        autoCapitalize="none"
-                        autoComplete="email"
-                        keyboardType="email-address"
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        borderRadius="$4"
-                        backgroundColor="transparent"
-                        color="$color"
-                        fontSize={14}
-                        height={44}
-                        paddingHorizontal="$3"
-                      />
-                    )}
+            {/* Birthday */}
+            <YStack gap="$1">
+              <Controller
+                control={form.control}
+                name="birthday"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    id="signup-birthday-input"
+                    placeholder="Birthday (DD/MM/YYYY)"
+                    placeholderTextColor="$placeholderColor"
+                    value={value}
+                    onChangeText={(text) => handleBirthdayChange(text, onChange)}
+                    onBlur={onBlur}
+                    keyboardType="numeric"
+                    maxLength={10}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius="$4"
+                    backgroundColor="transparent"
+                    color="$color"
+                    fontSize={14}
+                    height={44}
+                    paddingHorizontal="$3"
                   />
-                  {form.formState.errors.email?.message ? (
-                    <Text fontSize={11} color="$danger" paddingLeft="$1">
-                      {form.formState.errors.email.message}
-                    </Text>
-                  ) : null}
-                </YStack>
+                )}
+              />
+              {form.formState.errors.birthday?.message ? (
+                <Text fontSize={11} color="$danger" paddingLeft="$1">
+                  {form.formState.errors.birthday.message}
+                </Text>
+              ) : null}
+            </YStack>
 
-                {/* Champ : Birthday (format JJ/MM/AAAA avec auto-format) */}
-                <YStack gap="$1">
-                  <Controller
-                    control={form.control}
-                    name="birthday"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Input
-                        id="signup-birthday-input"
-                        placeholder="Birthday (DD/MM/YYYY)"
-                        placeholderTextColor="$placeholderColor"
-                        value={value}
-                        onChangeText={(text) => handleBirthdayChange(text, onChange)}
-                        onBlur={onBlur}
-                        keyboardType="numeric"
-                        maxLength={10}
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        borderRadius="$4"
-                        backgroundColor="transparent"
-                        color="$color"
-                        fontSize={14}
-                        height={44}
-                        paddingHorizontal="$3"
-                      />
-                    )}
-                  />
-                  {form.formState.errors.birthday?.message ? (
-                    <Text fontSize={11} color="$danger" paddingLeft="$1">
-                      {form.formState.errors.birthday.message}
-                    </Text>
-                  ) : null}
-                </YStack>
-
-                {/* Champ : Password (avec toggle visibilité) */}
-                <YStack gap="$1">
-                  <Controller
-                    control={form.control}
-                    name="password"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <XStack
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        borderRadius="$4"
-                        alignItems="center"
-                        height={44}
-                        backgroundColor="transparent"
-                      >
-                        <Input
-                          id="signup-password-input"
-                          placeholder="Password"
-                          placeholderTextColor="$placeholderColor"
-                          value={value}
-                          onChangeText={onChange}
-                          onBlur={onBlur}
-                          secureTextEntry={!showPassword}
-                          autoCapitalize="none"
-                          autoComplete="new-password"
-                          borderWidth={0}
-                          backgroundColor="transparent"
-                          color="$color"
-                          fontSize={14}
-                          flex={1}
-                          height={44}
-                          paddingHorizontal="$3"
-                        />
-                        <YStack
-                          paddingRight="$3"
-                          onPress={() => setShowPassword((prev) => !prev)}
-                          cursor="pointer"
-                          pressStyle={{ opacity: 0.6 }}
-                        >
-                          {showPassword ? (
-                            <EyeOff size={20} color="#A0A0A0" />
-                          ) : (
-                            <Eye size={20} color="#A0A0A0" />
-                          )}
-                        </YStack>
-                      </XStack>
-                    )}
-                  />
-                  {form.formState.errors.password?.message ? (
-                    <Text fontSize={11} color="$danger" paddingLeft="$1">
-                      {form.formState.errors.password.message}
-                    </Text>
-                  ) : null}
-                </YStack>
-
-                {/* Champ : Confirm Password */}
-                <YStack gap="$1">
-                  <Controller
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <XStack
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        borderRadius="$4"
-                        alignItems="center"
-                        height={44}
-                        backgroundColor="transparent"
-                      >
-                        <Input
-                          id="signup-confirm-password-input"
-                          placeholder="Confirm password"
-                          placeholderTextColor="$placeholderColor"
-                          value={value}
-                          onChangeText={onChange}
-                          onBlur={onBlur}
-                          secureTextEntry={!showConfirmPassword}
-                          autoCapitalize="none"
-                          autoComplete="new-password"
-                          borderWidth={0}
-                          backgroundColor="transparent"
-                          color="$color"
-                          fontSize={14}
-                          flex={1}
-                          height={44}
-                          paddingHorizontal="$3"
-                        />
-                        <YStack
-                          paddingRight="$3"
-                          onPress={() => setShowConfirmPassword((prev) => !prev)}
-                          cursor="pointer"
-                          pressStyle={{ opacity: 0.6 }}
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff size={20} color="#A0A0A0" />
-                          ) : (
-                            <Eye size={20} color="#A0A0A0" />
-                          )}
-                        </YStack>
-                      </XStack>
-                    )}
-                  />
-                  {form.formState.errors.confirmPassword?.message ? (
-                    <Text fontSize={11} color="$danger" paddingLeft="$1">
-                      {form.formState.errors.confirmPassword.message}
-                    </Text>
-                  ) : null}
-                </YStack>
-
-                {/* Bouton "Create an account" → passe à step 2 */}
-                <Button
-                  id="signup-step1-button"
-                  onPress={goToStep2}
-                  backgroundColor="$color"
-                  color="$background"
-                  borderRadius="$4"
-                  height={44}
-                  fontWeight="700"
-                  fontSize={15}
-                  pressStyle={{ opacity: 0.85, scale: 0.98 }}
-                  marginTop="$1"
-                >
-                  Create an account
-                </Button>
-
-                {/* Séparateur Google */}
-                <Separator text="Or log in with" />
-
-                {/* Bouton Google — OAuth via useGoogleAuth (E2-05) */}
-                <Button
-                  id="signup-google-button"
-                  onPress={signInWithGoogle}
-                  disabled={isGoogleLoading}
-                  backgroundColor="transparent"
-                  borderWidth={1}
-                  borderColor="$borderColor"
-                  borderRadius="$4"
-                  height={44}
-                  pressStyle={{
-                    opacity: 0.85,
-                    scale: 0.98,
-                    borderColor: '$borderColorHover',
-                  }}
-                >
-                  {isGoogleLoading ? (
-                    <Spinner size="small" color="$color" />
-                  ) : (
-                    <XStack alignItems="center" gap="$2.5">
-                      <GoogleLogo size={20} />
-                      <Text fontSize={14} fontWeight="600" color="$color">
-                        Google
-                      </Text>
-                    </XStack>
-                  )}
-                </Button>
-
-                {/* Erreur OAuth Google */}
-                {googleError ? (
-                  <Text fontSize={12} color="$danger" textAlign="center" marginTop="$1">
-                    {googleError}
-                  </Text>
-                ) : null}
-
-                {/* Lien vers login */}
-                <XStack justifyContent="center" gap="$1.5" marginTop="$1">
-                  <Text fontSize={13} color="$textSecondary">
-                    Already registered ?
-                  </Text>
-                  <Link href="/(auth)/login" asChild>
-                    <Text
-                      id="signup-login-link"
-                      fontSize={13}
+            {/* Password */}
+            <YStack gap="$1">
+              <Controller
+                control={form.control}
+                name="password"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <XStack
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius="$4"
+                    alignItems="center"
+                    height={44}
+                    backgroundColor="transparent"
+                  >
+                    <Input
+                      id="signup-password-input"
+                      placeholder="Password"
+                      placeholderTextColor="$placeholderColor"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoComplete="new-password"
+                      borderWidth={0}
+                      backgroundColor="transparent"
                       color="$color"
-                      fontWeight="600"
-                      pressStyle={{ opacity: 0.7 }}
+                      fontSize={14}
+                      flex={1}
+                      height={44}
+                      paddingHorizontal="$3"
+                    />
+                    <YStack
+                      paddingRight="$3"
+                      onPress={() => setShowPassword((prev) => !prev)}
                       cursor="pointer"
+                      pressStyle={{ opacity: 0.6 }}
                     >
-                      Log in
-                    </Text>
-                  </Link>
-                </XStack>
-              </YStack>
-            </>
-          )}
+                      {showPassword ? (
+                        <EyeOff size={20} color="#A0A0A0" />
+                      ) : (
+                        <Eye size={20} color="#A0A0A0" />
+                      )}
+                    </YStack>
+                  </XStack>
+                )}
+              />
+              {form.formState.errors.password?.message ? (
+                <Text fontSize={11} color="$danger" paddingLeft="$1">
+                  {form.formState.errors.password.message}
+                </Text>
+              ) : null}
+            </YStack>
 
-          {/* ============================================================= */}
-          {/* ÉTAPE 2 — Profil (avatar, bio, professionnel)                   */}
-          {/* ============================================================= */}
-          {step === 2 && (
-            <>
-              {/* Header: back arrow (left) + Skip button (right) */}
-              <XStack
-                width="100%"
-                alignItems="center"
-                justifyContent="space-between"
-                marginBottom="$2"
-              >
-                <YStack
-                  onPress={goToStep1}
-                  pressStyle={{ opacity: 0.6 }}
-                  cursor="pointer"
-                  padding="$2"
-                >
-                  <ArrowLeft size={24} color="#FFFFFF" />
-                </YStack>
+            {/* Confirm password */}
+            <YStack gap="$1">
+              <Controller
+                control={form.control}
+                name="confirmPassword"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <XStack
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius="$4"
+                    alignItems="center"
+                    height={44}
+                    backgroundColor="transparent"
+                  >
+                    <Input
+                      id="signup-confirm-password-input"
+                      placeholder="Confirm password"
+                      placeholderTextColor="$placeholderColor"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      secureTextEntry={!showConfirmPassword}
+                      autoCapitalize="none"
+                      autoComplete="new-password"
+                      borderWidth={0}
+                      backgroundColor="transparent"
+                      color="$color"
+                      fontSize={14}
+                      flex={1}
+                      height={44}
+                      paddingHorizontal="$3"
+                    />
+                    <YStack
+                      paddingRight="$3"
+                      onPress={() => setShowConfirmPassword((prev) => !prev)}
+                      cursor="pointer"
+                      pressStyle={{ opacity: 0.6 }}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={20} color="#A0A0A0" />
+                      ) : (
+                        <Eye size={20} color="#A0A0A0" />
+                      )}
+                    </YStack>
+                  </XStack>
+                )}
+              />
+              {form.formState.errors.confirmPassword?.message ? (
+                <Text fontSize={11} color="$danger" paddingLeft="$1">
+                  {form.formState.errors.confirmPassword.message}
+                </Text>
+              ) : null}
+            </YStack>
 
-                <YStack
-                  onPress={skipStep2}
-                  pressStyle={{ opacity: 0.8, scale: 0.96 }}
-                  cursor="pointer"
-                  backgroundColor="$danger"
-                  paddingHorizontal="$3"
-                  paddingVertical="$1.5"
-                  borderRadius="$4"
-                >
-                  <Text fontSize={13} fontWeight="700" color="#FFFFFF">
-                    Skip
-                  </Text>
-                </YStack>
-              </XStack>
+            {/* Erreur globale Supabase */}
+            {signupError ? (
+              <Text fontSize={12} color="$danger" textAlign="center">
+                {signupError}
+              </Text>
+            ) : null}
 
-              <YStack
-                width="100%"
-                borderWidth={1}
-                borderColor="black"
-                borderRadius="$6"
-                padding="$4"
-                gap="$2.5"
-                alignItems="center"
-              >
-                {/* Avatar placeholder avec bouton "+" */}
-                <AvatarPlaceholder onPress={pickAvatar} uri={avatarUri} />
+            {/* Bouton "Create an account" — submit direct */}
+            <Button
+              id="signup-submit-button"
+              onPress={onSubmit}
+              disabled={isLoading}
+              backgroundColor="$color"
+              color="$background"
+              borderRadius="$4"
+              height={44}
+              fontWeight="700"
+              fontSize={15}
+              pressStyle={{ opacity: 0.85, scale: 0.98 }}
+              marginTop="$1"
+            >
+              {isLoading ? <Spinner size="small" color="$background" /> : 'Create an account'}
+            </Button>
 
-                {/* Champ : Bio (textarea multi-lignes) */}
-                <YStack gap="$1.5" width="100%">
-                  <Controller
-                    control={form.control}
-                    name="bio"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextArea
-                        id="signup-bio-input"
-                        placeholder="Tell us about yourself..."
-                        placeholderTextColor="$placeholderColor"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        numberOfLines={4}
-                        maxLength={250}
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        borderRadius="$4"
-                        backgroundColor="transparent"
-                        color="$color"
-                        fontSize={14}
-                        paddingHorizontal="$3"
-                        paddingVertical="$3"
-                        minHeight={90}
-                        textAlignVertical="top"
-                      />
-                    )}
-                  />
-                  {form.formState.errors.bio?.message ? (
-                    <Text fontSize={12} color="$danger" paddingLeft="$1">
-                      {form.formState.errors.bio.message}
-                    </Text>
-                  ) : null}
-                </YStack>
+            {/* Séparateur Google */}
+            <Separator text="Or log in with" />
 
-                {/* Champ : Gender */}
-                <YStack gap="$2" width="100%">
+            {/* Bouton Google */}
+            <Button
+              id="signup-google-button"
+              onPress={signInWithGoogle}
+              disabled={isGoogleLoading}
+              backgroundColor="transparent"
+              borderWidth={1}
+              borderColor="$borderColor"
+              borderRadius="$4"
+              height={44}
+              pressStyle={{
+                opacity: 0.85,
+                scale: 0.98,
+                borderColor: '$borderColorHover',
+              }}
+            >
+              {isGoogleLoading ? (
+                <Spinner size="small" color="$color" />
+              ) : (
+                <XStack alignItems="center" gap="$2.5">
+                  <GoogleLogo size={20} />
                   <Text fontSize={14} fontWeight="600" color="$color">
-                    Gender
+                    Google
                   </Text>
-                  <Controller
-                    control={form.control}
-                    name="gender"
-                    render={({ field: { onChange, value } }) => (
-                      <XStack gap="$4" flexWrap="wrap">
-                        {['male', 'female', 'other'].map((g) => (
-                          <XStack
-                            key={g}
-                            alignItems="center"
-                            gap="$2"
-                            onPress={() => onChange(g)}
-                            cursor="pointer"
-                          >
-                            <YStack
-                              width={20}
-                              height={20}
-                              borderRadius={10}
-                              borderWidth={2}
-                              borderColor={value === g ? '$color' : '$borderColor'}
-                              alignItems="center"
-                              justifyContent="center"
-                            >
-                              {value === g && (
-                                <YStack
-                                  width={10}
-                                  height={10}
-                                  borderRadius={5}
-                                  backgroundColor="$color"
-                                />
-                              )}
-                            </YStack>
-                            <Text fontSize={14} color="$color" textTransform="capitalize">
-                              {g}
-                            </Text>
-                          </XStack>
-                        ))}
-                      </XStack>
-                    )}
-                  />
-                  {form.formState.errors.gender?.message ? (
-                    <Text fontSize={12} color="$danger" paddingLeft="$1">
-                      {form.formState.errors.gender.message}
-                    </Text>
-                  ) : null}
-                </YStack>
+                </XStack>
+              )}
+            </Button>
 
-                {/* Toggle : Professional account */}
-                <YStack width="100%" gap="$2">
-                  <Controller
-                    control={form.control}
-                    name="isProfessional"
-                    render={({ field: { onChange, value } }) => (
-                      <XStack width="100%" justifyContent="space-between" alignItems="center">
-                        <Text fontSize={16} fontWeight="600" color="$color">
-                          Professional account
-                        </Text>
-                        <Switch
-                          id="signup-professional-switch"
-                          size="$3"
-                          checked={value}
-                          onCheckedChange={onChange}
-                          backgroundColor={value ? '$accentNeon' : '$surface'}
-                        >
-                          <Switch.Thumb animation="quick" backgroundColor="$color" />
-                        </Switch>
-                      </XStack>
-                    )}
-                  />
-                  <Text fontSize={12} color="$textSecondary" lineHeight={18}>
-                    Activate this option if you represent a business, a brand, or an organization.
-                    This will give you access to professional features.
-                  </Text>
-                </YStack>
+            {/* Erreur OAuth Google */}
+            {googleError ? (
+              <Text fontSize={12} color="$danger" textAlign="center" marginTop="$1">
+                {googleError}
+              </Text>
+            ) : null}
 
-                {/* Erreur globale Supabase */}
-                {signupError ? (
-                  <Text fontSize={13} color="$danger" textAlign="center" width="100%">
-                    {signupError}
-                  </Text>
-                ) : null}
-
-                {/* Bouton "Continue" → soumission finale Supabase */}
-                <Button
-                  id="signup-submit-button"
-                  onPress={onSubmit}
-                  disabled={isLoading}
-                  backgroundColor="$color"
-                  color="$background"
-                  borderRadius="$4"
-                  height={48}
-                  fontWeight="700"
-                  fontSize={16}
-                  width="100%"
-                  pressStyle={{ opacity: 0.85, scale: 0.98 }}
-                  marginTop="$2"
+            {/* Lien vers login */}
+            <XStack justifyContent="center" gap="$1.5" marginTop="$1">
+              <Text fontSize={13} color="$textSecondary">
+                Already registered ?
+              </Text>
+              <Link href="/(auth)/login" asChild>
+                <Text
+                  id="signup-login-link"
+                  fontSize={13}
+                  color="$color"
+                  fontWeight="600"
+                  pressStyle={{ opacity: 0.7 }}
+                  cursor="pointer"
                 >
-                  {isLoading ? <Spinner size="small" color="$background" /> : 'Continue'}
-                </Button>
-              </YStack>
-            </>
-          )}
+                  Log in
+                </Text>
+              </Link>
+            </XStack>
+          </YStack>
         </YStack>
       </ScrollView>
     </KeyboardAvoidingView>
