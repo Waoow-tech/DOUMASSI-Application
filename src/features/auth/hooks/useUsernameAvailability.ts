@@ -2,7 +2,9 @@
 // Debounce 500ms pour éviter de spam la BDD à chaque frappe.
 //
 // Match case-insensitive (cohérent avec l'index profiles_username_unique_lower_idx).
-// Suppose une RLS policy qui autorise SELECT de username pour anon/public users.
+// Utilise la fonction RPC `is_username_available(p_username)` (SECURITY DEFINER,
+// accessible aux anon users) — évite d'exposer la table profiles directement
+// au public via RLS.
 //
 // État retourné :
 //   - 'idle'      : pas de check (username trop court ou format invalide — Zod prendra le relais)
@@ -45,14 +47,9 @@ export function useUsernameAvailability(username: string): UsernameStatus {
     let cancelled = false;
 
     const timeoutId = setTimeout(async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username')
-        // ilike sans wildcards = match exact case-insensitive
-        // (matche le LOWER(username) de notre unique index)
-        .ilike('username', trimmed)
-        .limit(1)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('is_username_available', {
+        p_username: trimmed,
+      });
 
       if (cancelled) return;
 
@@ -62,7 +59,7 @@ export function useUsernameAvailability(username: string): UsernameStatus {
         return;
       }
 
-      setStatus(data ? 'taken' : 'available');
+      setStatus(data === true ? 'available' : 'taken');
     }, DEBOUNCE_MS);
 
     return () => {
