@@ -1,18 +1,19 @@
-// Écran de callback OAuth — destination du deep link doumassi://auth/callback.
-// Capture les tokens (access_token + refresh_token) du fragment de l'URL,
-// établit la session Supabase, puis redirige vers /feed.
+// Écran de callback OAuth — filet de sécurité.
 //
-// 3 stratégies en parallèle (la première qui réussit l'emporte) :
-//   1) Linking.getInitialURL — cas cold start (l'app a été ouverte par le deep link)
-//   2) Linking.addEventListener('url') — cas warm (l'app était déjà ouverte)
-//   3) supabase.auth.onAuthStateChange — fallback si Supabase a quand même capté
-//      la session via un autre mécanisme (rehydratation, refresh token, etc.)
+// En usage normal (depuis #124), ce screen n'est JAMAIS atteint :
+//   useGoogleAuth utilise WebBrowser.openAuthSessionAsync qui intercepte
+//   le redirect Supabase directement dans le browser in-app et retourne
+//   l'URL au code sans passer par la couche deep link système.
 //
-// Timeout de 10s : si rien ne se passe, on retourne sur Welcome avec une erreur.
-// NOTE: en l'état, le retour du deep link doumassi:// depuis Chrome Android peut
-// échouer (limitation OS). Un ticket de fix utilisera expo-web-browser.
+// Mais on garde la route pour gérer les cas edge :
+//   - L'user ouvre l'app pendant que le browser est ouvert → cold start avec
+//     un deep link entrant
+//   - WebBrowser plante / le browser système prend le relais
 //
-// Ticket E2-05 — Sprint 1 Auth & Onboarding.
+// Le screen tente de récupérer les tokens depuis l'URL initiale, sinon
+// redirige vers welcome après un court délai.
+//
+// Ticket E2-05 (création) + #124 (refactor : devient juste un fallback).
 
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
@@ -23,10 +24,6 @@ import { t } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
-/**
- * Parse le fragment d'une URL deep link pour en extraire les tokens.
- * Format attendu : doumassi://auth/callback#access_token=XXX&refresh_token=YYY&...
- */
 function extractTokensFromUrl(url: string): {
   accessToken: string;
   refreshToken: string;
@@ -47,23 +44,6 @@ export default function AuthCallbackScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    const finishWithError = () => {
-      if (cancelled) return;
-      logger.warn('Auth callback failed — redirecting to welcome');
-      setErrorMessage(t.auth.google.callbackError);
-      setTimeout(() => {
-        if (!cancelled) router.replace('/(auth)/welcome');
-      }, 1500);
-    };
-
-    const finishWithSuccess = () => {
-      if (cancelled) return;
-      if (timeoutId) clearTimeout(timeoutId);
-      logger.info('Auth callback success — redirecting to feed');
-      router.replace('/feed');
-    };
 
     const consumeUrl = async (url: string | null) => {
       if (!url || cancelled) return;
@@ -79,42 +59,28 @@ export default function AuthCallbackScreen() {
       if (cancelled) return;
 
       if (error) {
-        logger.warn('setSession failed', { message: error.message });
-        finishWithError();
+        logger.warn('Fallback setSession failed', { message: error.message });
         return;
       }
 
-      finishWithSuccess();
+      router.replace('/feed');
     };
 
-    // Stratégie 1 : URL initiale (cold start)
-    Linking.getInitialURL().then((url) => {
-      void consumeUrl(url);
-    });
+    Linking.getInitialURL().then((url) => void consumeUrl(url));
+    const linkingSub = Linking.addEventListener('url', ({ url }) => void consumeUrl(url));
 
-    // Stratégie 2 : URL entrante (warm)
-    const linkingSub = Linking.addEventListener('url', ({ url }) => {
-      void consumeUrl(url);
-    });
-
-    // Stratégie 3 : auth state change (Supabase peut établir la session autrement)
-    const { data: authSub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (cancelled || !session) return;
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
-        finishWithSuccess();
-      }
-    });
-
-    // Timeout : si rien n'arrive dans 10s, on abandonne
-    timeoutId = setTimeout(() => {
-      finishWithError();
-    }, 10_000);
+    // Filet de sécurité : si rien n'arrive dans 5s, retour Welcome
+    const timeoutId = setTimeout(() => {
+      if (cancelled) return;
+      logger.warn('OAuth callback fallback timeout — redirect welcome');
+      setErrorMessage(t.auth.google.callbackError);
+      setTimeout(() => router.replace('/(auth)/welcome'), 1500);
+    }, 5_000);
 
     return () => {
       cancelled = true;
-      if (timeoutId) clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
       linkingSub.remove();
-      authSub.subscription.unsubscribe();
     };
   }, []);
 
