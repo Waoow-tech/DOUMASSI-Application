@@ -22,7 +22,7 @@ export default function FeedLayout() {
     return <Redirect href="/(auth)/welcome" />;
   }
 
-  if (status === 'incomplete') {
+  if (status === 'incomplete' || status === 'onboarding') {
     return <Redirect href="/(onboarding)" />;
   }
 
