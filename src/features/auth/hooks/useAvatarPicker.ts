@@ -1,8 +1,10 @@
 // Hook for picking and uploading an avatar to Supabase Storage.
 // Separated from useSignup to respect single responsibility.
 // Ticket E2-02 — Sprint 1 Auth & Onboarding.
+// Extended for E2-09 — takePhoto (expo-camera) + processImage (expo-image-manipulator).
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 
@@ -11,6 +13,39 @@ import { supabase } from '@/lib/supabase';
 
 export function useAvatarPicker() {
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  /**
+   * Crop 1:1, resize max 800×800, compress to <200 Ko.
+   */
+  const processImage = async (uri: string) => {
+    try {
+      setIsProcessing(true);
+
+      const result = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 800, height: 800 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
+      const fileInfo = await FileSystem.getInfoAsync(result.uri);
+      if (fileInfo.exists && fileInfo.size && fileInfo.size > 200_000) {
+        const compressed = await ImageManipulator.manipulateAsync(result.uri, [], {
+          compress: 0.5,
+          format: ImageManipulator.SaveFormat.JPEG,
+        });
+        setAvatarUri(compressed.uri);
+      } else {
+        setAvatarUri(result.uri);
+      }
+    } catch (err) {
+      logger.error('Image manipulation failed', err);
+      // Fallback to original URI
+      setAvatarUri(uri);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   /**
    * Open the image picker (gallery) to choose an avatar.
@@ -43,9 +78,46 @@ export function useAvatarPicker() {
       const asset = result.assets?.[0];
       if (!asset?.uri) return;
 
-      setAvatarUri(asset.uri);
+      await processImage(asset.uri);
     } catch (err) {
       logger.error('launchImageLibraryAsync failed', err);
+    }
+  };
+
+  /**
+   * Open the device camera to take a photo.
+   * Square crop 1:1, then process via ImageManipulator.
+   */
+  const takePhoto = async () => {
+    const { status: existingStatus } = await ImagePicker.getCameraPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') {
+      logger.warn('Camera permission denied by user');
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled) return;
+
+      const asset = result.assets?.[0];
+      if (!asset?.uri) return;
+
+      await processImage(asset.uri);
+    } catch (err) {
+      logger.error('launchCameraAsync failed', err);
     }
   };
 
@@ -100,5 +172,5 @@ export function useAvatarPicker() {
     }
   };
 
-  return { avatarUri, pickAvatar, uploadAvatar };
+  return { avatarUri, isProcessing, takePhoto, pickAvatar, uploadAvatar };
 }

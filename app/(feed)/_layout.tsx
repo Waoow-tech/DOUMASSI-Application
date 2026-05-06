@@ -26,6 +26,10 @@ export default function FeedLayout() {
     return <Redirect href="/(onboarding)" />;
   }
 
+  if (status === 'incomplete-google') {
+    return <Redirect href="/(onboarding)/complete-account" />;
+  }
+
   return (
     <Stack
       screenOptions={{

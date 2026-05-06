@@ -2,29 +2,46 @@
 // Source de vérité unique pour les guards de navigation (E2-07).
 //
 // États possibles :
-//   - 'loading'        : check en cours, on affiche le splash
-//   - 'unauthenticated': pas de session → /welcome
-//   - 'incomplete'     : session OK mais profil pas fini (pas de username) → /onboarding
-//   - 'complete'       : session OK + profil complet → /feed
+//   - 'loading'           : check en cours, on affiche le splash
+//   - 'unauthenticated'   : pas de session → /welcome
+//   - 'incomplete'        : session OK mais profil pas fini (pas de username) → /onboarding
+//   - 'incomplete-google' : session OK, username temporaire (user_XXXXXXXX) → /onboarding/complete-account
+//   - 'complete'          : session OK + profil complet → /feed
 //
 // Le hook écoute supabase.auth.onAuthStateChange pour réagir aux login/logout
 // en temps réel (pas besoin de re-mount le composant).
 //
 // Ticket E2-07 — Sprint 1 Auth & Onboarding.
+// Extended E2-14 — incomplete-google detection for Google OAuth users.
 
 import { useEffect, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
-export type AuthStatus = 'loading' | 'unauthenticated' | 'incomplete' | 'complete';
+export type AuthStatus =
+  | 'loading'
+  | 'unauthenticated'
+  | 'incomplete'
+  | 'incomplete-google'
+  | 'complete';
+
+/** Pattern for temporary usernames assigned by Google OAuth trigger. */
+const TEMP_USERNAME_REGEX = /^user_[0-9a-f]{8}$/;
 
 /**
  * Vérifie auprès de Supabase si le profil de l'utilisateur courant est complet.
  * Pour le MVP, on considère un profil complet si `username` est non-null.
  * Les autres champs (avatar, cover, intérêts) viendront avec E2-09 à E2-11.
+ *
+ * Returns:
+ *   - 'complete'          : username exists and is a real one
+ *   - 'incomplete'        : no username at all
+ *   - 'incomplete-google' : username matches temporary pattern (user_XXXXXXXX)
  */
-async function isProfileComplete(userId: string): Promise<boolean> {
+async function getProfileStatus(
+  userId: string
+): Promise<'complete' | 'incomplete' | 'incomplete-google'> {
   const { data, error } = await supabase
     .from('profiles')
     .select('username')
@@ -35,10 +52,19 @@ async function isProfileComplete(userId: string): Promise<boolean> {
     logger.warn('Échec lecture profile', { message: error.message });
     // En cas d'erreur réseau, on considère le profil incomplet plutôt que de bloquer l'user
     // sur le feed avec un compte cassé.
-    return false;
+    return 'incomplete';
   }
 
-  return Boolean(data?.username);
+  if (!data?.username) {
+    return 'incomplete';
+  }
+
+  // Google OAuth trigger generates usernames like "user_a1b2c3d4"
+  if (TEMP_USERNAME_REGEX.test(data.username)) {
+    return 'incomplete-google';
+  }
+
+  return 'complete';
 }
 
 export function useAuthGuard() {
@@ -53,9 +79,9 @@ export function useAuthGuard() {
         return;
       }
 
-      const complete = await isProfileComplete(userId);
+      const profileStatus = await getProfileStatus(userId);
       if (cancelled) return;
-      setStatus(complete ? 'complete' : 'incomplete');
+      setStatus(profileStatus);
     };
 
     // Initial check (cold start)
