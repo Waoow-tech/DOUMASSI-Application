@@ -47,6 +47,9 @@ export default function Splash() {
         case 'onboarding':
           router.replace('/(onboarding)');
           break;
+        case 'incomplete-google':
+          router.replace('/(onboarding)/complete-account');
+          break;
         case 'complete':
           router.replace('/feed');
           break;
