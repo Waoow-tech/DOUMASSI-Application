@@ -44,6 +44,7 @@ export default function Splash() {
           router.replace('/(auth)/welcome');
           break;
         case 'incomplete':
+        case 'onboarding':
           router.replace('/(onboarding)');
           break;
         case 'complete':

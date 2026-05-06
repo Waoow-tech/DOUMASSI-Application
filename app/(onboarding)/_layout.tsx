@@ -22,6 +22,8 @@ export default function OnboardingLayout() {
     return <Redirect href="/(auth)/welcome" />;
   }
 
+  // 'onboarding' status = user has username but needs profile setup — allow through.
+  // 'complete' status = user has filled profile fields — redirect to feed.
   if (status === 'complete') {
     return <Redirect href="/feed" />;
   }
