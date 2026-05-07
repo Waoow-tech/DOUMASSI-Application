@@ -19,6 +19,7 @@ import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagu
 import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
 import { useSignup } from '@/features/auth/hooks/useSignup';
 import { useUsernameAvailability } from '@/features/auth/hooks/useUsernameAvailability';
+import { formatBirthdayInput } from '@/features/auth/lib/formatBirthday';
 import { t } from '@/i18n';
 
 const logoSource = require('../../assets/Logo-Doumassi.png') as number;
@@ -76,13 +77,7 @@ function GoogleLogo({ size = 20 }: { size?: number }) {
   );
 }
 
-/** Auto-format birthday : insère les "/" automatiquement. */
-function formatBirthdayInput(raw: string): string {
-  const digits = raw.replace(/\D/g, '').slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-}
+// formatBirthdayInput imported from @/features/auth/lib/formatBirthday
 
 // ---------------------------------------------------------------------------
 // Écran principal
