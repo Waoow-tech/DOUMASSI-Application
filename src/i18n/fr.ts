@@ -89,6 +89,16 @@ export const fr = {
       unknown: 'An unexpected error occurred. Please try again.',
     },
   },
+  profile: {
+    stats: {
+      posts: 'Publications',
+      followers: 'Followers',
+      following: 'Suivis',
+    },
+    editButton: 'Modifier',
+    shareButton: 'Partager',
+    shareMessage: 'Découvre mon profil sur DOUMASSI ! 🚀',
+  },
 } as const;
 
 export type Translations = typeof fr;
