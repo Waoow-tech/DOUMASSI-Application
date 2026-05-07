@@ -36,6 +36,9 @@ export default function CompleteAccountScreen() {
       username: '',
       birthday: '',
     },
+    // mode 'onTouched' pour que form.formState.isValid devienne true dès qu'un
+    // champ est touché et valide (sinon isValid reste false jusqu'au 1er submit).
+    mode: 'onTouched',
   });
 
   // Live unicity check sur le username (debounce 500ms côté hook)
@@ -81,9 +84,10 @@ export default function CompleteAccountScreen() {
 
       logger.info('Google account completed', { username: values.username });
       router.push('/(onboarding)/complete-profile');
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Complete account failed', err);
-      setError(err.message ?? 'An unexpected error occurred');
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
