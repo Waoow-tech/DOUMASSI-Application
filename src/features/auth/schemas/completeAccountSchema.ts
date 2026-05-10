@@ -6,12 +6,10 @@
 
 import { z } from 'zod';
 
+import { usernameSchema } from './usernameRules';
+
 export const completeAccountSchema = z.object({
-  username: z
-    .string()
-    .min(3, 'Username must be at least 3 characters')
-    .max(30, 'Username cannot exceed 30 characters')
-    .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers and underscores'),
+  username: usernameSchema,
 
   birthday: z
     .string()
