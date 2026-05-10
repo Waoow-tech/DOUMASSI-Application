@@ -24,6 +24,17 @@ export const fr = {
         'Complete your profile to start using DOUMASSI.\nThe full onboarding flow is coming soon.',
       continueToFeed: 'Skip for now',
     },
+    coverPhoto: {
+      title: 'Add a cover photo',
+      subtitle: 'Personalize your profile with a banner image.',
+      hint: 'Tap to add a cover photo.\nWe recommend a wide image (1500×500px).',
+      changeHint: 'Tap to change',
+      takePhoto: 'Take a photo',
+      chooseFromGallery: 'Choose from gallery',
+      finishSetup: 'Finish setup',
+      skipForNow: 'Skip for now',
+      errorGeneric: 'An unexpected error occurred',
+    },
     settings: {
       title: 'Settings',
       logoutSection: 'Account',
