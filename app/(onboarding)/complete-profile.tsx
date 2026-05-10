@@ -66,8 +66,10 @@ export default function CompleteProfileScreen() {
         avatarUrl = await uploadAvatar(user.id);
       }
 
-      // On set onboarding_completed=true ici. L'utilisateur peut compléter
-      // davantage de champs dans /settings plus tard, mais il a vu le step.
+      // Note : on ne set PAS onboarding_completed=true ici — ce flag passe à true
+      // uniquement à la fin de l'onboarding (sur cover-photo, step 2/2). Sinon
+      // le guard verrait status='complete' au moment du push vers cover-photo et
+      // éjecterait l'user sur /feed avant qu'il puisse voir la step 2.
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -75,7 +77,6 @@ export default function CompleteProfileScreen() {
           gender,
           bio: bio.trim() || null,
           is_professional: isProfessional,
-          onboarding_completed: true,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
@@ -93,39 +94,12 @@ export default function CompleteProfileScreen() {
   };
 
   /**
-   * Skip volontaire — marque l'onboarding comme fait pour éviter une boucle
-   * infinie au prochain login (sinon le guard verrait les champs vides et
-   * renverrait l'user sur cet écran à chaque fois).
-   * L'user pourra remplir ses champs profil plus tard dans /settings.
+   * Skip volontaire — on ne save rien mais on passe à la step 2 (cover-photo).
+   * C'est la step 2 qui set onboarding_completed=true à la fin (qu'on ait
+   * uploaded un cover ou pas), donc pas de boucle infinie au prochain login.
    */
-  const handleSkip = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not found');
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          onboarding_completed: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      router.push('/(onboarding)/cover-photo');
-    } catch (err: unknown) {
-      logger.error('Skip onboarding failed', err);
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSkip = () => {
+    router.push('/(onboarding)/cover-photo');
   };
 
   // -----------------------------------------------------------------------
