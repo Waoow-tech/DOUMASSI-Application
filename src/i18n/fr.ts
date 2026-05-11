@@ -98,6 +98,20 @@ export const fr = {
     editButton: 'Modifier',
     shareButton: 'Partager',
     shareMessage: 'Découvre mon profil sur DOUMASSI ! 🚀',
+    verifiedBadge: 'Vérifié',
+    kebabMenu: {
+      settings: 'Paramètres',
+      shareProfile: 'Partager mon profil',
+      cancel: 'Annuler',
+    },
+    tabs: {
+      grid: 'Grille',
+      reels: 'Reels',
+      tagged: 'Identifié',
+    },
+    emptyState: {
+      title: "Aucune publication pour l'instant",
+    },
   },
 } as const;
 

@@ -10,6 +10,8 @@ import { supabase } from '@/lib/supabase';
 // --- Types ---
 
 export interface ProfileData {
+  id: string;
+  username: string;
   display_name: string;
   bio: string | null;
   avatar_url: string | null;
@@ -25,6 +27,7 @@ export interface ProfileCounters {
 export interface PostGridItem {
   id: string;
   image_url: string;
+  type: 'image' | 'video';
 }
 
 // --- Helpers ---
@@ -43,7 +46,7 @@ async function fetchProfileData(): Promise<ProfileData> {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('profiles')
-    .select('display_name, bio, avatar_url, cover_url')
+    .select('id, username, display_name, bio, avatar_url, cover_url')
     .eq('id', userId)
     .single();
 
@@ -97,7 +100,7 @@ async function fetchPostGrid(): Promise<PostGridItem[]> {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('posts')
-    .select('id, image_url')
+    .select('id, image_url, type')
     .eq('author_id', userId)
     .not('image_url', 'is', null)
     .is('deleted_at', null)
@@ -130,6 +133,7 @@ export function useProfile() {
 
   return {
     profile: profileQuery.data ?? null,
+    userId: profileQuery.data?.id ?? null,
     counters: countersQuery.data ?? { posts: 0, followers: 0, following: 0 },
     posts: postsQuery.data ?? [],
     isLoading: profileQuery.isLoading,

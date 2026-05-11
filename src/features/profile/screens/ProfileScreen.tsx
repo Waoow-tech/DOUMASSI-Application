@@ -1,18 +1,32 @@
-// Écran "Mon profil" — E3-01.
-// Header (cover + avatar overlap), nom, bio, compteurs, boutons, grille posts.
+// Écran "Mon profil" — E3-01 (v2).
+// Header (logo + cover + avatar overlap), nom, @username, badge vérifié,
+// kebab menu (Tamagui Sheet), compteurs cliquables, onglets (grille/reels/tagged),
+// FlashList pour la grille de posts, empty state.
 // Fidèle à la maquette Canva, dark mode exclusif.
 
+import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { User } from 'lucide-react-native';
-import { useCallback } from 'react';
-import { FlatList, Share, StyleSheet, useWindowDimensions } from 'react-native';
+import {
+  Camera,
+  Grid3x3,
+  MoreVertical,
+  Play,
+  Settings,
+  Share2,
+  User,
+  UserSquare2,
+} from 'lucide-react-native';
+import { useCallback, useState } from 'react';
+import { Share, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Button, Sheet, Spinner, Text, XStack, YStack } from 'tamagui';
 
 import { t } from '@/i18n';
 
 import { useProfile, PostGridItem } from '../hooks/useProfile';
+
+const logoSource = require('../../../../assets/Logo-Doumassi.png') as number;
 
 // --- Constantes layout ---
 const AVATAR_SIZE = 90;
@@ -20,10 +34,48 @@ const AVATAR_BORDER_WIDTH = 3;
 const COVER_HEIGHT = 180;
 const GRID_GAP = 2;
 const NUM_COLUMNS = 3;
+const LOGO_HEIGHT = 28;
 
-// --- Composant compteur ---
-function StatCounter({ value, label }: { value: number; label: string }) {
+// --- Types onglets ---
+type ProfileTab = 'grid' | 'reels' | 'tagged';
+
+// --- Composant Logo DOUMASSI (image asset) ---
+function DoumassiLogo() {
   return (
+    <Image source={logoSource} style={styles.logoImage} contentFit="contain" transition={200} />
+  );
+}
+
+// --- Badge Vérifié ---
+function VerifiedBadge() {
+  const copy = t.profile;
+  return (
+    <XStack
+      backgroundColor="#3B82F6"
+      paddingHorizontal={8}
+      paddingVertical={2}
+      borderRadius={12}
+      alignItems="center"
+      gap={4}
+    >
+      <Text fontSize={11} fontWeight="700" color="#FFFFFF">
+        ✓ {copy.verifiedBadge}
+      </Text>
+    </XStack>
+  );
+}
+
+// --- Composant compteur (rendu cliquable depuis le parent) ---
+function StatCounter({
+  value,
+  label,
+  onPress,
+}: {
+  value: number;
+  label: string;
+  onPress?: () => void;
+}) {
+  const content = (
     <YStack alignItems="center" flex={1}>
       <Text fontSize={20} fontWeight="700" color="$color" fontFamily="$heading">
         {value}
@@ -33,14 +85,70 @@ function StatCounter({ value, label }: { value: number; label: string }) {
       </Text>
     </YStack>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.statTouchable}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+  return content;
+}
+
+// --- Onglet du Segmented Control ---
+function TabButton({
+  icon,
+  isActive,
+  onPress,
+}: {
+  icon: React.ReactNode;
+  isActive: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      style={[styles.tabButton, isActive && styles.tabButtonActive]}
+    >
+      {icon}
+    </TouchableOpacity>
+  );
+}
+
+// --- Empty State ---
+function EmptyState() {
+  const copy = t.profile;
+  return (
+    <YStack alignItems="center" justifyContent="center" paddingVertical={80} gap="$3">
+      <YStack
+        width={72}
+        height={72}
+        borderRadius={36}
+        borderWidth={2}
+        borderColor="$borderColorHover"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Camera size={32} color="#A0A0A0" />
+      </YStack>
+      <Text fontSize={15} color="$textSecondary" textAlign="center" fontWeight="500">
+        {copy.emptyState.title}
+      </Text>
+    </YStack>
+  );
 }
 
 // --- Écran principal ---
 export function ProfileScreen() {
-  const { profile, counters, posts, isLoading, refetch } = useProfile();
+  const { profile, userId, counters, posts, isLoading, refetch } = useProfile();
   const { width: screenWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const copy = t.profile;
+
+  const [activeTab, setActiveTab] = useState<ProfileTab>('grid');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Taille de chaque cellule de la grille (carré 1:1)
   const itemSize = (screenWidth - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
@@ -56,6 +164,33 @@ export function ProfileScreen() {
       // L'utilisateur a annulé le partage — rien à faire.
     }
   }, [copy.shareMessage]);
+
+  // --- Menu Kebab : ouvre la Sheet ---
+  const handleKebabMenu = useCallback(() => {
+    setIsMenuOpen(true);
+  }, []);
+
+  // --- Actions de la Sheet ---
+  const handleMenuSettings = useCallback(() => {
+    setIsMenuOpen(false);
+    router.push('/settings');
+  }, []);
+
+  const handleMenuShare = useCallback(() => {
+    setIsMenuOpen(false);
+    void handleShare();
+  }, [handleShare]);
+
+  // --- Navigation compteurs ---
+  const handleFollowers = useCallback(() => {
+    if (userId) {
+      router.push(`/profile/${userId}/followers`);
+    }
+  }, [userId]);
+
+  const handleFollowing = useCallback(() => {
+    router.push('/following');
+  }, []);
 
   // --- Render item grille ---
   const renderGridItem = useCallback(
@@ -75,6 +210,19 @@ export function ProfileScreen() {
             recyclingKey={item.id}
             transition={200}
           />
+          {/* Overlay play pour les posts vidéo */}
+          {item.type === 'video' && (
+            <YStack
+              position="absolute"
+              bottom={6}
+              left={6}
+              backgroundColor="rgba(0,0,0,0.4)"
+              borderRadius={4}
+              padding={2}
+            >
+              <Play size={14} color="#FFFFFF" fill="#FFFFFF" />
+            </YStack>
+          )}
         </YStack>
       );
     },
@@ -92,9 +240,44 @@ export function ProfileScreen() {
     );
   }
 
+  // Données pour la grille selon l'onglet actif
+  // Seul l'onglet "grid" affiche du contenu pour l'instant.
+  const gridData = activeTab === 'grid' ? posts : [];
+
   // --- Header (tout ce qui est au-dessus de la grille) ---
   const ListHeader = (
     <YStack>
+      {/* Barre du haut : logo centré + kebab à droite */}
+      <XStack
+        position="absolute"
+        top={insets.top + 8}
+        left={0}
+        right={0}
+        zIndex={10}
+        paddingHorizontal="$4"
+        alignItems="center"
+        justifyContent="center"
+      >
+        {/* Spacer gauche pour centrer le logo */}
+        <YStack width={40} />
+
+        {/* Logo DOUMASSI centré */}
+        <YStack flex={1} alignItems="center">
+          <DoumassiLogo />
+        </YStack>
+
+        {/* Menu kebab à droite */}
+        <TouchableOpacity
+          id="profile-kebab-menu"
+          onPress={handleKebabMenu}
+          activeOpacity={0.6}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={styles.kebabButton}
+        >
+          <MoreVertical size={22} color="#FFFFFF" />
+        </TouchableOpacity>
+      </XStack>
+
       {/* Cover image */}
       <YStack width="100%" height={COVER_HEIGHT + insets.top}>
         {profile?.cover_url ? (
@@ -153,29 +336,45 @@ export function ProfileScreen() {
         {profile?.display_name ?? ''}
       </Text>
 
+      {/* @username + badge vérifié */}
+      <XStack justifyContent="center" alignItems="center" gap={8} marginTop="$1">
+        <Text fontSize={14} color="$textSecondary">
+          @{profile?.username ?? ''}
+        </Text>
+        <VerifiedBadge />
+      </XStack>
+
       {/* Bio */}
       {profile?.bio ? (
         <Text
           fontSize={14}
           color="$textSecondary"
           textAlign="center"
-          marginTop="$1"
+          marginTop="$2"
           paddingHorizontal="$5"
           lineHeight={20}
         >
-          {profile.bio}
+          {profile.bio.length > 250 ? profile.bio.slice(0, 250) + '…' : profile.bio}
         </Text>
       ) : null}
 
-      {/* Compteurs */}
+      {/* Compteurs — followers et suivis cliquables */}
       <XStack marginTop="$4" paddingHorizontal="$5" justifyContent="center" alignItems="center">
         <StatCounter value={counters.posts} label={copy.stats.posts} />
-        <StatCounter value={counters.followers} label={copy.stats.followers} />
-        <StatCounter value={counters.following} label={copy.stats.following} />
+        <StatCounter
+          value={counters.followers}
+          label={copy.stats.followers}
+          onPress={handleFollowers}
+        />
+        <StatCounter
+          value={counters.following}
+          label={copy.stats.following}
+          onPress={handleFollowing}
+        />
       </XStack>
 
       {/* Boutons d'action */}
-      <XStack marginTop="$4" marginBottom="$4" paddingHorizontal="$5" gap="$3">
+      <XStack marginTop="$4" paddingHorizontal="$5" gap="$3">
         <Button
           id="profile-edit-button"
           flex={1}
@@ -209,32 +408,120 @@ export function ProfileScreen() {
           {copy.shareButton}
         </Button>
       </XStack>
+
+      {/* Onglets de filtrage — Segmented Control */}
+      <XStack
+        marginTop="$4"
+        borderTopWidth={0.5}
+        borderBottomWidth={0.5}
+        borderColor="$borderColor"
+      >
+        <TabButton
+          icon={<Grid3x3 size={22} color={activeTab === 'grid' ? '#FFFFFF' : '#A0A0A0'} />}
+          isActive={activeTab === 'grid'}
+          onPress={() => setActiveTab('grid')}
+        />
+        <TabButton
+          icon={<Play size={22} color={activeTab === 'reels' ? '#FFFFFF' : '#A0A0A0'} />}
+          isActive={activeTab === 'reels'}
+          onPress={() => setActiveTab('reels')}
+        />
+        <TabButton
+          icon={<UserSquare2 size={22} color={activeTab === 'tagged' ? '#FFFFFF' : '#A0A0A0'} />}
+          isActive={activeTab === 'tagged'}
+          onPress={() => setActiveTab('tagged')}
+        />
+      </XStack>
     </YStack>
   );
 
   return (
-    <FlatList<PostGridItem>
-      data={posts}
-      renderItem={renderGridItem}
-      keyExtractor={keyExtractor}
-      numColumns={NUM_COLUMNS}
-      ListHeaderComponent={ListHeader}
-      showsVerticalScrollIndicator={false}
-      onRefresh={refetch}
-      refreshing={false}
-      style={styles.list}
-      contentContainerStyle={styles.listContent}
-    />
+    <>
+      <FlashList<PostGridItem>
+        data={gridData}
+        renderItem={renderGridItem}
+        keyExtractor={keyExtractor}
+        numColumns={NUM_COLUMNS}
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={EmptyState}
+        showsVerticalScrollIndicator={false}
+        onRefresh={refetch}
+        refreshing={false}
+        contentContainerStyle={styles.listContent}
+      />
+
+      {/* Bottom Sheet — Menu kebab cross-platform (Tamagui Sheet) */}
+      <Sheet
+        modal
+        open={isMenuOpen}
+        onOpenChange={setIsMenuOpen}
+        snapPoints={[25]}
+        dismissOnSnapToBottom
+      >
+        <Sheet.Overlay
+          animation="lazy"
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+          backgroundColor="rgba(0,0,0,0.5)"
+        />
+        <Sheet.Frame
+          backgroundColor="$surface"
+          borderTopLeftRadius={16}
+          borderTopRightRadius={16}
+          paddingHorizontal="$4"
+          paddingTop="$3"
+          paddingBottom="$5"
+        >
+          {/* Poignée */}
+          <XStack justifyContent="center" marginBottom="$3">
+            <YStack width={36} height={4} borderRadius={2} backgroundColor="$borderColorHover" />
+          </XStack>
+
+          <YStack gap="$1">
+            {/* Paramètres */}
+            <Button
+              id="menu-settings-button"
+              backgroundColor="transparent"
+              height={48}
+              justifyContent="flex-start"
+              paddingHorizontal="$3"
+              onPress={handleMenuSettings}
+              pressStyle={{ backgroundColor: '$surfaceElevated' }}
+              borderRadius="$md"
+              icon={<Settings size={20} color="#FFFFFF" />}
+            >
+              <Text color="$color" fontSize={15} fontWeight="500">
+                {copy.kebabMenu.settings}
+              </Text>
+            </Button>
+
+            {/* Partager mon profil */}
+            <Button
+              id="menu-share-button"
+              backgroundColor="transparent"
+              height={48}
+              justifyContent="flex-start"
+              paddingHorizontal="$3"
+              onPress={handleMenuShare}
+              pressStyle={{ backgroundColor: '$surfaceElevated' }}
+              borderRadius="$md"
+              icon={<Share2 size={20} color="#FFFFFF" />}
+            >
+              <Text color="$color" fontSize={15} fontWeight="500">
+                {copy.kebabMenu.shareProfile}
+              </Text>
+            </Button>
+          </YStack>
+        </Sheet.Frame>
+      </Sheet>
+    </>
   );
 }
 
 // --- Styles statiques (pas de re-calc à chaque render) ---
 const styles = StyleSheet.create({
-  list: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
   listContent: {
+    backgroundColor: '#000000',
     paddingBottom: 32,
   },
   coverImage: {
@@ -249,5 +536,29 @@ const styles = StyleSheet.create({
   gridImage: {
     width: '100%',
     height: '100%',
+  },
+  logoImage: {
+    width: 120,
+    height: LOGO_HEIGHT,
+  },
+  kebabButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statTouchable: {
+    flex: 1,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'transparent',
+  },
+  tabButtonActive: {
+    borderBottomColor: '#FFFFFF',
   },
 });
