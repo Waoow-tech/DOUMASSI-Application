@@ -1,9 +1,9 @@
-// Hook de données du profil courant — E3-01 / E3-02.
+// Hook de données du profil — E3-01 / E3-02 / E3-03.
 // Utilise TanStack Query pour le cache et le refetch automatique.
-// 3 queries indépendantes : profil, compteurs, grille de posts.
 //
-// useCurrentProfile : query profil uniquement (utilisée par l'édition).
-// useProfile : compose profil + counters + posts (utilisée par ProfileScreen).
+// useCurrentProfile : query profil de l'user connecté (utilisée par l'édition).
+// useProfile : compose profil + counters + posts pour l'user connecté (ProfileScreen).
+// useUserProfile(userId) : profil + counters + posts d'un autre user (E3-03).
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -51,27 +51,26 @@ async function getCurrentUser(): Promise<{ id: string; email: string | null }> {
   return { id: data.session.user.id, email: data.session.user.email ?? null };
 }
 
-// --- Query functions ---
+// --- Query functions (génériques sur userId) ---
 
-async function fetchProfileData(): Promise<ProfileData> {
-  const user = await getCurrentUser();
+async function fetchProfileById(userId: string, email: string | null = null): Promise<ProfileData> {
   const { data, error } = await supabase
     .from('profiles')
     .select(
       'id, username, full_name, bio, birthday, avatar_url, cover_url, is_professional, is_verified, username_changed_at'
     )
-    .eq('id', user.id)
+    .eq('id', userId)
     .single();
 
   if (error) {
-    logger.warn('Erreur fetch profile', { message: error.message });
+    logger.warn('Erreur fetch profile', { userId, message: error.message });
     throw error;
   }
 
   const raw = data as Record<string, unknown>;
   return {
-    id: user.id,
-    email: user.email,
+    id: userId,
+    email,
     username: (raw.username as string) ?? '',
     full_name: (raw.full_name as string | null) ?? null,
     bio: (raw.bio as string | null) ?? null,
@@ -85,39 +84,33 @@ async function fetchProfileData(): Promise<ProfileData> {
 }
 
 // status value must match follows table enum — verified 11/05/2026.
-async function fetchProfileCounters(): Promise<ProfileCounters> {
-  const user = await getCurrentUser();
-
+async function fetchCountersByUserId(userId: string): Promise<ProfileCounters> {
   const [postsRes, followersRes, followingRes] = await Promise.all([
     supabase
       .from('posts')
       .select('*', { count: 'exact', head: true })
-      .eq('author_id', user.id)
+      .eq('author_id', userId)
       .is('deleted_at', null),
     supabase
       .from('follows')
       .select('*', { count: 'exact', head: true })
-      .eq('followed_id', user.id)
+      .eq('followed_id', userId)
       .eq('status', 'accepted'),
     supabase
       .from('follows')
       .select('*', { count: 'exact', head: true })
-      .eq('follower_id', user.id)
+      .eq('follower_id', userId)
       .eq('status', 'accepted'),
   ]);
 
   if (postsRes.error) {
-    logger.warn('Erreur count posts', { message: postsRes.error.message });
+    logger.warn('Erreur count posts', { userId, message: postsRes.error.message });
   }
   if (followersRes.error) {
-    logger.warn('Erreur count followers', {
-      message: followersRes.error.message,
-    });
+    logger.warn('Erreur count followers', { userId, message: followersRes.error.message });
   }
   if (followingRes.error) {
-    logger.warn('Erreur count following', {
-      message: followingRes.error.message,
-    });
+    logger.warn('Erreur count following', { userId, message: followingRes.error.message });
   }
 
   return {
@@ -127,19 +120,16 @@ async function fetchProfileCounters(): Promise<ProfileCounters> {
   };
 }
 
-async function fetchPostGrid(): Promise<PostGridItem[]> {
-  const user = await getCurrentUser();
-
-  // Fetch tous les posts (image + vidéo). Filtre côté client.
+async function fetchPostGridByUserId(userId: string): Promise<PostGridItem[]> {
   const { data, error } = await supabase
     .from('posts')
     .select('id, image_url, video_url, type')
-    .eq('author_id', user.id)
+    .eq('author_id', userId)
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
   if (error) {
-    logger.warn('Erreur fetch post grid', { message: error.message });
+    logger.warn('Erreur fetch post grid', { userId, message: error.message });
     throw error;
   }
 
@@ -149,31 +139,72 @@ async function fetchPostGrid(): Promise<PostGridItem[]> {
 
 // --- Hooks ---
 
-// Profil seul — utilisé par l'écran d'édition.
+// Profil de l'user connecté seul — utilisé par l'écran d'édition.
 export function useCurrentProfile() {
   return useQuery({
     queryKey: profileQueryKey,
-    queryFn: fetchProfileData,
+    queryFn: async () => {
+      const user = await getCurrentUser();
+      return fetchProfileById(user.id, user.email);
+    },
   });
 }
 
-// Composition profil + counters + posts — utilisé par ProfileScreen.
+// Composition profil + counters + posts (user connecté) — utilisé par ProfileScreen.
 export function useProfile() {
   const profileQuery = useCurrentProfile();
+  const userId = profileQuery.data?.id ?? null;
 
   const countersQuery = useQuery({
     queryKey: ['profile', 'me', 'counters'],
-    queryFn: fetchProfileCounters,
+    queryFn: () => fetchCountersByUserId(userId as string),
+    enabled: userId !== null,
   });
 
   const postsQuery = useQuery({
     queryKey: ['profile', 'me', 'posts'],
-    queryFn: fetchPostGrid,
+    queryFn: () => fetchPostGridByUserId(userId as string),
+    enabled: userId !== null,
   });
 
   return {
     profile: profileQuery.data ?? null,
-    userId: profileQuery.data?.id ?? null,
+    userId,
+    counters: countersQuery.data ?? { posts: 0, followers: 0, following: 0 },
+    posts: postsQuery.data ?? [],
+    isLoading: profileQuery.isLoading,
+    isError: profileQuery.isError || countersQuery.isError,
+    refetch: () => {
+      void profileQuery.refetch();
+      void countersQuery.refetch();
+      void postsQuery.refetch();
+    },
+  };
+}
+
+// Profil d'un autre user — utilisé par E3-03 (Profil d'un autre utilisateur).
+// La relation (follow status, blocks) est gérée séparément par useFollow (E3-04).
+export function useUserProfile(userId: string | null) {
+  const profileQuery = useQuery({
+    queryKey: ['profile', 'user', userId],
+    queryFn: () => fetchProfileById(userId as string),
+    enabled: userId !== null,
+  });
+
+  const countersQuery = useQuery({
+    queryKey: ['profile', 'user', userId, 'counters'],
+    queryFn: () => fetchCountersByUserId(userId as string),
+    enabled: userId !== null,
+  });
+
+  const postsQuery = useQuery({
+    queryKey: ['profile', 'user', userId, 'posts'],
+    queryFn: () => fetchPostGridByUserId(userId as string),
+    enabled: userId !== null,
+  });
+
+  return {
+    profile: profileQuery.data ?? null,
     counters: countersQuery.data ?? { posts: 0, followers: 0, following: 0 },
     posts: postsQuery.data ?? [],
     isLoading: profileQuery.isLoading,
