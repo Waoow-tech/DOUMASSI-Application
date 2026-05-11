@@ -13,9 +13,12 @@ export interface ProfileData {
   id: string;
   username: string;
   display_name: string;
+  full_name: string | null;
   bio: string | null;
   avatar_url: string | null;
   cover_url: string | null;
+  // TODO: is_verified peut ne pas exister en base — on default à false.
+  is_verified: boolean;
 }
 
 export interface ProfileCounters {
@@ -26,7 +29,8 @@ export interface ProfileCounters {
 
 export interface PostGridItem {
   id: string;
-  image_url: string;
+  image_url: string | null;
+  video_url: string | null;
   type: 'image' | 'video';
 }
 
@@ -46,7 +50,7 @@ async function fetchProfileData(): Promise<ProfileData> {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, username, display_name, bio, avatar_url, cover_url')
+    .select('id, username, display_name, full_name, bio, avatar_url, cover_url, is_verified')
     .eq('id', userId)
     .single();
 
@@ -54,13 +58,18 @@ async function fetchProfileData(): Promise<ProfileData> {
     logger.warn('Erreur fetch profile', { message: error.message });
     throw error;
   }
-  return data as ProfileData;
+
+  const raw = data as Record<string, unknown>;
+  return {
+    ...(data as Omit<ProfileData, 'is_verified'>),
+    is_verified: typeof raw.is_verified === 'boolean' ? raw.is_verified : false,
+  };
 }
 
+// status value must match follows table enum — verified 11/05/2026.
 async function fetchProfileCounters(): Promise<ProfileCounters> {
   const userId = await getCurrentUserId();
 
-  // 3 requêtes parallèles avec count: 'exact' pour les compteurs live.
   const [postsRes, followersRes, followingRes] = await Promise.all([
     supabase
       .from('posts')
@@ -83,10 +92,14 @@ async function fetchProfileCounters(): Promise<ProfileCounters> {
     logger.warn('Erreur count posts', { message: postsRes.error.message });
   }
   if (followersRes.error) {
-    logger.warn('Erreur count followers', { message: followersRes.error.message });
+    logger.warn('Erreur count followers', {
+      message: followersRes.error.message,
+    });
   }
   if (followingRes.error) {
-    logger.warn('Erreur count following', { message: followingRes.error.message });
+    logger.warn('Erreur count following', {
+      message: followingRes.error.message,
+    });
   }
 
   return {
@@ -98,11 +111,12 @@ async function fetchProfileCounters(): Promise<ProfileCounters> {
 
 async function fetchPostGrid(): Promise<PostGridItem[]> {
   const userId = await getCurrentUserId();
+
+  // Fetch tous les posts (image + vidéo). Filtre côté client.
   const { data, error } = await supabase
     .from('posts')
-    .select('id, image_url, type')
+    .select('id, image_url, video_url, type')
     .eq('author_id', userId)
-    .not('image_url', 'is', null)
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
@@ -110,7 +124,9 @@ async function fetchPostGrid(): Promise<PostGridItem[]> {
     logger.warn('Erreur fetch post grid', { message: error.message });
     throw error;
   }
-  return (data ?? []) as PostGridItem[];
+
+  // Garde uniquement les posts avec au moins une URL affichable.
+  return ((data ?? []) as PostGridItem[]).filter((p) => p.image_url != null || p.video_url != null);
 }
 
 // --- Hook principal ---

@@ -17,10 +17,17 @@ import {
   User,
   UserSquare2,
 } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
-import { Share, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Easing,
+  Share,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Sheet, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
 import { t } from '@/i18n';
 
@@ -46,8 +53,9 @@ function DoumassiLogo() {
   );
 }
 
-// --- Badge Vérifié ---
-function VerifiedBadge() {
+// --- Badge Vérifié (conditionnel sur is_verified) ---
+function VerifiedBadge({ isVerified }: { isVerified: boolean }) {
+  if (!isVerified) return null;
   const copy = t.profile;
   return (
     <XStack
@@ -62,6 +70,57 @@ function VerifiedBadge() {
         ✓ {copy.verifiedBadge}
       </Text>
     </XStack>
+  );
+}
+
+// --- Skeleton shimmer pour le loading ---
+function SkeletonBlock({
+  width,
+  height,
+  borderRadius = 4,
+  style,
+}: {
+  width: number | string;
+  height: number;
+  borderRadius?: number;
+  style?: object;
+}) {
+  const opacity = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.7,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [opacity]);
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: width as number,
+          height,
+          borderRadius,
+          backgroundColor: '#2A2A2A',
+          opacity,
+        },
+        style,
+      ]}
+    />
   );
 }
 
@@ -196,6 +255,9 @@ export function ProfileScreen() {
   const renderGridItem = useCallback(
     ({ item, index }: { item: PostGridItem; index: number }) => {
       const isLastColumn = (index + 1) % NUM_COLUMNS === 0;
+      // Pour les vidéos sans thumbnail, on utilise video_url comme source image
+      const displayUrl = item.image_url ?? item.video_url;
+      if (!displayUrl) return null;
       return (
         <YStack
           width={itemSize}
@@ -204,7 +266,7 @@ export function ProfileScreen() {
           marginBottom={GRID_GAP}
         >
           <Image
-            source={{ uri: item.image_url }}
+            source={{ uri: displayUrl }}
             style={styles.gridImage}
             contentFit="cover"
             recyclingKey={item.id}
@@ -223,6 +285,10 @@ export function ProfileScreen() {
               <Play size={14} color="#FFFFFF" fill="#FFFFFF" />
             </YStack>
           )}
+          {/* TODO: View count overlay — à câbler quand le système de vues est en place.
+           * Utiliser formatViewCount() de @/utils/formatCount.ts
+           * Position: absolute, bottom-right, avec icône Eye + texte formaté.
+           */}
         </YStack>
       );
     },
@@ -231,11 +297,36 @@ export function ProfileScreen() {
 
   const keyExtractor = useCallback((item: PostGridItem) => item.id, []);
 
-  // --- Loading state ---
+  // --- Skeleton loading state ---
   if (isLoading) {
     return (
-      <YStack flex={1} backgroundColor="$background" justifyContent="center" alignItems="center">
-        <Spinner size="large" color="$color" />
+      <YStack flex={1} backgroundColor="$background">
+        {/* Cover skeleton */}
+        <SkeletonBlock width="100%" height={COVER_HEIGHT + insets.top} borderRadius={0} />
+        {/* Avatar skeleton */}
+        <YStack alignItems="center" marginTop={-(AVATAR_SIZE / 2)}>
+          <SkeletonBlock
+            width={AVATAR_SIZE + AVATAR_BORDER_WIDTH * 2}
+            height={AVATAR_SIZE + AVATAR_BORDER_WIDTH * 2}
+            borderRadius={9999}
+          />
+        </YStack>
+        {/* Name skeleton */}
+        <YStack alignItems="center" marginTop={16} gap={8}>
+          <SkeletonBlock width={140} height={20} borderRadius={6} />
+          <SkeletonBlock width={100} height={14} borderRadius={6} />
+        </YStack>
+        {/* Bio skeleton */}
+        <YStack alignItems="center" marginTop={12} gap={6}>
+          <SkeletonBlock width={260} height={12} borderRadius={4} />
+          <SkeletonBlock width={200} height={12} borderRadius={4} />
+        </YStack>
+        {/* Counters skeleton */}
+        <XStack marginTop={20} paddingHorizontal={40} justifyContent="space-between">
+          <SkeletonBlock width={60} height={36} borderRadius={6} />
+          <SkeletonBlock width={60} height={36} borderRadius={6} />
+          <SkeletonBlock width={60} height={36} borderRadius={6} />
+        </XStack>
       </YStack>
     );
   }
@@ -324,7 +415,7 @@ export function ProfileScreen() {
         </YStack>
       </YStack>
 
-      {/* Nom */}
+      {/* Nom — fallback : display_name → full_name → @username */}
       <Text
         fontSize={22}
         fontWeight="700"
@@ -333,15 +424,15 @@ export function ProfileScreen() {
         fontFamily="$heading"
         marginTop="$3"
       >
-        {profile?.display_name ?? ''}
+        {profile?.display_name ?? profile?.full_name ?? `@${profile?.username ?? ''}`}
       </Text>
 
-      {/* @username + badge vérifié */}
+      {/* @username + badge vérifié (conditionnel) */}
       <XStack justifyContent="center" alignItems="center" gap={8} marginTop="$1">
         <Text fontSize={14} color="$textSecondary">
           @{profile?.username ?? ''}
         </Text>
-        <VerifiedBadge />
+        <VerifiedBadge isVerified={profile?.is_verified ?? false} />
       </XStack>
 
       {/* Bio */}
