@@ -22,7 +22,7 @@ import { useAvatarPicker } from '@/features/auth/hooks/useAvatarPicker';
 import { useCoverPicker } from '@/features/auth/hooks/useCoverPicker';
 import { useUsernameAvailability } from '@/features/auth/hooks/useUsernameAvailability';
 import { useEditProfile } from '@/features/profile/hooks/useEditProfile';
-import { useProfileQuery } from '@/features/profile/hooks/useProfileQuery';
+import { useCurrentProfile } from '@/features/profile/hooks/useProfile';
 import {
   editProfileSchema,
   type EditProfileFormValues,
@@ -86,7 +86,7 @@ function FieldCard({
 }
 
 export default function EditProfileScreen() {
-  const profileQuery = useProfileQuery();
+  const profileQuery = useCurrentProfile();
   const saveProfile = useEditProfile();
   const {
     avatarUri,
@@ -111,7 +111,6 @@ export default function EditProfileScreen() {
     resolver: zodResolver(editProfileSchema),
     defaultValues: {
       fullName: '',
-      displayName: '',
       username: '',
       bio: '',
       isProfessional: false,
@@ -126,7 +125,6 @@ export default function EditProfileScreen() {
 
     form.reset({
       fullName: profile.full_name ?? '',
-      displayName: profile.display_name ?? '',
       username: profile.username ?? '',
       bio: profile.bio ?? '',
       isProfessional: Boolean(profile.is_professional),
@@ -151,7 +149,6 @@ export default function EditProfileScreen() {
     (avatarUri ||
       coverUri ||
       values.fullName.trim() !== (profile.full_name ?? '') ||
-      (values.displayName.trim() || null) !== profile.display_name ||
       values.username.trim().toLowerCase() !== (profile.username?.toLowerCase() ?? '') ||
       (values.bio.trim() || null) !== profile.bio ||
       values.isProfessional !== Boolean(profile.is_professional))
@@ -366,35 +363,6 @@ export default function EditProfileScreen() {
               {form.formState.errors.fullName?.message ? (
                 <Text color="$danger" fontSize={11}>
                   {form.formState.errors.fullName.message}
-                </Text>
-              ) : null}
-            </FieldCard>
-
-            <FieldCard>
-              <Text color="$placeholderColor" fontSize={12} fontWeight="700">
-                Display name
-              </Text>
-              <Controller
-                control={form.control}
-                name="displayName"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    placeholder="Display name"
-                    placeholderTextColor="$placeholderColor"
-                    backgroundColor="transparent"
-                    borderWidth={0}
-                    paddingHorizontal={0}
-                    color="$color"
-                    fontSize={16}
-                  />
-                )}
-              />
-              {form.formState.errors.displayName?.message ? (
-                <Text color="$danger" fontSize={11}>
-                  {form.formState.errors.displayName.message}
                 </Text>
               ) : null}
             </FieldCard>

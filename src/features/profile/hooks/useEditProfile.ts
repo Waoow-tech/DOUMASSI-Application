@@ -1,14 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { type ProfileData, profileQueryKey } from '@/features/profile/hooks/useProfile';
 import type { EditProfileFormValues } from '@/features/profile/schemas/editProfileSchema';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
-import { type CurrentProfile, profileQueryKey } from './useProfileQuery';
-
 type SaveProfileInput = {
   values: EditProfileFormValues;
-  currentProfile: CurrentProfile;
+  currentProfile: ProfileData;
   uploadAvatar: (userId: string) => Promise<string | undefined>;
   uploadCover: (userId: string) => Promise<string | undefined>;
   hasAvatarChange: boolean;
@@ -34,13 +33,11 @@ export function useEditProfile() {
     }: SaveProfileInput) => {
       const updates: Record<string, unknown> = {};
       const fullName = values.fullName.trim();
-      const displayName = nullableTrim(values.displayName);
       const bio = nullableTrim(values.bio);
       const username = values.username.trim().toLowerCase();
       const currentUsername = currentProfile.username?.toLowerCase() ?? '';
 
       if (fullName !== (currentProfile.full_name ?? '')) updates.full_name = fullName;
-      if (displayName !== currentProfile.display_name) updates.display_name = displayName;
       if (bio !== currentProfile.bio) updates.bio = bio;
       if (values.isProfessional !== Boolean(currentProfile.is_professional)) {
         updates.is_professional = values.isProfessional;

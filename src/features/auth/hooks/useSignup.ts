@@ -57,8 +57,7 @@ export function useSignup() {
 
       // Metadata consommées par le trigger on_auth_user_created (migration 22) :
       // - username : utilisé tel quel si fourni (sinon trigger génère user_XXXXXXXX)
-      // - display_name : nom affiché public (par défaut = fullName, modifiable plus tard)
-      // - full_name : nom complet "légal" (peut différer du display_name)
+      // - full_name : nom affiché public
       // - birthday : date ISO YYYY-MM-DD
       const { data: signUpData, error } = await supabase.auth.signUp({
         email: values.email,
@@ -66,7 +65,6 @@ export function useSignup() {
         options: {
           data: {
             username: values.username,
-            display_name: values.fullName.trim(),
             full_name: values.fullName.trim(),
             birthday: birthdayISO,
           },
