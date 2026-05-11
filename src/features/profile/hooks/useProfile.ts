@@ -1,6 +1,9 @@
-// Hook de données du profil courant — E3-01.
+// Hook de données du profil courant — E3-01 / E3-02.
 // Utilise TanStack Query pour le cache et le refetch automatique.
 // 3 queries indépendantes : profil, compteurs, grille de posts.
+//
+// useCurrentProfile : query profil uniquement (utilisée par l'édition).
+// useProfile : compose profil + counters + posts (utilisée par ProfileScreen).
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -9,15 +12,20 @@ import { supabase } from '@/lib/supabase';
 
 // --- Types ---
 
+export const profileQueryKey = ['profile', 'me'] as const;
+
 export interface ProfileData {
   id: string;
+  email: string | null;
   username: string;
-  display_name: string;
   full_name: string | null;
   bio: string | null;
+  birthday: string | null;
   avatar_url: string | null;
   cover_url: string | null;
+  is_professional: boolean;
   is_verified: boolean;
+  username_changed_at: string | null;
 }
 
 export interface ProfileCounters {
@@ -35,22 +43,24 @@ export interface PostGridItem {
 
 // --- Helpers ---
 
-async function getCurrentUserId(): Promise<string> {
+async function getCurrentUser(): Promise<{ id: string; email: string | null }> {
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session?.user?.id) {
     throw new Error('No authenticated user');
   }
-  return data.session.user.id;
+  return { id: data.session.user.id, email: data.session.user.email ?? null };
 }
 
 // --- Query functions ---
 
 async function fetchProfileData(): Promise<ProfileData> {
-  const userId = await getCurrentUserId();
+  const user = await getCurrentUser();
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, username, display_name, full_name, bio, avatar_url, cover_url, is_verified')
-    .eq('id', userId)
+    .select(
+      'id, username, full_name, bio, birthday, avatar_url, cover_url, is_professional, is_verified, username_changed_at'
+    )
+    .eq('id', user.id)
     .single();
 
   if (error) {
@@ -60,30 +70,39 @@ async function fetchProfileData(): Promise<ProfileData> {
 
   const raw = data as Record<string, unknown>;
   return {
-    ...(data as Omit<ProfileData, 'is_verified'>),
+    id: user.id,
+    email: user.email,
+    username: (raw.username as string) ?? '',
+    full_name: (raw.full_name as string | null) ?? null,
+    bio: (raw.bio as string | null) ?? null,
+    birthday: (raw.birthday as string | null) ?? null,
+    avatar_url: (raw.avatar_url as string | null) ?? null,
+    cover_url: (raw.cover_url as string | null) ?? null,
+    is_professional: typeof raw.is_professional === 'boolean' ? raw.is_professional : false,
     is_verified: typeof raw.is_verified === 'boolean' ? raw.is_verified : false,
+    username_changed_at: (raw.username_changed_at as string | null) ?? null,
   };
 }
 
 // status value must match follows table enum — verified 11/05/2026.
 async function fetchProfileCounters(): Promise<ProfileCounters> {
-  const userId = await getCurrentUserId();
+  const user = await getCurrentUser();
 
   const [postsRes, followersRes, followingRes] = await Promise.all([
     supabase
       .from('posts')
       .select('*', { count: 'exact', head: true })
-      .eq('author_id', userId)
+      .eq('author_id', user.id)
       .is('deleted_at', null),
     supabase
       .from('follows')
       .select('*', { count: 'exact', head: true })
-      .eq('followed_id', userId)
+      .eq('followed_id', user.id)
       .eq('status', 'accepted'),
     supabase
       .from('follows')
       .select('*', { count: 'exact', head: true })
-      .eq('follower_id', userId)
+      .eq('follower_id', user.id)
       .eq('status', 'accepted'),
   ]);
 
@@ -109,13 +128,13 @@ async function fetchProfileCounters(): Promise<ProfileCounters> {
 }
 
 async function fetchPostGrid(): Promise<PostGridItem[]> {
-  const userId = await getCurrentUserId();
+  const user = await getCurrentUser();
 
   // Fetch tous les posts (image + vidéo). Filtre côté client.
   const { data, error } = await supabase
     .from('posts')
     .select('id, image_url, video_url, type')
-    .eq('author_id', userId)
+    .eq('author_id', user.id)
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
@@ -128,13 +147,19 @@ async function fetchPostGrid(): Promise<PostGridItem[]> {
   return ((data ?? []) as PostGridItem[]).filter((p) => p.image_url != null || p.video_url != null);
 }
 
-// --- Hook principal ---
+// --- Hooks ---
 
-export function useProfile() {
-  const profileQuery = useQuery({
-    queryKey: ['profile', 'me'],
+// Profil seul — utilisé par l'écran d'édition.
+export function useCurrentProfile() {
+  return useQuery({
+    queryKey: profileQueryKey,
     queryFn: fetchProfileData,
   });
+}
+
+// Composition profil + counters + posts — utilisé par ProfileScreen.
+export function useProfile() {
+  const profileQuery = useCurrentProfile();
 
   const countersQuery = useQuery({
     queryKey: ['profile', 'me', 'counters'],

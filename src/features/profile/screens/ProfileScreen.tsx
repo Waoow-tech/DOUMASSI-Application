@@ -415,7 +415,7 @@ export function ProfileScreen() {
         </YStack>
       </YStack>
 
-      {/* Nom — fallback : display_name → full_name → @username */}
+      {/* Nom — fallback : full_name → @username */}
       <Text
         fontSize={22}
         fontWeight="700"
@@ -424,7 +424,7 @@ export function ProfileScreen() {
         fontFamily="$heading"
         marginTop="$3"
       >
-        {profile?.display_name ?? profile?.full_name ?? `@${profile?.username ?? ''}`}
+        {profile?.full_name ?? `@${profile?.username ?? ''}`}
       </Text>
 
       {/* @username + badge vérifié (conditionnel) */}
