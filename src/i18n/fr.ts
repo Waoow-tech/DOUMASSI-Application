@@ -89,6 +89,30 @@ export const fr = {
       unknown: 'An unexpected error occurred. Please try again.',
     },
   },
+  profile: {
+    stats: {
+      posts: 'Publications',
+      followers: 'Followers',
+      following: 'Suivis',
+    },
+    editButton: 'Modifier',
+    shareButton: 'Partager',
+    shareMessage: 'Découvre mon profil sur DOUMASSI ! 🚀',
+    verifiedBadge: 'Vérifié',
+    kebabMenu: {
+      settings: 'Paramètres',
+      shareProfile: 'Partager mon profil',
+      cancel: 'Annuler',
+    },
+    tabs: {
+      grid: 'Grille',
+      reels: 'Reels',
+      tagged: 'Identifié',
+    },
+    emptyState: {
+      title: "Aucune publication pour l'instant",
+    },
+  },
 } as const;
 
 export type Translations = typeof fr;
