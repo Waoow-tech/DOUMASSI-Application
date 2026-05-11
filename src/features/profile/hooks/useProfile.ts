@@ -17,7 +17,6 @@ export interface ProfileData {
   bio: string | null;
   avatar_url: string | null;
   cover_url: string | null;
-  // TODO: is_verified peut ne pas exister en base — on default à false.
   is_verified: boolean;
 }
 
