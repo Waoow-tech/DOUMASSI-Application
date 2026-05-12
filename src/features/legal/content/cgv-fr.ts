@@ -4,184 +4,184 @@ export type LegalSection = {
 };
 
 export const CGV_FR_TITLE =
-  "Conditions generales d'utilisation (CGU) et Conditions generales de vente (CGV)";
+  "Conditions générales d'utilisation (CGU) et Conditions générales de vente (CGV)";
 
 export const CGV_FR_UPDATED_AT = '11 mai 2026';
 
 export const cgvFrSections: LegalSection[] = [
   {
-    title: '1. Informations generales',
+    title: '1. Informations générales',
     body: [
-      "Les presentes Conditions Generales d'Utilisation (CGU) et Conditions Generales de Vente (CGV) regissent l'acces et l'utilisation de l'application DOUMASSI (D, la Plateforme, l'Application), ainsi que les services associes.",
-      "DOUMASSI est une plateforme numerique multifonctions integrant notamment : un reseau social, des fonctionnalites communautaires, des outils d'intelligence artificielle, une marketplace, des services de paiement, des contenus numeriques, des services cloud et logiciels, et des fonctionnalites de communication.",
-      "En accedant a l'Application ou en utilisant ses services, l'utilisateur accepte pleinement et sans reserve les presentes conditions.",
+      "Les présentes Conditions Générales d'Utilisation (CGU) et Conditions Générales de Vente (CGV) régissent l'accès et l'utilisation de l'application DOUMASSI (D, la Plateforme, l'Application), ainsi que les services associés.",
+      "DOUMASSI est une plateforme numérique multifonctions intégrant notamment : un réseau social, des fonctionnalités communautaires, des outils d'intelligence artificielle, une marketplace, des services de paiement, des contenus numériques, des services cloud et logiciels, et des fonctionnalités de communication.",
+      "En accédant à l'Application ou en utilisant ses services, l'utilisateur accepte pleinement et sans réserve les présentes conditions.",
     ],
   },
   {
-    title: '2. Definitions',
+    title: '2. Définitions',
     body: [
-      "Application designe la plateforme DOUMASSI (D). Utilisateur designe toute personne physique ou morale utilisant l'Application. Compte designe l'espace personnel cree par l'Utilisateur. Contenu designe tout texte, image, video, audio, publication, commentaire, message ou donnee publie sur la plateforme. Services designe l'ensemble des fonctionnalites proposees par DOUMASSI. Marketplace designe l'espace de vente de produits ou services. IA designe les fonctionnalites d'intelligence artificielle integrees a la plateforme.",
+      "Application désigne la plateforme DOUMASSI (D). Utilisateur désigne toute personne physique ou morale utilisant l'Application. Compte désigne l'espace personnel créé par l'Utilisateur. Contenu désigne tout texte, image, vidéo, audio, publication, commentaire, message ou donnée publié sur la plateforme. Services désigne l'ensemble des fonctionnalités proposées par DOUMASSI. Marketplace désigne l'espace de vente de produits ou services. IA désigne les fonctionnalités d'intelligence artificielle intégrées à la plateforme.",
     ],
   },
   {
     title: '3. Acceptation des conditions',
     body: [
-      "L'utilisation de l'Application implique l'acceptation complete des presentes CGU/CGV.",
+      "L'utilisation de l'Application implique l'acceptation complète des présentes CGU/CGV.",
       "Si l'Utilisateur n'accepte pas ces conditions, il ne doit pas utiliser l'Application.",
-      'DOUMASSI se reserve le droit de modifier les presentes conditions a tout moment. Les modifications prennent effet des leur publication sur la plateforme.',
+      'DOUMASSI se réserve le droit de modifier les présentes conditions à tout moment. Les modifications prennent effet dès leur publication sur la plateforme.',
     ],
   },
   {
-    title: "4. Conditions d'acces",
+    title: "4. Conditions d'accès",
     body: [
-      "L'acces a certains services necessite la creation d'un compte.",
-      "L'Utilisateur s'engage a fournir des informations exactes, maintenir la confidentialite de ses identifiants, ne pas usurper l'identite d'un tiers et utiliser l'Application conformement aux lois applicables.",
-      'DOUMASSI peut suspendre ou supprimer un compte en cas de violation des presentes conditions.',
+      "L'accès à certains services nécessite la création d'un compte.",
+      "L'Utilisateur s'engage à fournir des informations exactes, maintenir la confidentialité de ses identifiants, ne pas usurper l'identité d'un tiers et utiliser l'Application conformément aux lois applicables.",
+      'DOUMASSI peut suspendre ou supprimer un compte en cas de violation des présentes conditions.',
     ],
   },
   {
-    title: '5. Age minimum',
+    title: '5. Âge minimum',
     body: [
-      "L'utilisation de l'Application est reservee aux personnes agees d'au moins 13 ans ou de l'age minimum requis dans le pays de residence de l'Utilisateur.",
-      "Les mineurs doivent utiliser l'Application sous la supervision d'un representant legal.",
+      "L'utilisation de l'Application est réservée aux personnes âgées d'au moins 13 ans ou de l'âge minimum requis dans le pays de résidence de l'Utilisateur.",
+      "Les mineurs doivent utiliser l'Application sous la supervision d'un représentant légal.",
     ],
   },
   {
-    title: '6. Utilisation autorisee',
+    title: '6. Utilisation autorisée',
     body: [
-      "L'Utilisateur s'engage a ne pas publier de contenus illegaux, diffuser des contenus haineux, discriminatoires ou violents, harceler d'autres utilisateurs, publier des contenus pornographiques ou contraires aux bonnes moeurs, transmettre des virus ou logiciels malveillants, utiliser des robots, scripts ou systemes automatises non autorises, collecter illegalement des donnees, porter atteinte aux droits de propriete intellectuelle ou contourner les mesures de securite de la plateforme.",
-      'DOUMASSI se reserve le droit de supprimer tout contenu non conforme.',
+      "L'Utilisateur s'engage à ne pas publier de contenus illégaux, diffuser des contenus haineux, discriminatoires ou violents, harceler d'autres utilisateurs, publier des contenus pornographiques ou contraires aux bonnes mœurs, transmettre des virus ou logiciels malveillants, utiliser des robots, scripts ou systèmes automatisés non autorisés, collecter illégalement des données, porter atteinte aux droits de propriété intellectuelle ou contourner les mesures de sécurité de la plateforme.",
+      'DOUMASSI se réserve le droit de supprimer tout contenu non conforme.',
     ],
   },
   {
-    title: '7. Contenus publies par les utilisateurs',
+    title: '7. Contenus publiés par les utilisateurs',
     body: [
-      "L'Utilisateur reste proprietaire des contenus qu'il publie.",
-      "En publiant du contenu sur DOUMASSI, l'Utilisateur accorde a DOUMASSI une licence mondiale, non exclusive, gratuite et transferable permettant l'hebergement, la reproduction, la diffusion, l'adaptation, la distribution, l'affichage et l'utilisation technique necessaire au fonctionnement de la plateforme.",
-      "Cette licence prend fin lors de la suppression du contenu, sauf obligations legales contraires. L'Utilisateur garantit disposer de tous les droits necessaires sur les contenus publies.",
+      "L'Utilisateur reste propriétaire des contenus qu'il publie.",
+      "En publiant du contenu sur DOUMASSI, l'Utilisateur accorde à DOUMASSI une licence mondiale, non exclusive, gratuite et transférable permettant l'hébergement, la reproduction, la diffusion, l'adaptation, la distribution, l'affichage et l'utilisation technique nécessaire au fonctionnement de la plateforme.",
+      "Cette licence prend fin lors de la suppression du contenu, sauf obligations légales contraires. L'Utilisateur garantit disposer de tous les droits nécessaires sur les contenus publiés.",
     ],
   },
   {
-    title: '8. Moderation',
+    title: '8. Modération',
     body: [
-      'DOUMASSI peut supprimer des contenus, limiter certaines fonctionnalites, suspendre temporairement un compte ou supprimer definitivement un compte.',
-      'Les decisions de moderation peuvent etre prises automatiquement ou manuellement.',
+      'DOUMASSI peut supprimer des contenus, limiter certaines fonctionnalités, suspendre temporairement un compte ou supprimer définitivement un compte.',
+      'Les décisions de modération peuvent être prises automatiquement ou manuellement.',
     ],
   },
   {
     title: "9. Services d'intelligence artificielle",
     body: [
-      "Certaines fonctionnalites de l'Application utilisent des systemes d'intelligence artificielle.",
-      "Les resultats generes par l'IA sont fournis a titre informatif. DOUMASSI ne garantit pas l'exactitude absolue des resultats, l'absence d'erreurs, l'absence de biais ou l'adequation a un usage specifique.",
-      "L'Utilisateur reste seul responsable de l'utilisation des contenus generes.",
+      "Certaines fonctionnalités de l'Application utilisent des systèmes d'intelligence artificielle.",
+      "Les résultats générés par l'IA sont fournis à titre informatif. DOUMASSI ne garantit pas l'exactitude absolue des résultats, l'absence d'erreurs, l'absence de biais ou l'adéquation à un usage spécifique.",
+      "L'Utilisateur reste seul responsable de l'utilisation des contenus générés.",
     ],
   },
   {
     title: '10. Marketplace',
     body: [
       "La plateforme peut permettre l'achat, la vente ou la promotion de produits et services.",
-      'Les vendeurs sont seuls responsables des produits proposes, des descriptions, des garanties legales et du respect des lois applicables.',
-      "DOUMASSI agit en qualite d'intermediaire technique sauf mention contraire.",
+      'Les vendeurs sont seuls responsables des produits proposés, des descriptions, des garanties légales et du respect des lois applicables.',
+      "DOUMASSI agit en qualité d'intermédiaire technique sauf mention contraire.",
     ],
   },
   {
     title: '11. Paiements',
     body: [
-      'Certains services peuvent etre payants. Les prix sont affiches dans la devise applicable et peuvent inclure les taxes legales.',
-      "L'Utilisateur autorise DOUMASSI ou ses prestataires de paiement a debiter le moyen de paiement enregistre.",
-      'DOUMASSI peut utiliser des prestataires tiers securises pour le traitement des paiements.',
+      'Certains services peuvent être payants. Les prix sont affichés dans la devise applicable et peuvent inclure les taxes légales.',
+      "L'Utilisateur autorise DOUMASSI ou ses prestataires de paiement à débiter le moyen de paiement enregistré.",
+      'DOUMASSI peut utiliser des prestataires tiers sécurisés pour le traitement des paiements.',
     ],
   },
   {
     title: '12. Abonnements',
     body: [
-      "Certains services fonctionnent sous forme d'abonnement. Sauf resiliation avant la date de renouvellement, les abonnements sont automatiquement renouveles.",
-      "L'Utilisateur peut resilier son abonnement depuis les parametres du compte. Les sommes deja payees restent dues et non remboursables sauf disposition legale contraire.",
+      "Certains services fonctionnent sous forme d'abonnement. Sauf résiliation avant la date de renouvellement, les abonnements sont automatiquement renouvelés.",
+      "L'Utilisateur peut résilier son abonnement depuis les paramètres du compte. Les sommes déjà payées restent dues et non remboursables sauf disposition légale contraire.",
     ],
   },
   {
     title: '13. Politique de remboursement',
     body: [
-      'Les produits numeriques, abonnements et services deja executes ne sont pas remboursables sauf obligation legale.',
-      'En cas de probleme technique imputable a DOUMASSI, une solution alternative ou un remboursement partiel peut etre propose.',
+      'Les produits numériques, abonnements et services déjà exécutés ne sont pas remboursables sauf obligation légale.',
+      'En cas de problème technique imputable à DOUMASSI, une solution alternative ou un remboursement partiel peut être proposé.',
     ],
   },
   {
-    title: '14. Propriete intellectuelle',
+    title: '14. Propriété intellectuelle',
     body: [
-      'Tous les elements de DOUMASSI sont proteges par les lois relatives a la propriete intellectuelle.',
-      'Sont notamment proteges : le nom DOUMASSI, le logo, les logiciels, les interfaces, les algorithmes, les designs, les bases de donnees et les contenus produits par DOUMASSI.',
-      'Toute reproduction non autorisee est interdite.',
+      'Tous les éléments de DOUMASSI sont protégés par les lois relatives à la propriété intellectuelle.',
+      'Sont notamment protégés : le nom DOUMASSI, le logo, les logiciels, les interfaces, les algorithmes, les designs, les bases de données et les contenus produits par DOUMASSI.',
+      'Toute reproduction non autorisée est interdite.',
     ],
   },
   {
-    title: '15. Donnees personnelles',
+    title: '15. Données personnelles',
     body: [
-      'DOUMASSI collecte et traite certaines donnees personnelles necessaires au fonctionnement des services.',
-      'Les donnees peuvent inclure : nom, adresse e-mail, numero de telephone, informations de paiement, donnees de navigation et contenus publies.',
-      "Le traitement des donnees est regi par la Politique de Confidentialite de DOUMASSI. L'Utilisateur dispose des droits prevus par les reglementations applicables, notamment droit d'acces, droit de rectification, droit a l'effacement, droit d'opposition et droit a la portabilite.",
+      'DOUMASSI collecte et traite certaines données personnelles nécessaires au fonctionnement des services.',
+      'Les données peuvent inclure : nom, adresse e-mail, numéro de téléphone, informations de paiement, données de navigation et contenus publiés.',
+      "Le traitement des données est régi par la Politique de Confidentialité de DOUMASSI. L'Utilisateur dispose des droits prévus par les réglementations applicables, notamment droit d'accès, droit de rectification, droit à l'effacement, droit d'opposition et droit à la portabilité.",
     ],
   },
   {
-    title: '16. Securite',
+    title: '16. Sécurité',
     body: [
-      'DOUMASSI met en oeuvre des mesures raisonnables de securite.',
-      "Cependant, aucun systeme informatique ne peut garantir une securite absolue. L'Utilisateur reconnait utiliser les services a ses propres risques.",
+      'DOUMASSI met en œuvre des mesures raisonnables de sécurité.',
+      "Cependant, aucun système informatique ne peut garantir une sécurité absolue. L'Utilisateur reconnaît utiliser les services à ses propres risques.",
     ],
   },
   {
-    title: '17. Disponibilite des services',
+    title: '17. Disponibilité des services',
     body: [
-      "DOUMASSI s'efforce d'assurer la disponibilite continue des services.",
-      "Cependant, l'Application peut etre interrompue temporairement pour maintenance, mises a jour, incidents techniques ou raisons de securite.",
-      'DOUMASSI ne garantit pas une disponibilite ininterrompue.',
+      "DOUMASSI s'efforce d'assurer la disponibilité continue des services.",
+      "Cependant, l'Application peut être interrompue temporairement pour maintenance, mises à jour, incidents techniques ou raisons de sécurité.",
+      'DOUMASSI ne garantit pas une disponibilité ininterrompue.',
     ],
   },
   {
-    title: '18. Limitation de responsabilite',
+    title: '18. Limitation de responsabilité',
     body: [
-      "Dans les limites autorisees par la loi, DOUMASSI ne pourra etre tenu responsable des pertes indirectes, pertes de donnees, pertes financieres, interruptions de service, contenus publies par les utilisateurs, actes de tiers ou decisions prises sur la base des contenus generes par l'IA.",
-      "La responsabilite totale de DOUMASSI ne pourra exceder les montants effectivement payes par l'Utilisateur au cours des douze derniers mois.",
+      "Dans les limites autorisées par la loi, DOUMASSI ne pourra être tenu responsable des pertes indirectes, pertes de données, pertes financières, interruptions de service, contenus publiés par les utilisateurs, actes de tiers ou décisions prises sur la base des contenus générés par l'IA.",
+      "La responsabilité totale de DOUMASSI ne pourra excéder les montants effectivement payés par l'Utilisateur au cours des douze derniers mois.",
     ],
   },
   {
-    title: '19. Resiliation',
+    title: '19. Résiliation',
     body: [
-      "L'Utilisateur peut supprimer son compte a tout moment.",
-      "DOUMASSI peut suspendre ou resilier un compte en cas de violation des presentes conditions, d'activite frauduleuse, de risque pour la securite ou d'obligation legale.",
-      'Certaines donnees peuvent etre conservees conformement aux obligations legales.',
+      "L'Utilisateur peut supprimer son compte à tout moment.",
+      "DOUMASSI peut suspendre ou résilier un compte en cas de violation des présentes conditions, d'activité frauduleuse, de risque pour la sécurité ou d'obligation légale.",
+      'Certaines données peuvent être conservées conformément aux obligations légales.',
     ],
   },
   {
-    title: '20. Publicite et contenus sponsorises',
+    title: '20. Publicité et contenus sponsorisés',
     body: [
-      "L'Application peut afficher des publicites, des contenus sponsorises et des recommandations commerciales.",
-      "DOUMASSI peut personnaliser les publicites selon l'activite de l'Utilisateur conformement a la reglementation applicable.",
+      "L'Application peut afficher des publicités, des contenus sponsorisés et des recommandations commerciales.",
+      "DOUMASSI peut personnaliser les publicités selon l'activité de l'Utilisateur conformément à la réglementation applicable.",
     ],
   },
   {
     title: '21. Services tiers',
     body: [
-      "L'Application peut integrer des services tiers.",
+      "L'Application peut intégrer des services tiers.",
       "DOUMASSI n'est pas responsable des services, contenus ou politiques des tiers.",
-      "L'utilisation de services tiers peut etre soumise a des conditions supplementaires.",
+      "L'utilisation de services tiers peut être soumise à des conditions supplémentaires.",
     ],
   },
   {
     title: '22. Force majeure',
     body: [
-      "DOUMASSI ne pourra etre tenu responsable d'un retard ou d'une inexecution resultant d'un evenement independant de sa volonte.",
+      "DOUMASSI ne pourra être tenu responsable d'un retard ou d'une inexécution résultant d'un événement indépendant de sa volonté.",
     ],
   },
   {
     title: '23. Droit applicable',
     body: [
-      "Les presentes conditions sont regies par les lois applicables dans le pays d'etablissement de DOUMASSI, sauf dispositions imperatives contraires.",
-      'Tout litige sera soumis aux juridictions competentes.',
+      "Les présentes conditions sont régies par les lois applicables dans le pays d'établissement de DOUMASSI, sauf dispositions impératives contraires.",
+      'Tout litige sera soumis aux juridictions compétentes.',
     ],
   },
   {
     title: '24. Contact',
-    body: ['Pour toute question concernant les presentes conditions : contact@doumassi.com'],
+    body: ['Pour toute question concernant les présentes conditions : contact@doumassi.com'],
   },
 ];

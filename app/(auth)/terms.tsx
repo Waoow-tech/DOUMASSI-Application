@@ -95,7 +95,7 @@ export default function TermsScreen() {
                 {CGV_FR_TITLE}
               </Text>
               <Text color="$textSecondary" fontSize={13}>
-                Application DOUMASSI (D) - Derniere mise a jour : {CGV_FR_UPDATED_AT}
+                Application DOUMASSI (D) — Dernière mise à jour : {CGV_FR_UPDATED_AT}
               </Text>
             </YStack>
             <SectionList sections={cgvFrSections} />
