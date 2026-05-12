@@ -10,20 +10,21 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { type Resolver, useForm } from 'react-hook-form';
 
 import { mapAuthError } from '@/features/auth/lib/mapAuthError';
+import { CGV_CURRENT_VERSION } from '@/features/legal/content/cgv';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
-import { signupSchema, type SignupFormValues } from '../schemas/signupSchema';
+import { signupSchema, type SignupFormInput, type SignupFormValues } from '../schemas/signupSchema';
 
 export function useSignup() {
   const [isLoading, setIsLoading] = useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
 
-  const form = useForm<SignupFormValues>({
-    resolver: zodResolver(signupSchema),
+  const form = useForm<SignupFormInput, unknown, SignupFormValues>({
+    resolver: zodResolver(signupSchema) as Resolver<SignupFormInput, unknown, SignupFormValues>,
     defaultValues: {
       fullName: '',
       username: '',
@@ -31,6 +32,7 @@ export function useSignup() {
       birthday: '',
       password: '',
       confirmPassword: '',
+      acceptedTerms: false,
     },
     mode: 'onTouched',
   });
@@ -67,6 +69,8 @@ export function useSignup() {
             username: values.username,
             full_name: values.fullName.trim(),
             birthday: birthdayISO,
+            cgv_accepted_at: new Date().toISOString(),
+            cgv_version: CGV_CURRENT_VERSION,
           },
         },
       });

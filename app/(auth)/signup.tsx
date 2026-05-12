@@ -9,12 +9,12 @@
 
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
-import { Eye, EyeOff } from 'lucide-react-native';
+import { Check, Eye, EyeOff } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Button, Checkbox, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui';
 
 import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
 import { useSignup } from '@/features/auth/hooks/useSignup';
@@ -98,8 +98,10 @@ export default function SignupScreen() {
   const usernameValue = form.watch('username');
   const usernameStatus = useUsernameAvailability(usernameValue);
   const usernameTaken = usernameStatus === 'taken';
+  const acceptedTerms = form.watch('acceptedTerms');
 
-  const submitDisabled = isLoading || usernameStatus === 'checking' || usernameTaken;
+  const submitDisabled =
+    isLoading || usernameStatus === 'checking' || usernameTaken || !acceptedTerms;
 
   const handleBirthdayChange = useCallback((text: string, rhfOnChange: (value: string) => void) => {
     rhfOnChange(formatBirthdayInput(text));
@@ -396,6 +398,56 @@ export default function SignupScreen() {
               {form.formState.errors.confirmPassword?.message ? (
                 <Text fontSize={11} color="$danger" paddingLeft="$1">
                   {form.formState.errors.confirmPassword.message}
+                </Text>
+              ) : null}
+            </YStack>
+
+            {/* Terms acceptance */}
+            <YStack gap="$1">
+              <Controller
+                control={form.control}
+                name="acceptedTerms"
+                render={({ field: { onChange, value } }) => (
+                  <XStack alignItems="flex-start" gap="$2.5">
+                    <Checkbox
+                      id="signup-terms-checkbox"
+                      checked={value}
+                      onCheckedChange={(checked) => onChange(checked === true)}
+                      borderWidth={1}
+                      borderColor="$borderColor"
+                      backgroundColor="transparent"
+                      size="$4"
+                      marginTop={2}
+                    >
+                      <Checkbox.Indicator>
+                        <Check size={14} color="#FFFFFF" />
+                      </Checkbox.Indicator>
+                    </Checkbox>
+                    <XStack flex={1} flexWrap="wrap" gap="$1">
+                      <Text fontSize={13} color="$textSecondary" lineHeight={18}>
+                        I agree to the
+                      </Text>
+                      <Link href="/terms" asChild>
+                        <Text
+                          id="signup-terms-link"
+                          fontSize={13}
+                          color="$color"
+                          fontWeight="700"
+                          lineHeight={18}
+                          textDecorationLine="underline"
+                          pressStyle={{ opacity: 0.7 }}
+                          cursor="pointer"
+                        >
+                          Terms and Conditions
+                        </Text>
+                      </Link>
+                    </XStack>
+                  </XStack>
+                )}
+              />
+              {form.formState.errors.acceptedTerms?.message ? (
+                <Text fontSize={11} color="$danger" paddingLeft="$1">
+                  {form.formState.errors.acceptedTerms.message}
                 </Text>
               ) : null}
             </YStack>
