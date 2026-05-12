@@ -75,16 +75,13 @@ export default function TermsScreen() {
           showsVerticalScrollIndicator
         >
           <YStack width="100%" maxWidth={720} alignSelf="center" gap="$6">
-            <YStack alignItems="center" gap="$3">
+            <YStack alignItems="center" gap="$2">
               <Image
                 source={logoSource}
                 style={{ width: 56, height: 56 }}
                 contentFit="contain"
                 accessibilityLabel="Logo DOUMASSI"
               />
-              <Text color="$color" fontSize={28} fontWeight="800" fontFamily="$heading">
-                D
-              </Text>
               <Text color="$textSecondary" fontSize={12}>
                 Version {CGV_CURRENT_VERSION}
               </Text>
