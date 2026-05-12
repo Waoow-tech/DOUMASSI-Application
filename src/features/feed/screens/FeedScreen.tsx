@@ -4,7 +4,7 @@
 // Ticket E2-03 — Sprint 1 Auth & Onboarding.
 
 import { router } from 'expo-router';
-import { Settings, User } from 'lucide-react-native';
+import { Search, Settings, User } from 'lucide-react-native';
 import { ScrollView, Text, XStack, YStack } from 'tamagui';
 
 export function FeedScreen() {
@@ -18,6 +18,15 @@ export function FeedScreen() {
           </Text>
 
           <XStack gap="$3" alignItems="center">
+            <YStack
+              onPress={() => router.push('/search')}
+              pressStyle={{ opacity: 0.6 }}
+              cursor="pointer"
+              padding="$2"
+            >
+              <Search size={22} color="#FFFFFF" />
+            </YStack>
+
             <YStack
               onPress={() => router.push('/profile')}
               pressStyle={{ opacity: 0.6 }}
