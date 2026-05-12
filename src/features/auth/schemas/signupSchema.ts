@@ -42,6 +42,10 @@ export const signupSchema = z
       .regex(/[0-9]/, 'Password must contain at least one number'),
 
     confirmPassword: z.string().min(1, 'Please confirm your password'),
+
+    acceptedTerms: z.literal(true, {
+      error: 'You must accept the Terms and Conditions',
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -49,3 +53,7 @@ export const signupSchema = z
   });
 
 export type SignupFormValues = z.infer<typeof signupSchema>;
+
+export type SignupFormInput = Omit<SignupFormValues, 'acceptedTerms'> & {
+  acceptedTerms: boolean;
+};
