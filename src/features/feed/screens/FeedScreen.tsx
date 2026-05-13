@@ -41,6 +41,7 @@ export function FeedScreen() {
         <Text fontSize={15} color="$placeholderColor">
           Welcome to DOUMASSI.
         </Text>
+      </YStack>
     </ScrollView>
   );
 }
