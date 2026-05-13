@@ -216,13 +216,14 @@ export default function OtherUserProfileScreen() {
   const keyExtractor = useCallback((item: PostGridItem) => item.id, []);
 
   // --- Attente du check de blocage ---
-  if (!blockChecked || isLoading) {
-    return <ProfileSkeleton />;
-  }
-
   // --- Self-visit : redirige vers son propre profil ---
-  if (followStatus === 'self') {
-    router.replace('/profile');
+  useEffect(() => {
+    if (followStatus === 'self') {
+      router.replace('/profile');
+    }
+  }, [followStatus]);
+
+  if (followStatus === 'self' || !blockChecked || isLoading) {
     return <ProfileSkeleton />;
   }
 
