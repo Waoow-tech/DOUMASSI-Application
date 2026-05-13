@@ -5,17 +5,19 @@
 
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
-import { Settings, Share2 } from 'lucide-react-native';
+import { Settings, Share2, Store } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { Share, StyleSheet, useWindowDimensions } from 'react-native';
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
+import { ProductCard } from '@/features/profile/components/ProductCard';
 import { ProfileEmptyState } from '@/features/profile/components/ProfileEmptyState';
 import { ProfileGridItem } from '@/features/profile/components/ProfileGridItem';
 import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
 import { ProfileSkeleton } from '@/features/profile/components/ProfileSkeleton';
 import { ProfileStats } from '@/features/profile/components/ProfileStats';
 import { ProfileTabs, type ProfileTab } from '@/features/profile/components/ProfileTabs';
+import { useProducts, type ProductItem } from '@/features/profile/hooks/useProducts';
 import { useProfile, type PostGridItem } from '@/features/profile/hooks/useProfile';
 import { t } from '@/i18n';
 
@@ -24,13 +26,15 @@ const NUM_COLUMNS = 3;
 
 export function ProfileScreen() {
   const { profile, userId, counters, posts, isLoading, refetch } = useProfile();
+  const { data: products = [] } = useProducts(userId);
   const { width: screenWidth } = useWindowDimensions();
   const copy = t.profile;
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('grid');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const itemSize = (screenWidth - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+  const numColumns = activeTab === 'shop' ? 2 : NUM_COLUMNS;
+  const itemSize = (screenWidth - GRID_GAP * (numColumns - 1)) / numColumns;
 
   const handleEdit = useCallback(() => {
     router.push('/profile/edit');
@@ -64,26 +68,57 @@ export function ProfileScreen() {
     if (userId) router.push(`/profile/${userId}/following`);
   }, [userId]);
 
-  const renderGridItem = useCallback(
-    ({ item, index }: { item: PostGridItem; index: number }) => (
-      <ProfileGridItem
-        item={item}
-        size={itemSize}
-        isLastColumn={(index + 1) % NUM_COLUMNS === 0}
-        gap={GRID_GAP}
-      />
-    ),
-    [itemSize]
+  const renderItem = useCallback(
+    ({ item, index }: { item: PostGridItem | ProductItem; index: number }) => {
+      if (activeTab === 'shop') {
+        return (
+          <ProductCard
+            product={item as ProductItem}
+            size={itemSize}
+            isLastColumn={(index + 1) % numColumns === 0}
+            gap={GRID_GAP}
+          />
+        );
+      }
+      return (
+        <ProfileGridItem
+          item={item as PostGridItem}
+          size={itemSize}
+          isLastColumn={(index + 1) % numColumns === 0}
+          gap={GRID_GAP}
+        />
+      );
+    },
+    [activeTab, itemSize, numColumns]
   );
 
-  const keyExtractor = useCallback((item: PostGridItem) => item.id, []);
+  const keyExtractor = useCallback((item: PostGridItem | ProductItem) => item.id, []);
 
   if (isLoading) {
     return <ProfileSkeleton />;
   }
 
-  // Seul l'onglet "grid" affiche du contenu pour l'instant.
-  const gridData = activeTab === 'grid' ? posts : [];
+  // Sélection des données selon l'onglet
+  const listData = activeTab === 'grid' ? posts : activeTab === 'shop' ? products : [];
+
+  const ShopEmptyState = () => (
+    <YStack alignItems="center" justifyContent="center" paddingVertical={80} gap="$3">
+      <YStack
+        width={72}
+        height={72}
+        borderRadius={36}
+        borderWidth={2}
+        borderColor="$borderColorHover"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Store size={32} color="#A0A0A0" />
+      </YStack>
+      <Text fontSize={15} color="$textSecondary" textAlign="center" fontWeight="500">
+        Aucun produit pour l&apos;instant
+      </Text>
+    </YStack>
+  );
 
   const ListHeader = (
     <YStack>
@@ -136,13 +171,14 @@ export function ProfileScreen() {
 
   return (
     <>
-      <FlashList<PostGridItem>
-        data={gridData}
-        renderItem={renderGridItem}
+      <FlashList
+        key={`${activeTab}-${numColumns}`} // Force le re-render quand on change d'onglet/colonnes
+        data={listData}
+        renderItem={renderItem}
         keyExtractor={keyExtractor}
-        numColumns={NUM_COLUMNS}
+        numColumns={numColumns}
         ListHeaderComponent={ListHeader}
-        ListEmptyComponent={ProfileEmptyState}
+        ListEmptyComponent={activeTab === 'shop' ? ShopEmptyState : ProfileEmptyState}
         showsVerticalScrollIndicator={false}
         onRefresh={refetch}
         refreshing={false}

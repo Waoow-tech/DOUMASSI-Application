@@ -1,11 +1,11 @@
-// Segmented control des onglets profil : Grid / Reels / Tagged.
+// Segmented control des onglets profil : Vidéos / Posts / Boutique.
 // Identique entre Mon profil et Profil autre.
 
-import { Grid3x3, Play, UserSquare2 } from 'lucide-react-native';
+import { Play, Store, UserSquare2 } from 'lucide-react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { XStack } from 'tamagui';
 
-export type ProfileTab = 'grid' | 'reels' | 'tagged';
+export type ProfileTab = 'reels' | 'grid' | 'shop';
 
 interface ProfileTabsProps {
   active: ProfileTab;
@@ -36,19 +36,19 @@ export function ProfileTabs({ active, onChange }: ProfileTabsProps) {
   return (
     <XStack marginTop="$4" borderTopWidth={0.5} borderBottomWidth={0.5} borderColor="$borderColor">
       <TabButton
-        icon={<Grid3x3 size={22} color={active === 'grid' ? '#FFFFFF' : '#A0A0A0'} />}
-        isActive={active === 'grid'}
-        onPress={() => onChange('grid')}
-      />
-      <TabButton
         icon={<Play size={22} color={active === 'reels' ? '#FFFFFF' : '#A0A0A0'} />}
         isActive={active === 'reels'}
         onPress={() => onChange('reels')}
       />
       <TabButton
-        icon={<UserSquare2 size={22} color={active === 'tagged' ? '#FFFFFF' : '#A0A0A0'} />}
-        isActive={active === 'tagged'}
-        onPress={() => onChange('tagged')}
+        icon={<UserSquare2 size={22} color={active === 'grid' ? '#FFFFFF' : '#A0A0A0'} />}
+        isActive={active === 'grid'}
+        onPress={() => onChange('grid')}
+      />
+      <TabButton
+        icon={<Store size={22} color={active === 'shop' ? '#FFFFFF' : '#A0A0A0'} />}
+        isActive={active === 'shop'}
+        onPress={() => onChange('shop')}
       />
     </XStack>
   );
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
   tabButtonActive: {
