@@ -59,9 +59,9 @@ export function FollowButton({
         height={40}
         backgroundColor="transparent"
         borderWidth={1}
-        borderColor="$accentNeon"
+        borderColor="$color"
         borderRadius="$lg"
-        color="$accentNeon"
+        color="$color"
         fontWeight="600"
         fontSize={14}
         onPress={onCancelRequest}
