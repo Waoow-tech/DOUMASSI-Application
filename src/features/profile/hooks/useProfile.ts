@@ -25,6 +25,7 @@ export interface ProfileData {
   cover_url: string | null;
   is_professional: boolean;
   is_verified: boolean;
+  is_private: boolean;
   username_changed_at: string | null;
 }
 
@@ -57,7 +58,7 @@ async function fetchProfileById(userId: string, email: string | null = null): Pr
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, username, full_name, bio, birthday, avatar_url, cover_url, is_professional, is_verified, username_changed_at'
+      'id, username, full_name, bio, birthday, avatar_url, cover_url, is_professional, is_verified, is_private, username_changed_at'
     )
     .eq('id', userId)
     .single();
@@ -79,6 +80,7 @@ async function fetchProfileById(userId: string, email: string | null = null): Pr
     cover_url: (raw.cover_url as string | null) ?? null,
     is_professional: typeof raw.is_professional === 'boolean' ? raw.is_professional : false,
     is_verified: typeof raw.is_verified === 'boolean' ? raw.is_verified : false,
+    is_private: typeof raw.is_private === 'boolean' ? raw.is_private : false,
     username_changed_at: (raw.username_changed_at as string | null) ?? null,
   };
 }
