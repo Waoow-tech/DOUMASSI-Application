@@ -1,34 +1,35 @@
-// Carte produit pour l'onglet Boutique — E3-VENDOR.
-// Affiche l'image en ratio 1:1 avec deux overlays :
-//   - Prix en bas à droite (fond sombre semi-transparent)
-//   - Bouton "Voir le produit" en bas à gauche (fond blanc, texte noir)
+// Carte produit (Listing) pour l'onglet Boutique — E3-VENDOR.
+// Affiche l'image principale en ratio 1:1 avec les overlays prix et action.
 
 import { Image } from 'expo-image';
 import { Store } from 'lucide-react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, YStack } from 'tamagui';
 
-import type { ProductItem } from '@/features/profile/hooks/useProducts';
+import type { ListingItem } from '@/features/profile/hooks/useListings';
 
-interface ProductCardProps {
-  product: ProductItem;
+interface ListingCardProps {
+  item: ListingItem;
   size: number;
   gap: number;
   isLastColumn: boolean;
 }
 
-export function ProductCard({ product, size, gap, isLastColumn }: ProductCardProps) {
+export function ListingCard({ item, size, gap, isLastColumn }: ListingCardProps) {
   const handleViewProduct = () => {
-    // Placeholder — sera remplacé par une navigation vers la fiche produit.
-    console.warn('Voir produit', product.id);
+    console.warn('Voir produit', item.id);
   };
 
+  // Conversion cents -> unité principale
+  const price = item.price_cents / 100;
   const formattedPrice = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency: 'EUR',
+    currency: item.currency || 'EUR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  }).format(product.price);
+  }).format(price);
+
+  const mainImage = item.images && item.images.length > 0 ? item.images[0] : null;
 
   return (
     <YStack
@@ -39,9 +40,9 @@ export function ProductCard({ product, size, gap, isLastColumn }: ProductCardPro
       position="relative"
     >
       {/* Image 1:1 */}
-      {product.image_url ? (
+      {mainImage ? (
         <Image
-          source={{ uri: product.image_url }}
+          source={{ uri: mainImage }}
           style={styles.image}
           contentFit="cover"
           transition={200}

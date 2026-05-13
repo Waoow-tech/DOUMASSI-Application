@@ -10,14 +10,14 @@ import { useCallback, useState } from 'react';
 import { Share, StyleSheet, useWindowDimensions } from 'react-native';
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
-import { ProductCard } from '@/features/profile/components/ProductCard';
+import { ListingCard } from '@/features/profile/components/ListingCard';
 import { ProfileEmptyState } from '@/features/profile/components/ProfileEmptyState';
 import { ProfileGridItem } from '@/features/profile/components/ProfileGridItem';
 import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
 import { ProfileSkeleton } from '@/features/profile/components/ProfileSkeleton';
 import { ProfileStats } from '@/features/profile/components/ProfileStats';
 import { ProfileTabs, type ProfileTab } from '@/features/profile/components/ProfileTabs';
-import { useProducts, type ProductItem } from '@/features/profile/hooks/useProducts';
+import { useListings, type ListingItem } from '@/features/profile/hooks/useListings';
 import { useProfile, type PostGridItem } from '@/features/profile/hooks/useProfile';
 import { t } from '@/i18n';
 
@@ -26,7 +26,7 @@ const NUM_COLUMNS = 3;
 
 export function ProfileScreen() {
   const { profile, userId, counters, posts, isLoading, refetch } = useProfile();
-  const { data: products = [] } = useProducts(userId);
+  const { data: listings = [] } = useListings(userId);
   const { width: screenWidth } = useWindowDimensions();
   const copy = t.profile;
 
@@ -69,11 +69,11 @@ export function ProfileScreen() {
   }, [userId]);
 
   const renderItem = useCallback(
-    ({ item, index }: { item: PostGridItem | ProductItem; index: number }) => {
+    ({ item, index }: { item: PostGridItem | ListingItem; index: number }) => {
       if (activeTab === 'shop') {
         return (
-          <ProductCard
-            product={item as ProductItem}
+          <ListingCard
+            item={item as ListingItem}
             size={itemSize}
             isLastColumn={(index + 1) % numColumns === 0}
             gap={GRID_GAP}
@@ -92,14 +92,14 @@ export function ProfileScreen() {
     [activeTab, itemSize, numColumns]
   );
 
-  const keyExtractor = useCallback((item: PostGridItem | ProductItem) => item.id, []);
+  const keyExtractor = useCallback((item: PostGridItem | ListingItem) => item.id, []);
 
   if (isLoading) {
     return <ProfileSkeleton />;
   }
 
   // Sélection des données selon l'onglet
-  const listData = activeTab === 'grid' ? posts : activeTab === 'shop' ? products : [];
+  const listData = activeTab === 'grid' ? posts : activeTab === 'shop' ? listings : [];
 
   const ShopEmptyState = () => (
     <YStack alignItems="center" justifyContent="center" paddingVertical={80} gap="$3">
