@@ -1,7 +1,8 @@
-// Écran "Mon profil" — E3-01 (v2).
+// Écran "Mon profil" — E3-01 (v2) + E3-VENDOR.
 // Composition de composants partagés (ProfileHeader, ProfileStats, ProfileTabs,
 // ProfileGridItem) + boutons d'action "Modifier" / "Partager" + kebab menu
-// avec Settings / Share. Fidèle à la maquette Canva, dark mode exclusif.
+// avec Settings / Share. 4 onglets : Grille / Reels / Identifié / Boutique.
+// Fidèle à la maquette Canva, dark mode exclusif.
 
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
@@ -10,12 +11,15 @@ import { useCallback, useState } from 'react';
 import { Share, StyleSheet, useWindowDimensions } from 'react-native';
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
+import { ListingCard } from '@/features/profile/components/ListingCard';
 import { ProfileEmptyState } from '@/features/profile/components/ProfileEmptyState';
 import { ProfileGridItem } from '@/features/profile/components/ProfileGridItem';
 import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
 import { ProfileSkeleton } from '@/features/profile/components/ProfileSkeleton';
 import { ProfileStats } from '@/features/profile/components/ProfileStats';
 import { ProfileTabs, type ProfileTab } from '@/features/profile/components/ProfileTabs';
+import { ShopEmptyState } from '@/features/profile/components/ShopEmptyState';
+import { useListings, type ListingItem } from '@/features/profile/hooks/useListings';
 import { useProfile, type PostGridItem } from '@/features/profile/hooks/useProfile';
 import { t } from '@/i18n';
 
@@ -24,6 +28,7 @@ const NUM_COLUMNS = 3;
 
 export function ProfileScreen() {
   const { profile, userId, counters, posts, isLoading, refetch } = useProfile();
+  const { data: listings } = useListings(userId);
   const { width: screenWidth } = useWindowDimensions();
   const copy = t.profile;
 
@@ -76,13 +81,26 @@ export function ProfileScreen() {
     [itemSize]
   );
 
-  const keyExtractor = useCallback((item: PostGridItem) => item.id, []);
+  const renderListingItem = useCallback(
+    ({ item, index }: { item: ListingItem; index: number }) => (
+      <ListingCard
+        item={item}
+        size={itemSize}
+        gap={GRID_GAP}
+        isLastColumn={(index + 1) % NUM_COLUMNS === 0}
+      />
+    ),
+    [itemSize]
+  );
+
+  const keyExtractor = useCallback((item: { id: string }) => item.id, []);
 
   if (isLoading) {
     return <ProfileSkeleton />;
   }
 
-  // Seul l'onglet "grid" affiche du contenu pour l'instant.
+  const isShopTab = activeTab === 'shop';
+  // Seuls les onglets "grid" et "shop" affichent du contenu pour l'instant.
   const gridData = activeTab === 'grid' ? posts : [];
 
   const ListHeader = (
@@ -136,18 +154,33 @@ export function ProfileScreen() {
 
   return (
     <>
-      <FlashList<PostGridItem>
-        data={gridData}
-        renderItem={renderGridItem}
-        keyExtractor={keyExtractor}
-        numColumns={NUM_COLUMNS}
-        ListHeaderComponent={ListHeader}
-        ListEmptyComponent={ProfileEmptyState}
-        showsVerticalScrollIndicator={false}
-        onRefresh={refetch}
-        refreshing={false}
-        contentContainerStyle={styles.listContent}
-      />
+      {isShopTab ? (
+        <FlashList<ListingItem>
+          data={listings ?? []}
+          renderItem={renderListingItem}
+          keyExtractor={keyExtractor}
+          numColumns={NUM_COLUMNS}
+          ListHeaderComponent={ListHeader}
+          ListEmptyComponent={ShopEmptyState}
+          showsVerticalScrollIndicator={false}
+          onRefresh={refetch}
+          refreshing={false}
+          contentContainerStyle={styles.listContent}
+        />
+      ) : (
+        <FlashList<PostGridItem>
+          data={gridData}
+          renderItem={renderGridItem}
+          keyExtractor={keyExtractor}
+          numColumns={NUM_COLUMNS}
+          ListHeaderComponent={ListHeader}
+          ListEmptyComponent={ProfileEmptyState}
+          showsVerticalScrollIndicator={false}
+          onRefresh={refetch}
+          refreshing={false}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
 
       <Sheet
         modal

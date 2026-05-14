@@ -1,11 +1,12 @@
-// Segmented control des onglets profil : Grid / Reels / Tagged.
+// Segmented control des onglets profil : Grid / Reels / Tagged / Shop.
 // Identique entre Mon profil et Profil autre.
+// E3-VENDOR : ajout du 4e onglet "Boutique" (additif, non-breaking).
 
-import { Grid3x3, Play, UserSquare2 } from 'lucide-react-native';
+import { Grid3x3, Play, Store, UserSquare2 } from 'lucide-react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { XStack } from 'tamagui';
 
-export type ProfileTab = 'grid' | 'reels' | 'tagged';
+export type ProfileTab = 'grid' | 'reels' | 'tagged' | 'shop';
 
 interface ProfileTabsProps {
   active: ProfileTab;
@@ -49,6 +50,11 @@ export function ProfileTabs({ active, onChange }: ProfileTabsProps) {
         icon={<UserSquare2 size={22} color={active === 'tagged' ? '#FFFFFF' : '#A0A0A0'} />}
         isActive={active === 'tagged'}
         onPress={() => onChange('tagged')}
+      />
+      <TabButton
+        icon={<Store size={22} color={active === 'shop' ? '#FFFFFF' : '#A0A0A0'} />}
+        isActive={active === 'shop'}
+        onPress={() => onChange('shop')}
       />
     </XStack>
   );
