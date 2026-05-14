@@ -60,13 +60,9 @@ $$;
 grant execute on function public.can_view_post(uuid) to authenticated;
 
 -- ─── Policy SELECT sur posts ──────────────────────────────────────────────────
--- Remplace la policy existante. Le nom ci-dessous est une hypothèse — à
--- confirmer/adapter selon l'inspection de la base avant application.
+-- Remplace la policy SELECT existante (nom confirmé en base : posts_select_visible).
 
-drop policy if exists "posts_select_policy" on public.posts;
-drop policy if exists "posts are viewable by everyone" on public.posts;
-drop policy if exists "Posts are viewable by everyone" on public.posts;
-drop policy if exists "posts_select" on public.posts;
+drop policy if exists "posts_select_visible" on public.posts;
 
 create policy "posts_select_visibility"
   on public.posts
