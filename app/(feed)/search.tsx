@@ -25,13 +25,11 @@ export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const { users, debouncedQuery, canSearch, isLoading, isError } = useSearchUsers(query);
 
-  const handleUserPress = useCallback((userId: string) => {
-    router.push(`/profile/${userId}`);
-  }, []);
-
   const renderUser = useCallback(
-    ({ item }: { item: SearchUserResult }) => <UserRow user={item} onPress={handleUserPress} />,
-    [handleUserPress]
+    ({ item }: { item: SearchUserResult }) => (
+      <UserRow user={item} onPress={() => router.push(`/profile/${item.id}`)} />
+    ),
+    []
   );
 
   const keyExtractor = useCallback((item: SearchUserResult) => item.id, []);

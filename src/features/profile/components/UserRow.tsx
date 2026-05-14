@@ -1,6 +1,13 @@
+// Composant UserRow — E3-05 / E3-06.
+// Ligne d'un utilisateur dans les listes sociales
+// (followers, following, recherche).
+// Avatar, username, full_name, badge vérifié,
+// slot d'action à droite + menu meatballs optionnel.
+
 import { Image } from 'expo-image';
-import { User } from 'lucide-react-native';
-import { StyleSheet } from 'react-native';
+import { MoreHorizontal, User as UserIcon } from 'lucide-react-native';
+import React from 'react';
+import { TouchableOpacity } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
 import { VerifiedBadge } from './VerifiedBadge';
@@ -15,55 +22,88 @@ export interface UserRowData {
 
 interface UserRowProps {
   user: UserRowData;
-  onPress: (userId: string) => void;
+  rightSlot?: React.ReactNode;
+  onPress?: () => void;
+  onMenuPress?: () => void;
 }
 
-export function UserRow({ user, onPress }: UserRowProps) {
-  return (
-    <XStack
-      alignItems="center"
-      gap="$3"
-      paddingHorizontal="$4"
-      paddingVertical="$3"
-      pressStyle={{ backgroundColor: '$surface' }}
-      onPress={() => onPress(user.id)}
-      cursor="pointer"
-    >
-      <YStack
-        width={44}
-        height={44}
-        borderRadius={22}
-        backgroundColor="$surface"
-        alignItems="center"
-        justifyContent="center"
-        overflow="hidden"
-      >
-        {user.avatar_url ? (
-          <Image source={{ uri: user.avatar_url }} style={styles.avatar} contentFit="cover" />
-        ) : (
-          <User size={22} color="#A0A0A0" />
-        )}
-      </YStack>
+const AVATAR_SIZE = 44;
 
-      <YStack flex={1} minWidth={0} gap={2}>
-        <XStack alignItems="center" gap="$2" flexWrap="wrap">
-          <Text color="$color" fontSize={15} fontWeight="700" numberOfLines={1}>
-            @{user.username}
-          </Text>
-          <VerifiedBadge isVerified={user.is_verified} />
+export function UserRow({ user, rightSlot, onPress, onMenuPress }: UserRowProps) {
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+      <XStack
+        paddingVertical="$3"
+        paddingHorizontal="$4"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <XStack flex={1} alignItems="center" gap="$3">
+          {/* Avatar */}
+          <YStack
+            width={AVATAR_SIZE}
+            height={AVATAR_SIZE}
+            borderRadius={9999}
+            backgroundColor="$surface"
+            overflow="hidden"
+            alignItems="center"
+            justifyContent="center"
+          >
+            {user.avatar_url ? (
+              <Image
+                source={{ uri: user.avatar_url }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                }}
+                contentFit="cover"
+                transition={200}
+              />
+            ) : (
+              <UserIcon size={24} color="#A0A0A0" />
+            )}
+          </YStack>
+
+          {/* Username + full_name */}
+          <YStack flexShrink={1} gap={2}>
+            <XStack alignItems="center" gap="$2">
+              <Text
+                fontSize={15}
+                fontWeight="700"
+                color="$color"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {user.username}
+              </Text>
+              <VerifiedBadge isVerified={user.is_verified} />
+            </XStack>
+            {user.full_name ? (
+              <Text fontSize={13} color="$placeholderColor" numberOfLines={1} ellipsizeMode="tail">
+                {user.full_name}
+              </Text>
+            ) : null}
+          </YStack>
         </XStack>
-        <Text color="$textSecondary" fontSize={13} numberOfLines={1}>
-          {user.full_name ?? ''}
-        </Text>
-      </YStack>
-    </XStack>
+
+        {/* Droite : bouton contextuel + meatballs */}
+        <XStack alignItems="center" gap="$2">
+          {rightSlot ?? null}
+          {onMenuPress ? (
+            <TouchableOpacity
+              onPress={onMenuPress}
+              hitSlop={{
+                top: 8,
+                bottom: 8,
+                left: 8,
+                right: 8,
+              }}
+            >
+              <MoreHorizontal size={20} color="#A0A0A0" />
+            </TouchableOpacity>
+          ) : null}
+        </XStack>
+      </XStack>
+    </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-});

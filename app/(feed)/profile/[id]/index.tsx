@@ -37,7 +37,8 @@ const NUM_COLUMNS = 3;
 
 export default function OtherUserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const targetUserId = id ?? null;
+  // Expo Router peut retourner string | string[] — on narrow
+  const targetUserId = typeof id === 'string' ? id : null;
 
   const { profile, counters, posts, isLoading, isError } = useUserProfile(targetUserId);
   const { status: followStatus, isPending, follow, unfollow } = useFollow(targetUserId);
@@ -67,7 +68,7 @@ export default function OtherUserProfileScreen() {
         // Vérifie dans les deux sens : j'ai bloqué cet user OU il m'a bloqué
         const { data, error } = await supabase
           .from('blocks')
-          .select('id')
+          .select('blocker_id')
           .or(
             `and(blocker_id.eq.${currentUserId},blocked_id.eq.${targetUserId}),` +
               `and(blocker_id.eq.${targetUserId},blocked_id.eq.${currentUserId})`
@@ -294,7 +295,7 @@ export default function OtherUserProfileScreen() {
           height={40}
           backgroundColor="transparent"
           borderWidth={1}
-          borderColor="$borderColorHover"
+          borderColor="$borderColor"
           borderRadius="$lg"
           color="$color"
           fontWeight="600"
@@ -315,7 +316,7 @@ export default function OtherUserProfileScreen() {
             height={64}
             borderRadius={32}
             borderWidth={2}
-            borderColor="$borderColorHover"
+            borderColor="$borderColor"
             alignItems="center"
             justifyContent="center"
           >
@@ -387,7 +388,7 @@ export default function OtherUserProfileScreen() {
           paddingBottom="$5"
         >
           <XStack justifyContent="center" marginBottom="$3">
-            <YStack width={36} height={4} borderRadius={2} backgroundColor="$borderColorHover" />
+            <YStack width={36} height={4} borderRadius={2} backgroundColor="$borderColor" />
           </XStack>
 
           <YStack gap="$1">
