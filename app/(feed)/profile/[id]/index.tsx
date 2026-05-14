@@ -20,14 +20,17 @@ import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
 import { BlockConfirmModal } from '@/features/profile/components/BlockConfirmModal';
 import { FollowButton } from '@/features/profile/components/FollowButton';
+import { ListingCard } from '@/features/profile/components/ListingCard';
 import { ProfileEmptyState } from '@/features/profile/components/ProfileEmptyState';
 import { ProfileGridItem } from '@/features/profile/components/ProfileGridItem';
 import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
 import { ProfileSkeleton } from '@/features/profile/components/ProfileSkeleton';
 import { ProfileStats } from '@/features/profile/components/ProfileStats';
 import { ProfileTabs, type ProfileTab } from '@/features/profile/components/ProfileTabs';
+import { ShopEmptyState } from '@/features/profile/components/ShopEmptyState';
 import { UnfollowConfirmModal } from '@/features/profile/components/UnfollowConfirmModal';
 import { useFollow } from '@/features/profile/hooks/useFollow';
+import { useListings, type ListingItem } from '@/features/profile/hooks/useListings';
 import { useUserProfile, type PostGridItem } from '@/features/profile/hooks/useProfile';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
@@ -42,6 +45,7 @@ export default function OtherUserProfileScreen() {
 
   const { profile, counters, posts, isLoading, isError } = useUserProfile(targetUserId);
   const { status: followStatus, isPending, follow, unfollow } = useFollow(targetUserId);
+  const { data: listings } = useListings(targetUserId);
 
   const { width: screenWidth } = useWindowDimensions();
   const itemSize = (screenWidth - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
@@ -214,7 +218,19 @@ export default function OtherUserProfileScreen() {
     [itemSize]
   );
 
-  const keyExtractor = useCallback((item: PostGridItem) => item.id, []);
+  const renderListingItem = useCallback(
+    ({ item, index }: { item: ListingItem; index: number }) => (
+      <ListingCard
+        item={item}
+        size={itemSize}
+        gap={GRID_GAP}
+        isLastColumn={(index + 1) % NUM_COLUMNS === 0}
+      />
+    ),
+    [itemSize]
+  );
+
+  const keyExtractor = useCallback((item: { id: string }) => item.id, []);
 
   // --- Attente du check de blocage ---
   // --- Self-visit : redirige vers son propre profil ---
@@ -267,6 +283,7 @@ export default function OtherUserProfileScreen() {
   // --- Profil privé + non suivi (self already redirected above) ---
   const isPrivateAndNotFollowing = profile.is_private === true && followStatus !== 'following';
 
+  const isShopTab = activeTab === 'shop';
   const gridData = activeTab === 'grid' ? posts : [];
 
   const ListHeader = (
@@ -349,6 +366,17 @@ export default function OtherUserProfileScreen() {
           keyExtractor={keyExtractor}
           numColumns={NUM_COLUMNS}
           ListHeaderComponent={ListHeader}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+      ) : isShopTab ? (
+        <FlashList<ListingItem>
+          data={listings ?? []}
+          renderItem={renderListingItem}
+          keyExtractor={keyExtractor}
+          numColumns={NUM_COLUMNS}
+          ListHeaderComponent={ListHeader}
+          ListEmptyComponent={ShopEmptyState}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         />
