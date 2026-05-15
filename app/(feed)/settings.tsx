@@ -60,7 +60,7 @@ function soonAlert() {
 }
 
 function getInitials(name: string, email: string | null) {
-  const value = name.trim() || email?.split('@')[0] || 'Emma Dupont';
+  const value = name.trim() || email?.split('@')[0] || 'User';
   const parts = value.split(/\s+/).filter(Boolean);
 
   if (parts.length >= 2) {
@@ -228,7 +228,7 @@ function ToggleRow({
 }
 
 function ProfileCard({ profile }: { profile: ProfileData }) {
-  const displayName = profile.full_name?.trim() || profile.username || 'Emma Dupont';
+  const displayName = profile.full_name?.trim() || profile.username || 'User';
   const initials = getInitials(displayName, profile.email);
 
   return (
@@ -283,7 +283,7 @@ function ProfileCard({ profile }: { profile: ProfileData }) {
           {displayName}
         </Text>
         <Text color="$textSecondary" fontSize={13} numberOfLines={1}>
-          {profile.email ?? 'email non disponible'}
+          {profile.email ?? 'No email'}
         </Text>
       </YStack>
 
@@ -305,6 +305,7 @@ export default function SettingsScreen() {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   const profile = profileQuery.data;
+  // TODO E3-10 : brancher sur useBlockedUsers().length quand le hook sera livré
   const blockedUsersCount = 0;
 
   const doumassiFeatures = useMemo(
@@ -447,6 +448,7 @@ export default function SettingsScreen() {
               icon={Shield}
               label="Utilisateurs bloqués"
               trailing={blockedUsersCount > 0 ? <Badge isCount>{blockedUsersCount}</Badge> : null}
+              // TODO E3-10 : router.push('/(feed)/settings/blocked') quand l'écran sera livré
               onPress={soonAlert}
               isLast
             />
@@ -461,6 +463,7 @@ export default function SettingsScreen() {
             <SettingRow
               icon={ShieldCheck}
               label="Politique de confidentialité"
+              // TODO E-PRIVACY : router.push('/privacy') quand l'écran sera livré
               onPress={soonAlert}
               isLast
             />
