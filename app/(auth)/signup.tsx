@@ -441,6 +441,23 @@ export default function SignupScreen() {
                           Terms and Conditions
                         </Text>
                       </Link>
+                      <Text fontSize={13} color="$textSecondary" lineHeight={18}>
+                        and
+                      </Text>
+                      <Link href="/privacy" asChild>
+                        <Text
+                          id="signup-privacy-link"
+                          fontSize={13}
+                          color="$color"
+                          fontWeight="700"
+                          lineHeight={18}
+                          textDecorationLine="underline"
+                          pressStyle={{ opacity: 0.7 }}
+                          cursor="pointer"
+                        >
+                          Privacy Policy
+                        </Text>
+                      </Link>
                     </XStack>
                   </XStack>
                 )}
