@@ -29,6 +29,7 @@ import { ProfileStats } from '@/features/profile/components/ProfileStats';
 import { ProfileTabs, type ProfileTab } from '@/features/profile/components/ProfileTabs';
 import { ShopEmptyState } from '@/features/profile/components/ShopEmptyState';
 import { UnfollowConfirmModal } from '@/features/profile/components/UnfollowConfirmModal';
+import { useBlock } from '@/features/profile/hooks/useBlock';
 import { useFollow } from '@/features/profile/hooks/useFollow';
 import { useListings, type ListingItem } from '@/features/profile/hooks/useListings';
 import { useUserProfile, type PostGridItem } from '@/features/profile/hooks/useProfile';
@@ -47,6 +48,15 @@ export default function OtherUserProfileScreen() {
   const { status: followStatus, isPending, follow, unfollow } = useFollow(targetUserId);
   const { data: listings } = useListings(targetUserId);
 
+  // Toast de confirmation après block (E3-09)
+  const [blockToastVisible, setBlockToastVisible] = useState(false);
+
+  const { block, isPending: isBlocking } = useBlock(targetUserId, () => {
+    // Callback après block réussi : toast + redirection
+    setBlockToastVisible(true);
+    setTimeout(() => router.replace('/feed'), 1200);
+  });
+
   const { width: screenWidth } = useWindowDimensions();
   const itemSize = (screenWidth - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 
@@ -54,7 +64,6 @@ export default function OtherUserProfileScreen() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUnfollowModalOpen, setIsUnfollowModalOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
-  const [isBlocking, setIsBlocking] = useState(false);
   const [blockChecked, setBlockChecked] = useState(false);
 
   // --- Vérification de blocage au mount ---
@@ -161,28 +170,14 @@ export default function OtherUserProfileScreen() {
     setIsBlockModalOpen(true);
   }, []);
 
+  // E3-09 : utilise useBlock au lieu de l'appel inline
   const handleBlockConfirm = useCallback(async () => {
-    if (!targetUserId) return;
-    setIsBlocking(true);
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const currentUserId = session.session?.user?.id;
-      if (!currentUserId) return;
-
-      const { error } = await supabase
-        .from('blocks')
-        .insert({ blocker_id: currentUserId, blocked_id: targetUserId });
-
-      if (error) throw error;
-
-      router.replace('/feed');
-    } catch (err) {
-      logger.warn('Block failed', { message: (err as Error).message });
+      await block();
+    } catch {
       Alert.alert('Error', 'Could not block this user. Please try again.');
-    } finally {
-      setIsBlocking(false);
     }
-  }, [targetUserId]);
+  }, [block]);
 
   const handleReport = useCallback(() => {
     setIsMenuOpen(false);
@@ -484,6 +479,32 @@ export default function OtherUserProfileScreen() {
         onConfirm={() => void handleBlockConfirm()}
         isPending={isBlocking}
       />
+
+      {/* Toast "User blocked" — E3-09 */}
+      {blockToastVisible ? (
+        <XStack
+          position="absolute"
+          bottom={100}
+          left={0}
+          right={0}
+          justifyContent="center"
+          pointerEvents="none"
+        >
+          <XStack
+            backgroundColor="$surface"
+            paddingHorizontal="$4"
+            paddingVertical="$3"
+            borderRadius="$lg"
+            alignItems="center"
+            gap="$2"
+          >
+            <ShieldBan size={16} color="#FFFFFF" />
+            <Text color="$color" fontSize={14} fontWeight="600">
+              User blocked
+            </Text>
+          </XStack>
+        </XStack>
+      ) : null}
     </>
   );
 }
