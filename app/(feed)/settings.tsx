@@ -421,7 +421,11 @@ export default function SettingsScreen() {
               label="Modifier mon profil"
               onPress={() => router.push('/profile/edit')}
             />
-            <SettingRow icon={KeyRound} label="Changer le mot de passe" onPress={soonAlert} />
+            <SettingRow
+              icon={KeyRound}
+              label="Changer le mot de passe"
+              onPress={() => router.push('/(feed)/settings/change-password')}
+            />
             <SettingRow
               icon={Trash2}
               label="Supprimer mon compte"
