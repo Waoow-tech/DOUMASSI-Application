@@ -129,6 +129,11 @@ export default function EditProfileScreen() {
       bio: profile.bio ?? '',
       isProfessional: Boolean(profile.is_professional),
     });
+    // Force la validation immédiate du form pour que `formState.isValid` soit
+    // correct dès le mount (avec mode 'onChange' RHF ne valide qu'au premier
+    // touch d'un champ, ce qui désactive le bouton Save même si l'user modifie
+    // un autre champ qu'username).
+    void form.trigger();
   }, [form, profile]);
 
   const values = form.watch();
