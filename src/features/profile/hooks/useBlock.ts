@@ -14,6 +14,8 @@ import { useCallback, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
+import { blockedUsersQueryKey } from './useBlockedUsers';
+
 export interface UseBlockReturn {
   block: () => Promise<void>;
   unblock: () => Promise<void>;
@@ -64,6 +66,10 @@ export function useBlock(targetUserId: string | null, onSuccess?: () => void): U
       void queryClient.invalidateQueries({
         queryKey: ['feed'],
         exact: false,
+      });
+      // Liste "Utilisateurs bloqués" dans Paramètres.
+      void queryClient.invalidateQueries({
+        queryKey: blockedUsersQueryKey,
       });
     },
     [queryClient]
