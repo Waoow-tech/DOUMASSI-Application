@@ -9,7 +9,8 @@ export const privacyEnSections: LegalSection[] = [
     title: '1. Data controller',
     body: [
       'DOUMASSI (D) acts as the data controller for ' +
-        'personal data collected through the application.',
+        'personal data collected through the application ' +
+        '(Contact: contact@doumassi.com).',
       'We are committed to protecting your privacy in ' +
         'accordance with the General Data Protection ' +
         'Regulation (GDPR) and applicable local laws.',
@@ -22,9 +23,10 @@ export const privacyEnSections: LegalSection[] = [
         'identification information (name, email, date ' +
         'of birth), profile data (username, avatar, bio' +
         '), published content (posts, comments, ' +
-        'messages), payment information (handled by ' +
-        'secure third-party providers), and technical ' +
-        'data (IP address, device type, usage logs).',
+        'messages), AI interactions, payment information ' +
+        '(handled by secure third-party providers), and ' +
+        'technical data (IP address, device type, usage ' +
+        'logs).',
     ],
   },
   {
@@ -53,8 +55,8 @@ export const privacyEnSections: LegalSection[] = [
     title: '5. Data recipients',
     body: [
       'Your data is shared exclusively with DOUMASSI ' +
-        'and its technical subcontractors (hosting, ' +
-        'payment).',
+        'and its technical subcontractors (e.g., ' +
+        'Supabase, OpenAI, Mistral, Tavily, Stripe).',
       'We never sell your personal data to third ' + 'parties.',
       'Public profile data is visible to other users ' + 'based on your privacy settings.',
     ],
@@ -63,10 +65,11 @@ export const privacyEnSections: LegalSection[] = [
     title: '6. International transfers',
     body: [
       'Some data may be transferred outside the ' +
-        'European Economic Area (EEA). In such cases, ' +
-        'we ensure an equivalent level of protection ' +
-        'through European Commission standard ' +
-        'contractual clauses or adequacy decisions.',
+        'European Economic Area (EEA), notably to the ' +
+        'USA for OpenAI. In such cases, we ensure an ' +
+        'equivalent level of protection through European ' +
+        'Commission standard contractual clauses or ' +
+        'adequacy decisions.',
     ],
   },
   {
@@ -74,19 +77,20 @@ export const privacyEnSections: LegalSection[] = [
     body: [
       'We retain your data for as long as your ' + 'account is active.',
       'Upon account deletion, data is erased or ' +
-        'anonymized within 30 days, unless longer ' +
-        'retention is required by law (e.g., billing ' +
-        'data for 10 years).',
+        'anonymized within 30 days after the request, ' +
+        'unless longer retention is required by law ' +
+        '(e.g., billing data for 10 years).',
     ],
   },
   {
     title: '8. Cookies and trackers',
     body: [
-      'The application uses essential technical ' + 'trackers required for operation.',
-      'Optional trackers (analytics, personalized ' +
-        'advertising) may be used with your consent, ' +
-        'which you can withdraw at any time in the ' +
-        'settings.',
+      'The application uses essential technical ' +
+        'trackers required for operation (expo-secure-store).',
+      'Optional trackers for analytics and error ' +
+        'tracking (Sentry, PostHog) may be used with ' +
+        'your consent, which you can withdraw at any ' +
+        'time in the settings.',
     ],
   },
   {
@@ -99,6 +103,9 @@ export const privacyEnSections: LegalSection[] = [
       'You can exercise these rights through the ' +
         'application settings or by contacting ' +
         'privacy@doumassi.com.',
+      'You also have the right to lodge a complaint ' +
+        'with the CNIL (or your local data protection ' +
+        'authority).',
     ],
   },
   {
@@ -115,9 +122,10 @@ export const privacyEnSections: LegalSection[] = [
     title: '11. Security',
     body: [
       'We implement rigorous technical and ' +
-        'organizational measures (encryption, access ' +
-        'controls) to protect your data against ' +
-        'unauthorized access, loss, or alteration.',
+        'organizational measures (encryption, RLS, OAuth ' +
+        'authentication, and future MFA) to protect ' +
+        'your data against unauthorized access, loss, or ' +
+        'alteration.',
     ],
   },
   {

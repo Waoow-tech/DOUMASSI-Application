@@ -10,7 +10,7 @@ export const privacyFrSections: LegalSection[] = [
     body: [
       'DOUMASSI (D) agit en tant que responsable du ' +
         'traitement des données personnelles collectées ' +
-        "via l'application.",
+        "via l'application (Contact : contact@doumassi.com).",
       'Nous nous engageons à protéger votre vie privée ' +
         'conformément au Règlement Général sur la ' +
         'Protection des Données (RGPD) et aux ' +
@@ -25,10 +25,10 @@ export const privacyFrSections: LegalSection[] = [
         '(nom, e-mail, date de naissance), données de ' +
         'profil (username, avatar, biographie), contenus ' +
         'publiés (publications, commentaires, messages), ' +
-        'informations de paiement (gérées par des ' +
-        'prestataires tiers sécurisés) et données ' +
-        "techniques (adresse IP, type d'appareil, " +
-        "journaux d'utilisation).",
+        "interactions avec l'IA, informations de " +
+        'paiement (gérées par des prestataires tiers ' +
+        'sécurisés) et données techniques (adresse IP, ' +
+        "type d'appareil, journaux d'utilisation).",
     ],
   },
   {
@@ -61,7 +61,7 @@ export const privacyFrSections: LegalSection[] = [
     body: [
       'Vos données sont destinées exclusivement à ' +
         'DOUMASSI et à ses sous-traitants techniques ' +
-        '(hébergement, paiement).',
+        '(ex: Supabase, OpenAI, Mistral, Tavily, Stripe).',
       'Nous ne vendons jamais vos données personnelles ' + 'à des tiers.',
       'Les données publiques du profil sont visibles ' +
         'par les autres utilisateurs selon vos ' +
@@ -72,7 +72,8 @@ export const privacyFrSections: LegalSection[] = [
     title: '6. Transferts internationaux',
     body: [
       'Certaines données peuvent être transférées hors ' +
-        "de l'Espace Économique Européen (EEE). Dans ce " +
+        "de l'Espace Économique Européen (EEE), " +
+        'notamment vers les USA pour OpenAI. Dans ce ' +
         'cas, nous assurons un niveau de protection ' +
         'équivalent via des clauses contractuelles types ' +
         'de la Commission européenne ou des décisions ' +
@@ -84,20 +85,22 @@ export const privacyFrSections: LegalSection[] = [
     body: [
       'Nous conservons vos données tant que votre ' + 'compte est actif.',
       'En cas de suppression du compte, les données ' +
-        'sont effacées ou anonymisées sous 30 jours, ' +
-        'sauf si une conservation plus longue est ' +
-        'imposée par la loi (ex : données de ' +
-        'facturation pendant 10 ans).',
+        'sont effacées ou anonymisées sous 30 jours ' +
+        'après la demande, sauf si une conservation plus ' +
+        'longue est imposée par la loi (ex : données ' +
+        'de facturation pendant 10 ans).',
     ],
   },
   {
     title: '8. Cookies et traceurs',
     body: [
-      "L'application utilise des traceurs techniques " + 'essentiels au fonctionnement.',
-      'Des traceurs optionnels (analyses, publicité ' +
-        'personnalisée) peuvent être utilisés avec ' +
-        'votre consentement, que vous pouvez retirer à ' +
-        'tout moment dans les paramètres.',
+      "L'application utilise des traceurs techniques " +
+        'essentiels au fonctionnement (expo-secure-store).',
+      'Des traceurs optionnels pour les analyses et le ' +
+        'suivi des erreurs (Sentry, PostHog) peuvent ' +
+        'être utilisés avec votre consentement, que ' +
+        'vous pouvez retirer à tout moment dans les ' +
+        'paramètres.',
     ],
   },
   {
@@ -110,6 +113,7 @@ export const privacyFrSections: LegalSection[] = [
       'Vous pouvez exercer ces droits via les ' +
         "paramètres de l'application ou en contactant " +
         'privacy@doumassi.com.',
+      "Vous avez également le droit d'introduire une " + 'réclamation auprès de la CNIL.',
     ],
   },
   {
@@ -126,9 +130,9 @@ export const privacyFrSections: LegalSection[] = [
     body: [
       'Nous mettons en œuvre des mesures techniques et ' +
         'organisationnelles rigoureuses (chiffrement, ' +
-        "contrôles d'accès) pour protéger vos données " +
-        'contre tout accès non autorisé, perte ou ' +
-        'altération.',
+        'RLS, authentification OAuth, et futur MFA) ' +
+        'pour protéger vos données contre tout accès ' +
+        'non autorisé, perte ou altération.',
     ],
   },
   {

@@ -101,6 +101,9 @@ export default function PrivacyScreen() {
                 Application DOUMASSI (D) — DPO : privacy@doumassi.com
               </Text>
               <Text color="$textSecondary" fontSize={13}>
+                Siège : [À compléter avec Biram]
+              </Text>
+              <Text color="$textSecondary" fontSize={13}>
                 Dernière mise à jour : {PRIVACY_FR_UPDATED_AT}
               </Text>
             </YStack>
@@ -116,6 +119,9 @@ export default function PrivacyScreen() {
               </Text>
               <Text color="$textSecondary" fontSize={13}>
                 DOUMASSI (D) application — DPO: privacy@doumassi.com
+              </Text>
+              <Text color="$textSecondary" fontSize={13}>
+                Headquarters: [To be completed by Biram]
               </Text>
               <Text color="$textSecondary" fontSize={13}>
                 Last updated: {PRIVACY_EN_UPDATED_AT}
