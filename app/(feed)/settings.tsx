@@ -525,20 +525,12 @@ export default function SettingsScreen() {
               DOUMASSI
             </Text>
             <Text color="$textSecondary" fontSize={14} textAlign="center">
-              DOUMASSI v1.0.0 - MVP June 2026
+              Version 1.0.0 — MVP June 2026
+            </Text>
+            <Text color="$placeholderColor" fontSize={12} textAlign="center" marginTop="$2">
+              © 2026 DOUMASSI. Tous droits réservés.
             </Text>
           </YStack>
-          <Button
-            backgroundColor="$surfaceElevated"
-            color="$color"
-            borderRadius="$lg"
-            height={44}
-            onPress={() => {
-              void Linking.openURL('https://github.com/Waoow-tech/DOUMASSI-Application');
-            }}
-          >
-            Voir le GitHub
-          </Button>
         </Sheet.Frame>
       </Sheet>
     </>
