@@ -30,6 +30,7 @@ import { Alert, Linking, Platform } from 'react-native';
 import { Button, ScrollView, Sheet, Spinner, Switch, Text, XStack, YStack } from 'tamagui';
 
 import { useLogout } from '@/features/auth/hooks/useLogout';
+import { useBlockedUsers } from '@/features/profile/hooks/useBlockedUsers';
 import {
   type ProfileData,
   profileQueryKey,
@@ -295,6 +296,7 @@ function ProfileCard({ profile }: { profile: ProfileData }) {
 export default function SettingsScreen() {
   const { logout, isLoading: logoutLoading } = useLogout();
   const profileQuery = useCurrentProfile();
+  const blockedUsersQuery = useBlockedUsers();
   const privacyToggle = usePrivacyToggle();
   const copy = t.auth.settings;
 
@@ -305,8 +307,7 @@ export default function SettingsScreen() {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   const profile = profileQuery.data;
-  // TODO E3-10 : brancher sur useBlockedUsers().length quand le hook sera livré
-  const blockedUsersCount = 0;
+  const blockedUsersCount = blockedUsersQuery.data?.length ?? 0;
 
   const doumassiFeatures = useMemo(
     () => [
@@ -448,8 +449,7 @@ export default function SettingsScreen() {
               icon={Shield}
               label="Utilisateurs bloqués"
               trailing={blockedUsersCount > 0 ? <Badge isCount>{blockedUsersCount}</Badge> : null}
-              // TODO E3-10 : router.push('/(feed)/settings/blocked') quand l'écran sera livré
-              onPress={soonAlert}
+              onPress={() => router.push('/settings/blocked')}
               isLast
             />
           </Section>
