@@ -60,7 +60,7 @@ function soonAlert() {
 }
 
 function getInitials(name: string, email: string | null) {
-  const value = name.trim() || email?.split('@')[0] || 'Emma Dupont';
+  const value = name.trim() || email?.split('@')[0] || 'User';
   const parts = value.split(/\s+/).filter(Boolean);
 
   if (parts.length >= 2) {
@@ -228,7 +228,7 @@ function ToggleRow({
 }
 
 function ProfileCard({ profile }: { profile: ProfileData }) {
-  const displayName = profile.full_name?.trim() || profile.username || 'Emma Dupont';
+  const displayName = profile.full_name?.trim() || profile.username || 'User';
   const initials = getInitials(displayName, profile.email);
 
   return (
@@ -283,7 +283,7 @@ function ProfileCard({ profile }: { profile: ProfileData }) {
           {displayName}
         </Text>
         <Text color="$textSecondary" fontSize={13} numberOfLines={1}>
-          {profile.email ?? 'email non disponible'}
+          {profile.email ?? 'email unavailable'}
         </Text>
       </YStack>
 
@@ -305,6 +305,7 @@ export default function SettingsScreen() {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   const profile = profileQuery.data;
+  // TODO: replace with useBlockedUsers().length when E3-10 is merged.
   const blockedUsersCount = 0;
 
   const doumassiFeatures = useMemo(
@@ -443,6 +444,7 @@ export default function SettingsScreen() {
           </Section>
 
           <Section title="Modération">
+            {/* TODO: router.push('/(feed)/settings/blocked') when E3-10 is merged. */}
             <SettingRow
               icon={Shield}
               label="Utilisateurs bloqués"
@@ -458,6 +460,7 @@ export default function SettingsScreen() {
               label="Conditions d'utilisation"
               onPress={() => router.push('/terms')}
             />
+            {/* TODO: router.push('/privacy') when E-PRIVACY is merged. */}
             <SettingRow
               icon={ShieldCheck}
               label="Politique de confidentialité"
