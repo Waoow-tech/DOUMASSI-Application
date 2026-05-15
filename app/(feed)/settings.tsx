@@ -463,8 +463,7 @@ export default function SettingsScreen() {
             <SettingRow
               icon={ShieldCheck}
               label="Politique de confidentialité"
-              // TODO E-PRIVACY : router.push('/privacy') quand l'écran sera livré
-              onPress={soonAlert}
+              onPress={() => router.push('/privacy')}
               isLast
             />
           </Section>
