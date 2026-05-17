@@ -430,7 +430,7 @@ export default function SettingsScreen() {
               icon={Trash2}
               label="Supprimer mon compte"
               destructive
-              onPress={soonAlert}
+              onPress={() => router.push('/(feed)/settings/delete-account')}
               isLast
             />
           </Section>
