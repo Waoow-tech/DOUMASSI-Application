@@ -129,11 +129,6 @@ export default function EditProfileScreen() {
       bio: profile.bio ?? '',
       isProfessional: Boolean(profile.is_professional),
     });
-    // Force la validation immédiate du form pour que `formState.isValid` soit
-    // correct dès le mount (avec mode 'onChange' RHF ne valide qu'au premier
-    // touch d'un champ, ce qui désactive le bouton Save même si l'user modifie
-    // un autre champ qu'username).
-    void form.trigger();
   }, [form, profile]);
 
   const values = form.watch();
@@ -159,10 +154,13 @@ export default function EditProfileScreen() {
       values.isProfessional !== Boolean(profile.is_professional))
   );
 
+  // Save activé dès qu'il y a un changement détecté (`hasChanges`).
+  // La validation Zod est appliquée au moment du submit via `form.handleSubmit`
+  // (errors inline restent visibles sous les champs si invalide).
+  // On bloque uniquement les états transitoires (upload, cooldown, taken…).
   const submitDisabled =
     !profile ||
     !hasChanges ||
-    !form.formState.isValid ||
     isUsernameBlocked ||
     isUsernameTaken ||
     isUsernameChecking ||
