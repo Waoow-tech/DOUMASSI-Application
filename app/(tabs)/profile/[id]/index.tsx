@@ -1,5 +1,4 @@
 // Écran "Profil d'un autre utilisateur" — E3-03.
-// Route : app/(feed)/profile/[id]/index.tsx
 // Vérifie le blocage au mount, gère 404, profil privé, follow/unfollow,
 // kebab menu (share, block, report). Réutilise les composants partagés.
 
