@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm typecheck *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(set -e)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'fix\\(db\\): DEFAULT auth.uid\\(\\) sur posts/likes/bookmarks \\(dette Sprint 0\\)' -m 'Les 3 colonnes owner \\(posts.author_id, likes.user_id, bookmarks.user_id\\) *)",
+      "Bash(git push *)",
+      "Bash(cat)",
+      "Bash(git checkout *)",
+      "Bash(git cherry-pick *)"
+    ]
+  }
+}
