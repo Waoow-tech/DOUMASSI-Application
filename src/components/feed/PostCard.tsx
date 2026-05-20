@@ -337,7 +337,8 @@ export const PostCard = memo(function PostCard({
       await Share.share({ message: `doumassi://post/${post.id}` });
       await supabase.rpc('increment_share_count', { p_post_id: post.id });
     } catch {
-      // User cancellation or native error: callers can pass onShare to own the state.
+      // Annulation par l'utilisateur ou erreur native : le caller peut passer
+      // onShare pour gérer l'état lui-même.
     }
   }, [onShare, post.id]);
 

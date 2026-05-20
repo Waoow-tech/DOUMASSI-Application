@@ -41,7 +41,7 @@ export function PostMenuSheet({
     await Clipboard.setStringAsync(`doumassi://post/${postId}`);
     close();
     onCopyLink?.();
-    Alert.alert('Lien copie', 'Le lien du post est pret a etre partage.');
+    Alert.alert('Lien copié', 'Le lien du post est prêt à être partagé.');
   };
 
   const handleHide = async () => {
@@ -64,12 +64,12 @@ export function PostMenuSheet({
     if (!onDelete) {
       Alert.alert(
         'Suppression indisponible',
-        'La suppression sera active quand la RPC delete_post sera livree avec E4-09.'
+        'La suppression sera active quand la RPC delete_post sera livrée avec E4-09.'
       );
       return;
     }
 
-    Alert.alert('Supprimer le post ?', 'Cette action est definitive.', [
+    Alert.alert('Supprimer le post ?', 'Cette action est définitive.', [
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer',
