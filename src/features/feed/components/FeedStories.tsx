@@ -29,7 +29,7 @@ export function FeedStories({ stories, onStoryPress }: FeedStoriesProps) {
           pressStyle={{ scale: 0.97, opacity: 0.85 }}
           accessibilityRole="button"
           accessibilityLabel={
-            story.isMe ? 'Ajouter a votre story' : `Ouvrir la story de @${story.username}`
+            story.isMe ? 'Ajouter à votre story' : `Ouvrir la story de @${story.username}`
           }
         >
           <YStack

@@ -40,25 +40,25 @@ const FEED_TABS: FeedTab[] = [
 const PLACEHOLDERS = {
   business: {
     Icon: Store,
-    title: 'Marketplace bientot disponible',
-    subtitle: 'Achetez, vendez, decouvrez.',
+    title: 'Marketplace bientôt disponible',
+    subtitle: 'Achetez, vendez, découvrez.',
   },
   ai: {
     Icon: Sparkles,
-    title: 'Studio AI bientot disponible',
-    subtitle: "Assistant IA, generation d'images et plus.",
+    title: 'Studio AI bientôt disponible',
+    subtitle: "Assistant IA, génération d'images et plus.",
   },
   wallet: {
     Icon: Wallet,
-    title: 'Dpay bientot disponible',
-    subtitle: 'Votre wallet crypto integre.',
+    title: 'Dpay bientôt disponible',
+    subtitle: 'Votre wallet crypto intégré.',
   },
   soon: {
     Icon: Rocket,
-    title: 'Encore plus a venir',
-    subtitle: 'DOUMASSI evolue. Restez connecte.',
+    title: 'Encore plus à venir',
+    subtitle: 'DOUMASSI évolue. Restez connecté.',
     manifest:
-      'Un espace social, business, creatif et financier pense pour rassembler vos usages dans un seul univers.',
+      'Un espace social, business, créatif et financier pensé pour rassembler vos usages dans un seul univers.',
   },
 } satisfies Record<Exclude<FeedTabId, 'social'>, React.ComponentProps<typeof FeedTabPlaceholder>>;
 
@@ -97,7 +97,7 @@ function FeedHeader({
           hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           style={styles.headerSideButton}
           accessibilityRole="button"
-          accessibilityLabel="Ouvrir les parametres"
+          accessibilityLabel="Ouvrir les paramètres"
         >
           <Settings size={22} color="#FFFFFF" />
         </TouchableOpacity>
@@ -139,7 +139,7 @@ function FeedHeader({
       <SearchBar
         value={searchValue}
         onChangeText={onSearchChange}
-        placeholder={activeTab === 'social' ? 'Search posts...' : 'Search...'}
+        placeholder={activeTab === 'social' ? 'Rechercher des posts...' : 'Rechercher...'}
       />
     </YStack>
   );
@@ -161,7 +161,7 @@ function FeedEmptyState() {
         onPress={() => router.push('/search')}
         pressStyle={{ opacity: 0.85, scale: 0.98 }}
       >
-        Decouvrir des comptes
+        Découvrir des comptes
       </Button>
     </YStack>
   );
