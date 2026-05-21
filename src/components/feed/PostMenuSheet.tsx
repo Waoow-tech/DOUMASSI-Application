@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
+import { Trash2, type LucideIcon } from 'lucide-react-native';
 import { Alert } from 'react-native';
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
@@ -61,35 +62,29 @@ export function PostMenuSheet({
   };
 
   const handleDelete = () => {
-    if (!onDelete) {
-      Alert.alert(
-        'Suppression indisponible',
-        'La suppression sera active quand la RPC delete_post sera livrée avec E4-09.'
-      );
-      return;
-    }
+    if (!onDelete) return;
 
-    Alert.alert('Supprimer le post ?', 'Cette action est définitive.', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Supprimer',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await onDelete();
-          } catch (error) {
-            Alert.alert(
-              'Suppression impossible',
-              error instanceof Error ? error.message : 'Une erreur est survenue.'
-            );
-            return;
-          }
+    Alert.alert(
+      'Supprimer ce post ?',
+      'Cette action est irréversible. Le post sera retiré du feed.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await onDelete();
+            } catch {
+              return;
+            }
 
-          close();
-          onDeleted?.();
+            close();
+            onDeleted?.();
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   return (
@@ -123,7 +118,7 @@ export function PostMenuSheet({
           <MenuButton label="Copier le lien" onPress={() => void handleCopyLink()} />
 
           {isAuthor ? (
-            <MenuButton label="Supprimer" danger onPress={handleDelete} />
+            <MenuButton label="Supprimer" danger Icon={Trash2} onPress={handleDelete} />
           ) : (
             <>
               <MenuButton label="Masquer ce post" onPress={() => void handleHide()} />
@@ -139,12 +134,16 @@ export function PostMenuSheet({
 function MenuButton({
   label,
   danger = false,
+  Icon,
   onPress,
 }: {
   label: string;
   danger?: boolean;
+  Icon?: LucideIcon;
   onPress: () => void;
 }) {
+  const iconColor = danger ? '#FF3B30' : '#FFFFFF';
+
   return (
     <Button
       backgroundColor="transparent"
@@ -155,9 +154,12 @@ function MenuButton({
       onPress={onPress}
       pressStyle={{ backgroundColor: '$surfaceElevated' }}
     >
-      <Text color={danger ? '$danger' : '$color'} fontSize={15} fontWeight="500">
-        {label}
-      </Text>
+      <XStack alignItems="center" gap={10}>
+        {Icon ? <Icon size={18} color={iconColor} /> : null}
+        <Text color={danger ? '$danger' : '$color'} fontSize={15} fontWeight="500">
+          {label}
+        </Text>
+      </XStack>
     </Button>
   );
 }

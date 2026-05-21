@@ -300,6 +300,19 @@ export default function PostDetailRoute() {
   const shareMutation = useIncrementPostShare(postId ?? '');
 
   const post = postQuery.data;
+  const hadAvailablePost = useRef(false);
+
+  useEffect(() => {
+    if (post) {
+      hadAvailablePost.current = true;
+    }
+  }, [post]);
+
+  useEffect(() => {
+    if (hadAvailablePost.current && postQuery.data === null && !postQuery.isLoading) {
+      router.back();
+    }
+  }, [postQuery.data, postQuery.isLoading]);
 
   const handleToggleOverlays = useCallback(() => {
     setOverlaysVisible((current) => !current);
