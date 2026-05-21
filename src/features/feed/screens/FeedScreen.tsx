@@ -2,11 +2,12 @@ import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Rocket, Search, Settings, Sparkles, Store, User, Wallet } from 'lucide-react-native';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
+  Share,
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
@@ -14,11 +15,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Spinner, Text, XStack, YStack } from 'tamagui';
 
 import { PostCard, PostCardSkeleton, type PostCardPost } from '@/components/feed/PostCard';
+import { PostMenuSheet } from '@/components/feed/PostMenuSheet';
 import { FeedStories } from '@/features/feed/components/FeedStories';
 import { FeedTabPlaceholder } from '@/features/feed/components/FeedTabPlaceholder';
+import { useDeletePost } from '@/features/feed/hooks/useDeletePost';
 import { useFeed, useToggleFeedBookmark, useToggleFeedLike } from '@/features/feed/hooks/useFeed';
 import { type FeedStory, useFeedStories } from '@/features/feed/hooks/useFeedStories';
 import { SearchBar } from '@/features/profile/components/SearchBar';
+import { supabase } from '@/lib/supabase';
 
 const logoSource = require('../../../../assets/Logo-Doumassi.png') as number;
 
@@ -180,6 +184,10 @@ function FeedFooter({ isFetchingNextPage }: { isFetchingNextPage: boolean }) {
 export function FeedScreen() {
   const [activeTab, setActiveTab] = useState<FeedTabId>('social');
   const [searchValue, setSearchValue] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<PostCardPost | null>(null);
+  const [isPostMenuOpen, setIsPostMenuOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const scrollOffsets = useRef<Record<FeedTabId, number>>({
     social: 0,
     business: 0,
@@ -194,11 +202,23 @@ export function FeedScreen() {
   const storiesQuery = useFeedStories();
   const likeMutation = useToggleFeedLike();
   const bookmarkMutation = useToggleFeedBookmark();
+  const deletePostMutation = useDeletePost();
 
   const posts = useMemo(
     () => feedQuery.data?.pages.flatMap((page) => page.posts) ?? [],
     [feedQuery.data]
   );
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setCurrentUserId(data.session?.user.id ?? null);
+    });
+  }, []);
+
+  const showToast = useCallback((message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 1800);
+  }, []);
 
   const restoreScroll = useCallback((tab: FeedTabId) => {
     requestAnimationFrame(() => {
@@ -235,6 +255,36 @@ export function FeedScreen() {
     router.push(story.isMe ? '/profile' : `/profile/${story.id}`);
   }, []);
 
+  const handleMenuPress = useCallback((post: PostCardPost) => {
+    setSelectedPost(post);
+    setIsPostMenuOpen(true);
+  }, []);
+
+  const handleMenuShare = useCallback(async () => {
+    if (!selectedPost) return;
+
+    try {
+      const result = await Share.share({ message: `doumassi://post/${selectedPost.id}` });
+      if (result.action === Share.sharedAction) {
+        await supabase.rpc('increment_share_count', { p_post_id: selectedPost.id });
+      }
+    } catch {
+      showToast('Partage impossible, réessayez');
+    }
+  }, [selectedPost, showToast]);
+
+  const handleDeleteSelectedPost = useCallback(async () => {
+    if (!selectedPost) return;
+
+    try {
+      await deletePostMutation.mutateAsync(selectedPost.id);
+      showToast('Post supprimé');
+    } catch {
+      showToast('Suppression impossible, réessayez');
+      throw new Error('Delete post failed');
+    }
+  }, [deletePostMutation, selectedPost, showToast]);
+
   const renderPost = useCallback(
     ({ item }: { item: PostCardPost }) => (
       <PostCard
@@ -244,9 +294,10 @@ export function FeedScreen() {
         onOpenDetail={() => router.push(`/post/${item.id}`)}
         onOpenComments={() => router.push(`/post/${item.id}?focus=comments`)}
         onOpenProfile={() => router.push(`/profile/${item.author_id}`)}
+        onMenuPress={() => handleMenuPress(item)}
       />
     ),
-    [bookmarkMutation, likeMutation]
+    [bookmarkMutation, handleMenuPress, likeMutation]
   );
 
   const keyExtractor = useCallback((item: PostCardPost) => item.id, []);
@@ -289,36 +340,69 @@ export function FeedScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <FlashList<PostCardPost>
-        ref={socialListRef}
-        data={posts}
-        renderItem={renderPost}
-        keyExtractor={keyExtractor}
-        ListHeaderComponent={socialHeader}
-        ListEmptyComponent={
-          feedQuery.isLoading ? (
-            <YStack>
-              <PostCardSkeleton />
-              <PostCardSkeleton />
-            </YStack>
-          ) : (
-            <FeedEmptyState />
-          )
-        }
-        ListFooterComponent={<FeedFooter isFetchingNextPage={feedQuery.isFetchingNextPage} />}
-        onEndReached={() => {
-          if (feedQuery.hasNextPage && !feedQuery.isFetchingNextPage) {
-            void feedQuery.fetchNextPage();
+      <YStack flex={1}>
+        <FlashList<PostCardPost>
+          ref={socialListRef}
+          data={posts}
+          renderItem={renderPost}
+          keyExtractor={keyExtractor}
+          ListHeaderComponent={socialHeader}
+          ListEmptyComponent={
+            feedQuery.isLoading ? (
+              <YStack>
+                <PostCardSkeleton />
+                <PostCardSkeleton />
+              </YStack>
+            ) : (
+              <FeedEmptyState />
+            )
           }
-        }}
-        onEndReachedThreshold={0.8}
-        onRefresh={() => void feedQuery.refetch()}
-        refreshing={feedQuery.isRefetching && !feedQuery.isFetchingNextPage}
-        onScroll={handleSocialScroll}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-      />
+          ListFooterComponent={<FeedFooter isFetchingNextPage={feedQuery.isFetchingNextPage} />}
+          onEndReached={() => {
+            if (feedQuery.hasNextPage && !feedQuery.isFetchingNextPage) {
+              void feedQuery.fetchNextPage();
+            }
+          }}
+          onEndReachedThreshold={0.8}
+          onRefresh={() => void feedQuery.refetch()}
+          refreshing={feedQuery.isRefetching && !feedQuery.isFetchingNextPage}
+          onScroll={handleSocialScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+
+        {selectedPost ? (
+          <PostMenuSheet
+            postId={selectedPost.id}
+            isAuthor={selectedPost.author_id === currentUserId}
+            open={isPostMenuOpen}
+            onOpenChange={setIsPostMenuOpen}
+            onShare={() => void handleMenuShare()}
+            onDelete={handleDeleteSelectedPost}
+            onHidden={() => showToast('Post masqué')}
+            onCopyLink={() => showToast('Lien copié')}
+          />
+        ) : null}
+
+        {toastMessage ? (
+          <YStack
+            position="absolute"
+            bottom={24}
+            alignSelf="center"
+            backgroundColor="$surfaceElevated"
+            borderWidth={1}
+            borderColor="$accentNeon"
+            borderRadius="$4"
+            paddingHorizontal="$4"
+            paddingVertical="$2"
+          >
+            <Text color="$color" fontSize={13} fontWeight="700">
+              {toastMessage}
+            </Text>
+          </YStack>
+        ) : null}
+      </YStack>
     </SafeAreaView>
   );
 }
