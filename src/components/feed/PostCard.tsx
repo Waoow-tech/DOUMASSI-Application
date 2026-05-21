@@ -8,7 +8,6 @@ import {
   Share,
   StyleSheet,
   Text as RNText,
-  type LayoutChangeEvent,
   type NativeSyntheticEvent,
   type TextLayoutEventData,
 } from 'react-native';
@@ -289,7 +288,6 @@ export const PostCard = memo(function PostCard({
 }: PostCardProps) {
   const likeScale = useRef(new Animated.Value(1)).current;
   const bookmarkSpin = useRef(new Animated.Value(0)).current;
-  const [contentWidth, setContentWidth] = useState(0);
 
   useEffect(() => {
     bookmarkSpin.setValue(0);
@@ -347,10 +345,6 @@ export const PostCard = memo(function PostCard({
     outputRange: ['0deg', '360deg'],
   });
 
-  const onCardLayout = useCallback((event: LayoutChangeEvent) => {
-    setContentWidth(event.nativeEvent.layout.width);
-  }, []);
-
   if (!hasContent && !hasMedia) return null;
 
   if (variant === 'thumbnail') {
@@ -366,7 +360,6 @@ export const PostCard = memo(function PostCard({
       borderBottomWidth={StyleSheet.hairlineWidth}
       borderBottomColor="$borderColor"
       backgroundColor="$background"
-      onLayout={onCardLayout}
     >
       <XStack alignItems="center" gap={10}>
         <Avatar
@@ -412,7 +405,7 @@ export const PostCard = memo(function PostCard({
       </YStack>
 
       {variant === 'detail' ? null : (
-        <XStack alignItems="center" gap={20} marginTop={12} width={contentWidth || undefined}>
+        <XStack alignItems="center" gap={20} marginTop={12} width="100%">
           <CountAction
             label={`Aimer le post de @${post.author_username}`}
             count={post.like_count}

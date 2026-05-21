@@ -6,7 +6,7 @@
 
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
-import { Settings, Share2 } from 'lucide-react-native';
+import { Bookmark, Settings, Share2 } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { Share, StyleSheet, useWindowDimensions } from 'react-native';
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
@@ -54,6 +54,13 @@ export function ProfileScreen() {
   const handleMenuSettings = useCallback(() => {
     setIsMenuOpen(false);
     router.push('/settings');
+  }, []);
+
+  // E4-07 : raccourci kebab → /bookmarks (visible uniquement sur mon profil,
+  // ProfileScreen étant le rendu du profil personnel).
+  const handleMenuBookmarks = useCallback(() => {
+    setIsMenuOpen(false);
+    router.push('/bookmarks');
   }, []);
 
   const handleMenuShare = useCallback(() => {
@@ -220,6 +227,21 @@ export function ProfileScreen() {
             >
               <Text color="$color" fontSize={15} fontWeight="500">
                 {copy.kebabMenu.settings}
+              </Text>
+            </Button>
+
+            <Button
+              backgroundColor="transparent"
+              height={48}
+              justifyContent="flex-start"
+              paddingHorizontal="$3"
+              onPress={handleMenuBookmarks}
+              pressStyle={{ backgroundColor: '$surfaceElevated' }}
+              borderRadius="$md"
+              icon={<Bookmark size={20} color="#FFFFFF" />}
+            >
+              <Text color="$color" fontSize={15} fontWeight="500">
+                Sauvegardés
               </Text>
             </Button>
 

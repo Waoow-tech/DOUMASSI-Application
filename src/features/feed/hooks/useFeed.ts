@@ -157,6 +157,9 @@ export function useToggleFeedBookmark() {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['feed', 'social', 'foryou'] });
+      // E4-07 : un un-bookmark depuis le feed (ou l'écran /bookmarks lui-même)
+      // doit aussi rafraîchir la liste des sauvegardés.
+      void queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
     },
   });
 }
