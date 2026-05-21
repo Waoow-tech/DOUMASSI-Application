@@ -1,18 +1,25 @@
--- E4-07 — RPC get_bookmarks : liste paginée des posts bookmarkés par l'user
--- courant, ordonnée par date de bookmark (b.created_at) décroissante.
+-- E4-07 — Correction de get_bookmarks : ajout de bookmarked_at au retour.
 --
--- Le cursor du ticket est `b.created_at` (≠ `p.created_at`) — bookmarker un
--- vieux post le place en tête de la liste. On expose donc `bookmarked_at`
--- dans le retour pour que le caller (useInfiniteQuery, cf.
--- src/features/feed/hooks/useBookmarks.ts) puisse calculer la page suivante.
+-- La version initiale (20260521120000_get_bookmarks_rpc.sql) ordonnait par
+-- date de bookmark (b.created_at) mais ne la retournait pas → le
+-- useInfiniteQuery ne pouvait pas calculer le curseur de la page suivante
+-- (pagination cassée au-delà de 20 posts).
+--
+-- On expose donc `bookmarked_at` (= b.created_at) dans le retour. Le
+-- RETURNS TABLE change de signature → DROP + CREATE obligatoire
+-- (`create or replace` refuse un changement de type de retour).
 --
 -- Visibilité : on réutilise can_view_post(author_id) (cf.
 -- 20260514120000_rls_private_profiles_posts.sql) pour ne pas exposer un
 -- post devenu non visible (compte passé en privé, bloqué, etc.) — la RPC
--- est SECURITY DEFINER, donc on ne court-circuite pas la RLS posts SELECT
--- par mégarde.
+-- est SECURITY DEFINER, donc on ne court-circuite pas la RLS posts SELECT.
+--
+-- Appliqué via AI Supabase (DROP + CREATE) sur dev + staging le 21 mai 2026
+-- (migration get_bookmarks_add_bookmarked_at).
 
-create or replace function public.get_bookmarks(
+drop function if exists public.get_bookmarks(timestamptz, int);
+
+create function public.get_bookmarks(
   p_cursor timestamptz default null,
   p_limit int default 20
 )
