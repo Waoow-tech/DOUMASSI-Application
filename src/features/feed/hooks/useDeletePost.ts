@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { PostCardPost } from '@/components/feed/PostCard';
+import { FEED_QUERY_KEY } from '@/features/feed/hooks/useFeed';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -15,7 +16,7 @@ type ProfilePostItem = {
 };
 
 type DeletePostContext = {
-  previousFeeds: [readonly unknown[], unknown][];
+  previousFeed: FeedCacheData | undefined;
   previousProfilePosts: [readonly unknown[], unknown][];
   previousPost: unknown;
 };
@@ -49,11 +50,11 @@ export function useDeletePost() {
       }
     },
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: ['feed'] });
+      await queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
       await queryClient.cancelQueries({ queryKey: ['profile'] });
       await queryClient.cancelQueries({ queryKey: ['post', postId] });
 
-      const previousFeeds = queryClient.getQueriesData({ queryKey: ['feed'] });
+      const previousFeed = queryClient.getQueryData<FeedCacheData>(FEED_QUERY_KEY);
       const previousProfilePosts = queryClient.getQueriesData({
         predicate: (query) => {
           const queryKey = query.queryKey;
@@ -62,7 +63,7 @@ export function useDeletePost() {
       });
       const previousPost = queryClient.getQueryData(['post', postId]);
 
-      queryClient.setQueriesData<FeedCacheData>({ queryKey: ['feed'] }, (old) =>
+      queryClient.setQueryData<FeedCacheData>(FEED_QUERY_KEY, (old) =>
         removePostFromFeedCache(old, postId)
       );
       queryClient.setQueriesData<ProfilePostItem[]>(
@@ -76,21 +77,19 @@ export function useDeletePost() {
       );
       queryClient.setQueryData(['post', postId], null);
 
-      return { previousFeeds, previousProfilePosts, previousPost };
+      return { previousFeed, previousProfilePosts, previousPost };
     },
     onError: (error, postId, context) => {
       logger.warn('delete post failed', { message: error.message, postId });
 
-      context?.previousFeeds.forEach(([queryKey, data]) => {
-        queryClient.setQueryData(queryKey, data);
-      });
+      queryClient.setQueryData(FEED_QUERY_KEY, context?.previousFeed);
       context?.previousProfilePosts.forEach(([queryKey, data]) => {
         queryClient.setQueryData(queryKey, data);
       });
       queryClient.setQueryData(['post', postId], context?.previousPost);
     },
     onSettled: (_data, _error, postId) => {
-      void queryClient.invalidateQueries({ queryKey: ['feed'] });
+      void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['profile'] });
       void queryClient.invalidateQueries({ queryKey: ['post', postId] });
     },

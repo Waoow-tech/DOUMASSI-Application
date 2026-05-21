@@ -15,7 +15,7 @@ type FeedQueryData = {
   pageParams: unknown[];
 };
 
-const FEED_QUERY_KEY = ['feed', 'social', 'foryou'] as const;
+export const FEED_QUERY_KEY = ['feed', 'social', 'foryou'] as const;
 
 function mapFeedPost(row: FeedRpcRow): PostCardPost {
   return {
