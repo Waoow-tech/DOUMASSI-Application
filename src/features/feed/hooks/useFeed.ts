@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { PostCardPost } from '@/components/feed/PostCard';
 import { logger } from '@/lib/logger';
@@ -9,6 +9,13 @@ const PAGE_SIZE = 20;
 type FeedRpcRow = PostCardPost & {
   media_type: 'text' | 'image' | 'video' | string;
 };
+
+type FeedQueryData = {
+  pages: { posts: PostCardPost[]; nextCursor: string | null }[];
+  pageParams: unknown[];
+};
+
+const FEED_QUERY_KEY = ['feed', 'social', 'foryou'] as const;
 
 function mapFeedPost(row: FeedRpcRow): PostCardPost {
   return {
@@ -34,6 +41,24 @@ function mapFeedPost(row: FeedRpcRow): PostCardPost {
   };
 }
 
+function updateFeedPost(
+  queryClient: ReturnType<typeof useQueryClient>,
+  postId: string,
+  updater: (post: PostCardPost) => PostCardPost
+) {
+  queryClient.setQueryData<FeedQueryData>(FEED_QUERY_KEY, (old) => {
+    if (!old) return old;
+
+    return {
+      ...old,
+      pages: old.pages.map((page) => ({
+        ...page,
+        posts: page.posts.map((post) => (post.id === postId ? updater(post) : post)),
+      })),
+    };
+  });
+}
+
 async function fetchFeedPage(cursor: string | null) {
   const { data, error } = await supabase.rpc('get_feed', {
     p_cursor: cursor,
@@ -54,10 +79,32 @@ async function fetchFeedPage(cursor: string | null) {
 
 export function useFeed() {
   return useInfiniteQuery({
-    queryKey: ['feed', 'social', 'foryou'],
+    queryKey: FEED_QUERY_KEY,
     queryFn: ({ pageParam }) => fetchFeedPage(pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+  });
+}
+
+export function usePostDetail(postId: string | undefined) {
+  return useQuery({
+    queryKey: ['post', postId],
+    enabled: Boolean(postId),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_post_with_counts', {
+        p_post_id: postId,
+      });
+
+      if (error) {
+        logger.warn('get_post_with_counts failed', { message: error.message, postId });
+        throw error;
+      }
+
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) return null;
+
+      return mapFeedPost(row as FeedRpcRow);
+    },
   });
 }
 
@@ -71,42 +118,25 @@ export function useToggleFeedLike() {
       return { postId, liked: Boolean(data) };
     },
     onMutate: async (postId) => {
-      const queryKey = ['feed', 'social', 'foryou'];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
+      await queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
+      const previous = queryClient.getQueryData(FEED_QUERY_KEY);
 
-      queryClient.setQueryData<ReturnType<typeof useFeed>['data']>(queryKey, (old) => {
-        if (!old) return old;
-
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            posts: page.posts.map((post) =>
-              post.id === postId
-                ? {
-                    ...post,
-                    liked_by_me: !post.liked_by_me,
-                    like_count: post.liked_by_me
-                      ? Math.max(0, post.like_count - 1)
-                      : post.like_count + 1,
-                  }
-                : post
-            ),
-          })),
-        };
-      });
+      updateFeedPost(queryClient, postId, (post) => ({
+        ...post,
+        liked_by_me: !post.liked_by_me,
+        like_count: post.liked_by_me ? Math.max(0, post.like_count - 1) : post.like_count + 1,
+      }));
 
       return { previous };
     },
     onError: (error, _postId, context) => {
       logger.warn('toggle_like failed', { message: error.message });
       if (context?.previous) {
-        queryClient.setQueryData(['feed', 'social', 'foryou'], context.previous);
+        queryClient.setQueryData(FEED_QUERY_KEY, context.previous);
       }
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: ['feed', 'social', 'foryou'] });
+      void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
     },
   });
 }
@@ -121,45 +151,152 @@ export function useToggleFeedBookmark() {
       return { postId, bookmarked: Boolean(data) };
     },
     onMutate: async (postId) => {
-      const queryKey = ['feed', 'social', 'foryou'];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
+      await queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
+      const previous = queryClient.getQueryData(FEED_QUERY_KEY);
 
-      queryClient.setQueryData<ReturnType<typeof useFeed>['data']>(queryKey, (old) => {
-        if (!old) return old;
-
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            posts: page.posts.map((post) =>
-              post.id === postId
-                ? {
-                    ...post,
-                    bookmarked_by_me: !post.bookmarked_by_me,
-                    bookmark_count: post.bookmarked_by_me
-                      ? Math.max(0, post.bookmark_count - 1)
-                      : post.bookmark_count + 1,
-                  }
-                : post
-            ),
-          })),
-        };
-      });
+      updateFeedPost(queryClient, postId, (post) => ({
+        ...post,
+        bookmarked_by_me: !post.bookmarked_by_me,
+        bookmark_count: post.bookmarked_by_me
+          ? Math.max(0, post.bookmark_count - 1)
+          : post.bookmark_count + 1,
+      }));
 
       return { previous };
     },
     onError: (error, _postId, context) => {
       logger.warn('toggle_bookmark failed', { message: error.message });
       if (context?.previous) {
-        queryClient.setQueryData(['feed', 'social', 'foryou'], context.previous);
+        queryClient.setQueryData(FEED_QUERY_KEY, context.previous);
       }
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: ['feed', 'social', 'foryou'] });
+      void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
       // E4-07 : un un-bookmark depuis le feed (ou l'écran /bookmarks lui-même)
       // doit aussi rafraîchir la liste des sauvegardés.
       void queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+    },
+  });
+}
+
+export function useTogglePostLike(postId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('toggle_like', { p_post_id: postId });
+      if (error) throw error;
+      return Boolean(data);
+    },
+    onMutate: async () => {
+      const queryKey = ['post', postId];
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
+      const previousPost = queryClient.getQueryData<PostCardPost | null>(queryKey);
+      const previousFeed = queryClient.getQueryData(FEED_QUERY_KEY);
+
+      const updater = (post: PostCardPost) => ({
+        ...post,
+        liked_by_me: !post.liked_by_me,
+        like_count: post.liked_by_me ? Math.max(0, post.like_count - 1) : post.like_count + 1,
+      });
+
+      queryClient.setQueryData<PostCardPost | null>(queryKey, (old) => (old ? updater(old) : old));
+      updateFeedPost(queryClient, postId, updater);
+
+      return { previousPost, previousFeed };
+    },
+    onError: (error, _variables, context) => {
+      logger.warn('toggle_like detail failed', { message: error.message, postId });
+      queryClient.setQueryData(['post', postId], context?.previousPost);
+      queryClient.setQueryData(FEED_QUERY_KEY, context?.previousFeed);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+    },
+  });
+}
+
+export function useTogglePostBookmark(postId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('toggle_bookmark', { p_post_id: postId });
+      if (error) throw error;
+      return Boolean(data);
+    },
+    onMutate: async () => {
+      const queryKey = ['post', postId];
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
+      const previousPost = queryClient.getQueryData<PostCardPost | null>(queryKey);
+      const previousFeed = queryClient.getQueryData(FEED_QUERY_KEY);
+
+      const updater = (post: PostCardPost) => ({
+        ...post,
+        bookmarked_by_me: !post.bookmarked_by_me,
+        bookmark_count: post.bookmarked_by_me
+          ? Math.max(0, post.bookmark_count - 1)
+          : post.bookmark_count + 1,
+      });
+
+      queryClient.setQueryData<PostCardPost | null>(queryKey, (old) => (old ? updater(old) : old));
+      updateFeedPost(queryClient, postId, updater);
+
+      return { previousPost, previousFeed };
+    },
+    onError: (error, _variables, context) => {
+      logger.warn('toggle_bookmark detail failed', { message: error.message, postId });
+      queryClient.setQueryData(['post', postId], context?.previousPost);
+      queryClient.setQueryData(FEED_QUERY_KEY, context?.previousFeed);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+    },
+  });
+}
+
+export function useIncrementPostShare(postId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('increment_share_count', { p_post_id: postId });
+      if (error) throw error;
+      return Number(data ?? 0);
+    },
+    onMutate: async () => {
+      const queryKey = ['post', postId];
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
+      const previousPost = queryClient.getQueryData<PostCardPost | null>(queryKey);
+      const previousFeed = queryClient.getQueryData(FEED_QUERY_KEY);
+
+      const updater = (post: PostCardPost) => ({
+        ...post,
+        share_count: post.share_count + 1,
+      });
+
+      queryClient.setQueryData<PostCardPost | null>(queryKey, (old) => (old ? updater(old) : old));
+      updateFeedPost(queryClient, postId, updater);
+
+      return { previousPost, previousFeed };
+    },
+    onError: (error, _variables, context) => {
+      logger.warn('increment_share_count detail failed', { message: error.message, postId });
+      queryClient.setQueryData(['post', postId], context?.previousPost);
+      queryClient.setQueryData(FEED_QUERY_KEY, context?.previousFeed);
+    },
+    onSuccess: (shareCount) => {
+      if (!shareCount) return;
+      const updater = (post: PostCardPost) => ({ ...post, share_count: shareCount });
+      queryClient.setQueryData<PostCardPost | null>(['post', postId], (old) =>
+        old ? updater(old) : old
+      );
+      updateFeedPost(queryClient, postId, updater);
     },
   });
 }
