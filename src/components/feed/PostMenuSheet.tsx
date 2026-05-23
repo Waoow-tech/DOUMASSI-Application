@@ -1,8 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
-import { Trash2, type LucideIcon } from 'lucide-react-native';
+import { EyeOff, Trash2, type LucideIcon } from 'lucide-react-native';
 import { Alert } from 'react-native';
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
+
+import { useHidePost } from '@/features/feed/hooks/useHiddenPosts';
 
 export type PostMenuSheetProps = {
   postId: string;
@@ -11,13 +12,12 @@ export type PostMenuSheetProps = {
   onOpenChange: (open: boolean) => void;
   onShare?: () => void;
   onHidden?: () => void;
+  onHideError?: () => void;
   onDelete?: () => Promise<void> | void;
   onDeleted?: () => void;
   onReported?: () => void;
   onCopyLink?: () => void;
 };
-
-const HIDDEN_POSTS_STORAGE_KEY = 'doumassi:hidden_posts';
 
 export function PostMenuSheet({
   postId,
@@ -26,11 +26,13 @@ export function PostMenuSheet({
   onOpenChange,
   onShare,
   onHidden,
+  onHideError,
   onDelete,
   onDeleted,
   onReported,
   onCopyLink,
 }: PostMenuSheetProps) {
+  const hidePostMutation = useHidePost();
   const close = () => onOpenChange(false);
 
   const handleShare = () => {
@@ -46,11 +48,13 @@ export function PostMenuSheet({
   };
 
   const handleHide = async () => {
-    const rawHiddenPosts = await AsyncStorage.getItem(HIDDEN_POSTS_STORAGE_KEY);
-    const hiddenPosts = rawHiddenPosts ? (JSON.parse(rawHiddenPosts) as string[]) : [];
-    const nextHiddenPosts = Array.from(new Set([...hiddenPosts, postId]));
+    try {
+      await hidePostMutation.mutateAsync(postId);
+    } catch {
+      onHideError?.();
+      throw new Error('Hide post failed');
+    }
 
-    await AsyncStorage.setItem(HIDDEN_POSTS_STORAGE_KEY, JSON.stringify(nextHiddenPosts));
     close();
     onHidden?.();
   };
@@ -121,7 +125,7 @@ export function PostMenuSheet({
             <MenuButton label="Supprimer" danger Icon={Trash2} onPress={handleDelete} />
           ) : (
             <>
-              <MenuButton label="Masquer ce post" onPress={() => void handleHide()} />
+              <MenuButton label="Masquer ce post" Icon={EyeOff} onPress={() => void handleHide()} />
               <MenuButton label="Signaler" onPress={handleReport} />
             </>
           )}
@@ -155,7 +159,7 @@ function MenuButton({
       pressStyle={{ backgroundColor: '$surfaceElevated' }}
     >
       <XStack alignItems="center" gap={10}>
-        {Icon ? <Icon size={18} color={iconColor} /> : null}
+        {Icon ? <Icon size={20} color={iconColor} /> : null}
         <Text color={danger ? '$danger' : '$color'} fontSize={15} fontWeight="500">
           {label}
         </Text>
