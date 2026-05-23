@@ -8,6 +8,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import GuardLoader from '@/components/GuardLoader';
 import { useAuthGuard } from '@/features/auth/hooks/useAuthGuard';
+import { useNotificationsUnreadCount } from '@/features/notifications/hooks/useNotifications';
 
 const ACTIVE_COLOR = '#FFFFFF';
 const INACTIVE_COLOR = '#A0A0A0';
@@ -31,25 +32,12 @@ function TabIcon({ Icon, focused }: TabIconProps) {
   );
 }
 
-export default function TabsLayout() {
-  const status = useAuthGuard();
-
-  if (status === 'loading') {
-    return <GuardLoader />;
-  }
-
-  if (status === 'unauthenticated') {
-    return <Redirect href="/(auth)/welcome" />;
-  }
-
-  if (status === 'incomplete' || status === 'onboarding') {
-    return <Redirect href="/(onboarding)" />;
-  }
-
-  if (status === 'incomplete-google') {
-    return <Redirect href="/(onboarding)/complete-account" />;
-  }
-
+// Sous-composant rendu UNIQUEMENT après le guard auth — c'est ici qu'on peut
+// appeler `useNotificationsUnreadCount` sans risquer de tirer la RPC avant
+// qu'il y ait une session valide (et sans violer les règles des hooks au
+// niveau du parent qui short-circuit avec des Redirect).
+function AuthenticatedTabs() {
+  const unreadCount = useNotificationsUnreadCount();
   return (
     <Tabs
       screenOptions={{
@@ -72,6 +60,9 @@ export default function TabsLayout() {
         options={{
           tabBarIcon: ({ focused }) => <TabIcon Icon={Bell} focused={focused} />,
           tabBarAccessibilityLabel: 'Notifications',
+          // Cap à "99+" pour éviter un débordement visuel du badge sur les
+          // gros volumes (la cible MVP n'y arrivera pas mais c'est défensif).
+          tabBarBadge: unreadCount > 99 ? '99+' : unreadCount > 0 ? unreadCount : undefined,
         }}
       />
       <Tabs.Screen
@@ -97,6 +88,28 @@ export default function TabsLayout() {
       />
     </Tabs>
   );
+}
+
+export default function TabsLayout() {
+  const status = useAuthGuard();
+
+  if (status === 'loading') {
+    return <GuardLoader />;
+  }
+
+  if (status === 'unauthenticated') {
+    return <Redirect href="/(auth)/welcome" />;
+  }
+
+  if (status === 'incomplete' || status === 'onboarding') {
+    return <Redirect href="/(onboarding)" />;
+  }
+
+  if (status === 'incomplete-google') {
+    return <Redirect href="/(onboarding)/complete-account" />;
+  }
+
+  return <AuthenticatedTabs />;
 }
 
 const styles = StyleSheet.create({
