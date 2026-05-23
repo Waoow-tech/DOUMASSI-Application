@@ -21,6 +21,7 @@ import { FeedTabPlaceholder } from '@/features/feed/components/FeedTabPlaceholde
 import { useDeletePost } from '@/features/feed/hooks/useDeletePost';
 import { useFeed, useToggleFeedBookmark, useToggleFeedLike } from '@/features/feed/hooks/useFeed';
 import { type FeedStory, useFeedStories } from '@/features/feed/hooks/useFeedStories';
+import { useUnhidePost } from '@/features/feed/hooks/useHiddenPosts';
 import { SearchBar } from '@/features/profile/components/SearchBar';
 import { supabase } from '@/lib/supabase';
 
@@ -31,6 +32,12 @@ type FeedTabId = 'social' | 'business' | 'ai' | 'wallet' | 'soon';
 type FeedTab = {
   id: FeedTabId;
   label: string;
+};
+
+type FeedToast = {
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
 };
 
 const FEED_TABS: FeedTab[] = [
@@ -187,7 +194,8 @@ export function FeedScreen() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<PostCardPost | null>(null);
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<FeedToast | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollOffsets = useRef<Record<FeedTabId, number>>({
     social: 0,
     business: 0,
@@ -203,6 +211,7 @@ export function FeedScreen() {
   const likeMutation = useToggleFeedLike();
   const bookmarkMutation = useToggleFeedBookmark();
   const deletePostMutation = useDeletePost();
+  const unhidePostMutation = useUnhidePost();
 
   const posts = useMemo(
     () => feedQuery.data?.pages.flatMap((page) => page.posts) ?? [],
@@ -215,10 +224,23 @@ export function FeedScreen() {
     });
   }, []);
 
-  const showToast = useCallback((message: string) => {
-    setToastMessage(message);
-    setTimeout(() => setToastMessage(null), 1800);
+  const showToast = useCallback((nextToast: FeedToast, durationMs = 1800) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+
+    setToast(nextToast);
+    toastTimeoutRef.current = setTimeout(() => setToast(null), durationMs);
   }, []);
+
+  useEffect(
+    () => () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   const restoreScroll = useCallback((tab: FeedTabId) => {
     requestAnimationFrame(() => {
@@ -269,7 +291,7 @@ export function FeedScreen() {
         await supabase.rpc('increment_share_count', { p_post_id: selectedPost.id });
       }
     } catch {
-      showToast('Partage impossible, réessayez');
+      showToast({ message: 'Partage impossible, réessayez' });
     }
   }, [selectedPost, showToast]);
 
@@ -278,12 +300,30 @@ export function FeedScreen() {
 
     try {
       await deletePostMutation.mutateAsync(selectedPost.id);
-      showToast('Post supprimé');
+      showToast({ message: 'Post supprimé' });
     } catch {
-      showToast('Suppression impossible, réessayez');
+      showToast({ message: 'Suppression impossible, réessayez' });
       throw new Error('Delete post failed');
     }
   }, [deletePostMutation, selectedPost, showToast]);
+
+  const handleHiddenSelectedPost = useCallback(() => {
+    if (!selectedPost) return;
+    const hiddenPostId = selectedPost.id;
+
+    showToast(
+      {
+        message: 'Post masqué',
+        actionLabel: 'Annuler',
+        onAction: () => {
+          unhidePostMutation.mutate(hiddenPostId, {
+            onSuccess: () => showToast({ message: 'Affichage restauré' }),
+          });
+        },
+      },
+      5000
+    );
+  }, [selectedPost, showToast, unhidePostMutation]);
 
   const renderPost = useCallback(
     ({ item }: { item: PostCardPost }) => (
@@ -380,13 +420,14 @@ export function FeedScreen() {
             onOpenChange={setIsPostMenuOpen}
             onShare={() => void handleMenuShare()}
             onDelete={handleDeleteSelectedPost}
-            onHidden={() => showToast('Post masqué')}
-            onCopyLink={() => showToast('Lien copié')}
+            onHidden={handleHiddenSelectedPost}
+            onHideError={() => showToast({ message: 'Masquage impossible, réessayez' })}
+            onCopyLink={() => showToast({ message: 'Lien copié' })}
           />
         ) : null}
 
-        {toastMessage ? (
-          <YStack
+        {toast ? (
+          <XStack
             position="absolute"
             bottom={24}
             alignSelf="center"
@@ -396,11 +437,24 @@ export function FeedScreen() {
             borderRadius="$4"
             paddingHorizontal="$4"
             paddingVertical="$2"
+            alignItems="center"
+            gap="$4"
           >
             <Text color="$color" fontSize={13} fontWeight="700">
-              {toastMessage}
+              {toast.message}
             </Text>
-          </YStack>
+            {toast.actionLabel && toast.onAction ? (
+              <Text
+                color="$accentNeon"
+                fontSize={13}
+                fontWeight="700"
+                onPress={toast.onAction}
+                pressStyle={{ opacity: 0.72 }}
+              >
+                {toast.actionLabel}
+              </Text>
+            ) : null}
+          </XStack>
         ) : null}
       </YStack>
     </SafeAreaView>

@@ -4,6 +4,8 @@ import type { PostCardPost } from '@/components/feed/PostCard';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
+import { useHiddenPosts } from './useHiddenPosts';
+
 const PAGE_SIZE = 20;
 
 type FeedRpcRow = PostCardPost & {
@@ -78,11 +80,21 @@ async function fetchFeedPage(cursor: string | null) {
 }
 
 export function useFeed() {
+  const hiddenPostsQuery = useHiddenPosts();
+  const hiddenIds = hiddenPostsQuery.data ?? [];
+
   return useInfiniteQuery({
     queryKey: FEED_QUERY_KEY,
     queryFn: ({ pageParam }) => fetchFeedPage(pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+    select: (data) => ({
+      ...data,
+      pages: data.pages.map((page) => ({
+        ...page,
+        posts: page.posts.filter((post) => !hiddenIds.includes(post.id)),
+      })),
+    }),
   });
 }
 

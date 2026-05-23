@@ -8,6 +8,7 @@ import {
   Bell,
   ChevronLeft,
   ChevronRight,
+  EyeOff,
   FileText,
   Info,
   KeyRound,
@@ -395,6 +396,11 @@ export default function SettingsScreen() {
               checked={Boolean(profile.is_private)}
               disabled={privacyToggle.isPending}
               onCheckedChange={handlePrivacyChange}
+            />
+            <SettingRow
+              icon={EyeOff}
+              label="Posts masqués"
+              onPress={() => router.push('/settings/hidden-posts')}
               isLast
             />
           </Section>
