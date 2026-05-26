@@ -24,14 +24,12 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
+        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+        "android.permission.POST_NOTIFICATIONS"
       ],
       "package": "com.doumassi.app"
     },
@@ -46,7 +44,21 @@
       "expo-video",
       "expo-localization",
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "DOUMASSI a besoin d'accéder à votre caméra pour publier des photos et des stories.",
+          "microphonePermission": "DOUMASSI a besoin du microphone pour enregistrer des stories vidéo.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#10D970"
+        }
+      ]
     ],
     "extra": {
       "router": {},

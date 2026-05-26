@@ -46,6 +46,9 @@ module.exports = defineConfig([
       'web-build/**',
       'babel.config.js',
       'metro.config.js',
+      // Edge Functions Supabase tournent en Deno (imports URL, env.Deno...).
+      // Pas le même runtime que l'app RN ; on les exclut du lint Node/RN.
+      'supabase/functions/**',
     ],
   },
 
