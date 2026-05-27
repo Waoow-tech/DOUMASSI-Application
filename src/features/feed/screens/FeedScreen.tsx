@@ -274,7 +274,7 @@ export function FeedScreen() {
   );
 
   const handleStoryPress = useCallback((story: FeedStory) => {
-    router.push(story.isMe ? '/profile' : `/profile/${story.id}`);
+    router.push(story.isMe ? '/story/create' : `/profile/${story.id}`);
   }, []);
 
   const handleMenuPress = useCallback((post: PostCardPost) => {

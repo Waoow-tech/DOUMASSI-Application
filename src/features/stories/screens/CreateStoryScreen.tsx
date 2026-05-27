@@ -8,7 +8,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useNavigation } from 'expo-router';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { CameraIcon, FlipHorizontal, ImageIcon, RefreshCw } from 'lucide-react-native';
+import { CameraIcon, ImageIcon, RefreshCw, SwitchCamera } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -94,9 +94,33 @@ export function CreateStoryScreen() {
   );
 
   useEffect(() => {
-    if (capturedAsset?.type === 'video') {
-      videoPlayer.play();
+    if (capturedAsset?.type !== 'video') return;
+
+    const checkAndPlay = () => {
+      // player.duration is in seconds (expo-video); asset.duration from picker is unreliable on Android
+      if (videoPlayer.duration > MAX_VIDEO_SECS) {
+        setCapturedAsset(null);
+        Alert.alert('Vidéo trop longue', `La vidéo doit faire ${MAX_VIDEO_SECS} secondes maximum.`);
+      } else {
+        videoPlayer.play();
+      }
+    };
+
+    if (videoPlayer.status === 'readyToPlay') {
+      checkAndPlay();
+      return;
     }
+
+    const sub = videoPlayer.addListener('statusChange', ({ status }) => {
+      if (status === 'readyToPlay') {
+        checkAndPlay();
+        sub.remove();
+      } else if (status === 'error') {
+        sub.remove();
+      }
+    });
+
+    return () => sub.remove();
   }, [capturedAsset, videoPlayer]);
 
   // -------------------------------------------------------------------------
@@ -109,9 +133,10 @@ export function CreateStoryScreen() {
     timerRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - recordStartRef.current) / 1000);
       setTimerSecs(Math.min(elapsed, MAX_VIDEO_SECS));
-      if (elapsed >= MAX_VIDEO_SECS && timerRef.current) {
-        clearInterval(timerRef.current);
+      if (elapsed >= MAX_VIDEO_SECS) {
+        clearInterval(timerRef.current!);
         timerRef.current = null;
+        cameraRef.current?.stopRecording();
       }
     }, 500);
   };
@@ -177,7 +202,7 @@ export function CreateStoryScreen() {
     }
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: mode === 'image' ? ['images'] : ['videos'],
+        mediaTypes: ['images', 'videos'],
         videoMaxDuration: MAX_VIDEO_SECS,
         quality: 1,
       });
@@ -185,7 +210,15 @@ export function CreateStoryScreen() {
       const asset = result.assets[0];
       if (!asset) return;
       if (asset.type === 'video') {
-        const duration = asset.duration ? Math.round(asset.duration / 1000) : undefined;
+        const durationSecs = asset.duration ? asset.duration / 1000 : 0;
+        if (durationSecs > MAX_VIDEO_SECS) {
+          Alert.alert(
+            'Vidéo trop longue',
+            `La vidéo doit faire ${MAX_VIDEO_SECS} secondes maximum.`
+          );
+          return;
+        }
+        const duration = durationSecs > 0 ? Math.round(durationSecs) : undefined;
         setCapturedAsset({ uri: asset.uri, type: 'video', durationSeconds: duration });
       } else {
         setCapturedAsset({ uri: asset.uri, type: 'image' });
@@ -403,7 +436,7 @@ export function CreateStoryScreen() {
               padding="$2"
               pressStyle={{ opacity: 0.6 }}
             >
-              <FlipHorizontal size={26} color="#FFFFFF" />
+              <SwitchCamera size={26} color="#FFFFFF" />
             </YStack>
           </XStack>
 
