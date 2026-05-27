@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Text, XStack, YStack } from 'tamagui';
 
 import { useCreateStory } from '@/features/stories/hooks/useCreateStory';
+import { logger } from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
 // Constantes
@@ -146,8 +147,10 @@ export function CreateStoryScreen() {
         const duration = Math.max(1, Math.round((Date.now() - recordStartRef.current) / 1000));
         setCapturedAsset({ uri: result.uri, type: 'video', durationSeconds: duration });
       }
-    } catch {
-      // Arrêt normal via stopRecording() — pas une vraie erreur
+    } catch (err) {
+      // stopRecording() résout recordAsync (pas de throw) — toute exception ici est réelle
+      Alert.alert('Erreur', "L'enregistrement vidéo a échoué. Vérifiez les permissions micro.");
+      logger.error('video_recording_failed', err instanceof Error ? err : new Error(String(err)));
     } finally {
       setIsRecording(false);
       stopTimer();

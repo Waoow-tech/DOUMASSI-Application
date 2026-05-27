@@ -32,7 +32,10 @@ export function useCreateStory() {
     },
 
     onSuccess: () => {
+      // ['stories', 'feed'] → future visionneuse E4-13 (get_stories_feed RPC)
+      // ['feed', 'stories']  → barre stories du feed (useFeedStories)
       void queryClient.invalidateQueries({ queryKey: ['stories', 'feed'] });
+      void queryClient.invalidateQueries({ queryKey: ['feed', 'stories'] });
     },
 
     onError: (error) => {
