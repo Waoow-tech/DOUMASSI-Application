@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <title>DOUMASSI</title>
+    <meta
+      name="description"
+      content="DOUMASSI — la super-app sociale, business, créative et financière."
+    />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
+        background: #000;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: 480px;
+        width: 100%;
+        text-align: center;
+      }
+      .logo {
+        font-size: 42px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 16px;
+        color: #fff;
+      }
+      .logo span {
+        color: #10d970;
+      }
+      .tagline {
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.72);
+        margin-bottom: 40px;
+      }
+      .post-redirect {
+        background: rgba(16, 217, 112, 0.08);
+        border: 1px solid rgba(16, 217, 112, 0.32);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 24px;
+        display: none;
+      }
+      .post-redirect.visible {
+        display: block;
+      }
+      .post-redirect strong {
+        color: #10d970;
+      }
+      .buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 24px;
+        border-radius: 10px;
+        background: #fff;
+        color: #000;
+        font-weight: 700;
+        font-size: 15px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: opacity 0.15s ease;
+        border: none;
+      }
+      .btn:hover {
+        opacity: 0.85;
+      }
+      .btn-secondary {
+        background: transparent;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .footer {
+        margin-top: 64px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.4);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="logo">DOU<span>MASSI</span></div>
+      <p class="tagline">La super-app sociale, créative et financière.</p>
+
+      <!-- Affiché dynamiquement si on arrive via un lien /post/[id] ou /profile/[id] -->
+      <div id="post-redirect" class="post-redirect">
+        <p>
+          Pour voir <strong id="post-redirect-label">ce contenu</strong>,
+          <strong>ouvrez l'app DOUMASSI</strong>.
+        </p>
+      </div>
+
+      <div class="buttons">
+        <a class="btn" href="#" id="store-ios">App Store</a>
+        <a class="btn btn-secondary" href="#" id="store-android">Google Play</a>
+      </div>
+
+      <p class="footer">© 2026 DOUMASSI</p>
+    </main>
+
+    <script>
+      // Si on arrive via /post/[id], /profile/[id] ou /story/[userId],
+      // on personnalise le bandeau. La route catch-all de vercel.json sert
+      // toujours ce même index.html.
+      (function () {
+        var path = window.location.pathname;
+        var labels = { post: 'ce post', profile: 'ce profil', story: 'cette story' };
+        var match = path.match(/^\/(post|profile|story)\/[^/]+/);
+        if (match) {
+          var label = labels[match[1]] || 'ce contenu';
+          var el = document.getElementById('post-redirect-label');
+          if (el) el.textContent = label;
+          document.getElementById('post-redirect').classList.add('visible');
+        }
+      })();
+    </script>
+  </body>
+</html>
