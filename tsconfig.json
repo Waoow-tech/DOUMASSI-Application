@@ -10,5 +10,14 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    ".expo",
+    "android",
+    "ios",
+    "dist",
+    "web-build",
+    "supabase/functions/**"
+  ]
 }
