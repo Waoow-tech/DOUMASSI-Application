@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Text, XStack, YStack } from 'tamagui';
 
 import type { PostCardPost } from '@/components/feed/PostCard';
+import { CommentsSheet } from '@/features/comments/components/CommentsSheet';
 import {
   useIncrementPostShare,
   usePostDetail,
@@ -289,10 +290,12 @@ function ErrorState() {
 }
 
 export default function PostDetailRoute() {
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id?: string; focus?: string }>();
   const postId = typeof params.id === 'string' ? params.id : undefined;
+  const shouldFocusComments = params.focus === 'comments';
   const insets = useSafeAreaInsets();
   const [overlaysVisible, setOverlaysVisible] = useState(true);
+  const [commentsOpen, setCommentsOpen] = useState(false);
 
   const postQuery = usePostDetail(postId);
   const likeMutation = useTogglePostLike(postId ?? '');
@@ -301,6 +304,7 @@ export default function PostDetailRoute() {
 
   const post = postQuery.data;
   const hadAvailablePost = useRef(false);
+  const didOpenFocusedComments = useRef(false);
 
   useEffect(() => {
     if (post) {
@@ -313,6 +317,13 @@ export default function PostDetailRoute() {
       router.back();
     }
   }, [postQuery.data, postQuery.isLoading]);
+
+  useEffect(() => {
+    if (!post || !shouldFocusComments || didOpenFocusedComments.current) return;
+
+    didOpenFocusedComments.current = true;
+    setCommentsOpen(true);
+  }, [post, shouldFocusComments]);
 
   const handleToggleOverlays = useCallback(() => {
     setOverlaysVisible((current) => !current);
@@ -329,7 +340,7 @@ export default function PostDetailRoute() {
   }, [bookmarkMutation]);
 
   const handleComments = useCallback(() => {
-    Alert.alert('Bientôt disponible', 'Les commentaires arrivent bientôt.');
+    setCommentsOpen(true);
   }, []);
 
   const handleShare = useCallback(async () => {
@@ -366,82 +377,88 @@ export default function PostDetailRoute() {
   const isLive = Boolean((post as PostCardPost & { is_live?: boolean }).is_live);
 
   return (
-    <View style={styles.screen}>
-      <StatusBar hidden />
-      <Pressable
-        onPress={handleToggleOverlays}
-        onLongPress={() => {}}
-        delayLongPress={240}
-        style={StyleSheet.absoluteFill}
-        accessibilityRole="button"
-        accessibilityLabel="Afficher ou masquer les contrôles du post"
-      >
-        <PostBackground post={post} />
-      </Pressable>
+    <>
+      <View style={styles.screen}>
+        <StatusBar hidden />
+        <Pressable
+          onPress={handleToggleOverlays}
+          onLongPress={() => {}}
+          delayLongPress={240}
+          style={StyleSheet.absoluteFill}
+          accessibilityRole="button"
+          accessibilityLabel="Afficher ou masquer les contrôles du post"
+        >
+          <PostBackground post={post} />
+        </Pressable>
 
-      {overlaysVisible ? (
-        <>
-          <BottomScrim />
-          <LiveBadge visible={isLive} />
+        {overlaysVisible ? (
+          <>
+            <BottomScrim />
+            <LiveBadge visible={isLive} />
 
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={HIT_SLOP}
-            accessibilityRole="button"
-            accessibilityLabel="Fermer le post"
-            style={[styles.closeButton, { top: insets.top + 12 }]}
-          >
-            <X size={24} color="#FFFFFF" strokeWidth={2.5} />
-          </Pressable>
-
-          <YStack position="absolute" right={ACTION_RIGHT} bottom={ACTION_BOTTOM} gap={24}>
-            <ActionButton
-              label={`Aimer le post de @${post.author_username}`}
-              count={post.like_count}
-              onPress={handleLike}
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={HIT_SLOP}
+              accessibilityRole="button"
+              accessibilityLabel="Fermer le post"
+              style={[styles.closeButton, { top: insets.top + 12 }]}
             >
-              <Animated.View>
-                <Heart
+              <X size={24} color="#FFFFFF" strokeWidth={2.5} />
+            </Pressable>
+
+            <YStack position="absolute" right={ACTION_RIGHT} bottom={ACTION_BOTTOM} gap={24}>
+              <ActionButton
+                label={`Aimer le post de @${post.author_username}`}
+                count={post.like_count}
+                onPress={handleLike}
+              >
+                <Animated.View>
+                  <Heart
+                    size={32}
+                    color={post.liked_by_me ? LIKE_RED : '#FFFFFF'}
+                    fill={post.liked_by_me ? LIKE_RED : 'transparent'}
+                  />
+                </Animated.View>
+              </ActionButton>
+
+              <ActionButton
+                label={`Commenter le post de @${post.author_username}`}
+                count={post.comment_count}
+                onPress={handleComments}
+              >
+                <MessageCircle size={32} color="#FFFFFF" />
+              </ActionButton>
+
+              <ActionButton
+                label={`Partager le post de @${post.author_username}`}
+                count={post.share_count}
+                onPress={() => void handleShare()}
+              >
+                <Send size={32} color="#FFFFFF" />
+              </ActionButton>
+
+              <ActionButton
+                label={`Sauvegarder le post de @${post.author_username}`}
+                count={post.bookmark_count}
+                onPress={handleBookmark}
+              >
+                <Bookmark
                   size={32}
-                  color={post.liked_by_me ? LIKE_RED : '#FFFFFF'}
-                  fill={post.liked_by_me ? LIKE_RED : 'transparent'}
+                  color={post.bookmarked_by_me ? ACCENT_NEON : '#FFFFFF'}
+                  fill={post.bookmarked_by_me ? ACCENT_NEON : 'transparent'}
                 />
-              </Animated.View>
-            </ActionButton>
+              </ActionButton>
+            </YStack>
 
-            <ActionButton
-              label={`Commenter le post de @${post.author_username}`}
-              count={post.comment_count}
-              onPress={handleComments}
-            >
-              <MessageCircle size={32} color="#FFFFFF" />
-            </ActionButton>
+            <Footer post={post} onOpenProfile={handleOpenProfile} />
+          </>
+        ) : null}
+      </View>
 
-            <ActionButton
-              label={`Partager le post de @${post.author_username}`}
-              count={post.share_count}
-              onPress={() => void handleShare()}
-            >
-              <Send size={32} color="#FFFFFF" />
-            </ActionButton>
-
-            <ActionButton
-              label={`Sauvegarder le post de @${post.author_username}`}
-              count={post.bookmark_count}
-              onPress={handleBookmark}
-            >
-              <Bookmark
-                size={32}
-                color={post.bookmarked_by_me ? ACCENT_NEON : '#FFFFFF'}
-                fill={post.bookmarked_by_me ? ACCENT_NEON : 'transparent'}
-              />
-            </ActionButton>
-          </YStack>
-
-          <Footer post={post} onOpenProfile={handleOpenProfile} />
-        </>
+      {postId ? (
+        <CommentsSheet postId={postId} open={commentsOpen} onOpenChange={setCommentsOpen} />
       ) : null}
-    </View>
+    </>
   );
 }
 
