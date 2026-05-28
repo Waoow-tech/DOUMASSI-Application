@@ -3,8 +3,9 @@ import { Send, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
+  Alert,
+  Keyboard,
+  type KeyboardEvent,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -39,6 +40,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
   const [content, setContent] = useState('');
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const comments = commentsQuery.data ?? [];
   const trimmedContent = content.trim();
@@ -66,18 +68,44 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
     if (!open) {
       setReplyTo(null);
       setContent('');
+      setKeyboardHeight(0);
     }
   }, [open]);
+
+  useEffect(() => {
+    const handleKeyboardShow = (event: KeyboardEvent) => {
+      setKeyboardHeight(Math.max(0, event.endCoordinates.height - insets.bottom));
+    };
+    const handleKeyboardHide = () => setKeyboardHeight(0);
+
+    const showSubscription = Keyboard.addListener('keyboardDidShow', handleKeyboardShow);
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', handleKeyboardHide);
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, [insets.bottom]);
 
   const handleSend = async () => {
     if (!trimmedContent || createComment.isPending) return;
 
-    await createComment.mutateAsync({
-      content: trimmedContent,
-      parentCommentId: replyTo?.id ?? null,
-    });
-    setContent('');
-    setReplyTo(null);
+    try {
+      await createComment.mutateAsync({
+        content: trimmedContent,
+        parentCommentId: replyTo?.id ?? null,
+      });
+      setContent('');
+      setReplyTo(null);
+      Keyboard.dismiss();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Impossible de publier ce commentaire pour le moment.';
+
+      Alert.alert('Commentaire non envoyé', `${message} Réessayez dans un instant.`);
+    }
   };
 
   const renderItem = ({ item }: { item: Comment }) => (
@@ -92,14 +120,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
   );
 
   return (
-    <Sheet
-      modal
-      open={open}
-      onOpenChange={onOpenChange}
-      snapPoints={[82]}
-      dismissOnSnapToBottom
-      moveOnKeyboardChange
-    >
+    <Sheet modal open={open} onOpenChange={onOpenChange} snapPoints={[82]} dismissOnSnapToBottom>
       <Sheet.Overlay
         animation="lazy"
         enterStyle={{ opacity: 0 }}
@@ -112,144 +133,135 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
         borderTopRightRadius={18}
         overflow="hidden"
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.keyboardAvoiding}
-        >
-          <YStack flex={1}>
-            <YStack
-              paddingTop={10}
-              paddingHorizontal={16}
-              paddingBottom={10}
-              borderBottomWidth={StyleSheet.hairlineWidth}
-              borderBottomColor="$borderColor"
-            >
-              <XStack justifyContent="center" marginBottom={10}>
-                <YStack
-                  width={38}
-                  height={4}
-                  borderRadius={2}
-                  backgroundColor="$borderColorHover"
-                />
+        <YStack flex={1}>
+          <YStack
+            paddingTop={10}
+            paddingHorizontal={16}
+            paddingBottom={10}
+            borderBottomWidth={StyleSheet.hairlineWidth}
+            borderBottomColor="$borderColor"
+          >
+            <XStack justifyContent="center" marginBottom={10}>
+              <YStack width={38} height={4} borderRadius={2} backgroundColor="$borderColorHover" />
+            </XStack>
+
+            <XStack alignItems="center">
+              <XStack alignItems="baseline" gap={8} flex={1}>
+                <Text color="$color" fontSize={18} fontWeight="800">
+                  Commentaires
+                </Text>
+                <Text color="$textSecondary" fontSize={13} fontWeight="700">
+                  {countLabel}
+                </Text>
               </XStack>
 
-              <XStack alignItems="center">
-                <XStack alignItems="baseline" gap={8} flex={1}>
-                  <Text color="$color" fontSize={18} fontWeight="800">
-                    Commentaires
-                  </Text>
-                  <Text color="$textSecondary" fontSize={13} fontWeight="700">
-                    {countLabel}
-                  </Text>
-                </XStack>
+              <Pressable
+                onPress={() => onOpenChange(false)}
+                hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+                accessibilityRole="button"
+                accessibilityLabel="Fermer les commentaires"
+                style={styles.closeButton}
+              >
+                <X size={20} color="#FFFFFF" />
+              </Pressable>
+            </XStack>
+          </YStack>
 
+          <View style={[styles.listContainer, { marginBottom: keyboardHeight }]}>
+            {commentsQuery.isLoading ? (
+              <YStack flex={1} alignItems="center" justifyContent="center">
+                <ActivityIndicator color="#FFFFFF" />
+              </YStack>
+            ) : (
+              <FlashList
+                data={comments}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.listContent}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={commentsQuery.isRefetching}
+                    onRefresh={() => void commentsQuery.refetch()}
+                    tintColor="#FFFFFF"
+                  />
+                }
+                ListEmptyComponent={
+                  <YStack flex={1} alignItems="center" justifyContent="center" paddingTop={88}>
+                    <Text color="$textSecondary" fontSize={15} fontWeight="600">
+                      Soyez le premier à commenter !
+                    </Text>
+                  </YStack>
+                }
+              />
+            )}
+          </View>
+
+          <YStack
+            borderTopWidth={StyleSheet.hairlineWidth}
+            borderTopColor="$borderColor"
+            paddingHorizontal={16}
+            paddingTop={replyTo ? 8 : 12}
+            paddingBottom={Math.max(insets.bottom, 12)}
+            backgroundColor="$background"
+            gap={8}
+            style={[styles.composer, { bottom: keyboardHeight }]}
+          >
+            {replyTo ? (
+              <XStack
+                alignItems="center"
+                gap={8}
+                backgroundColor="$surface"
+                borderRadius={8}
+                paddingHorizontal={10}
+                paddingVertical={8}
+              >
+                <Text color="$textSecondary" fontSize={13} flex={1} numberOfLines={1}>
+                  Réponse à @{replyTo.author_username}
+                </Text>
                 <Pressable
-                  onPress={() => onOpenChange(false)}
-                  hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+                  onPress={() => setReplyTo(null)}
+                  hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
                   accessibilityRole="button"
-                  accessibilityLabel="Fermer les commentaires"
-                  style={styles.closeButton}
+                  accessibilityLabel="Annuler la réponse"
                 >
-                  <X size={20} color="#FFFFFF" />
+                  <X size={16} color="#A1A1AA" />
                 </Pressable>
               </XStack>
-            </YStack>
+            ) : null}
 
-            <View style={styles.listContainer}>
-              {commentsQuery.isLoading ? (
-                <YStack flex={1} alignItems="center" justifyContent="center">
-                  <ActivityIndicator color="#FFFFFF" />
-                </YStack>
-              ) : (
-                <FlashList
-                  data={comments}
-                  renderItem={renderItem}
-                  keyExtractor={(item) => item.id}
-                  contentContainerStyle={styles.listContent}
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={commentsQuery.isRefetching}
-                      onRefresh={() => void commentsQuery.refetch()}
-                      tintColor="#FFFFFF"
-                    />
-                  }
-                  ListEmptyComponent={
-                    <YStack flex={1} alignItems="center" justifyContent="center" paddingTop={88}>
-                      <Text color="$textSecondary" fontSize={15} fontWeight="600">
-                        Soyez le premier à commenter !
-                      </Text>
-                    </YStack>
-                  }
-                />
-              )}
-            </View>
+            <XStack alignItems="flex-end" gap={10}>
+              <TextInput
+                value={content}
+                onChangeText={setContent}
+                placeholder="Ajouter un commentaire..."
+                placeholderTextColor="#8E8E93"
+                multiline
+                maxLength={500}
+                style={styles.input}
+                returnKeyType="default"
+              />
 
-            <YStack
-              borderTopWidth={StyleSheet.hairlineWidth}
-              borderTopColor="$borderColor"
-              paddingHorizontal={16}
-              paddingTop={replyTo ? 8 : 12}
-              paddingBottom={Math.max(insets.bottom, 12)}
-              backgroundColor="$background"
-              gap={8}
-            >
-              {replyTo ? (
-                <XStack
-                  alignItems="center"
-                  gap={8}
-                  backgroundColor="$surface"
-                  borderRadius={8}
-                  paddingHorizontal={10}
-                  paddingVertical={8}
-                >
-                  <Text color="$textSecondary" fontSize={13} flex={1} numberOfLines={1}>
-                    Réponse à @{replyTo.author_username}
-                  </Text>
-                  <Pressable
-                    onPress={() => setReplyTo(null)}
-                    hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Annuler la réponse"
-                  >
-                    <X size={16} color="#A1A1AA" />
-                  </Pressable>
-                </XStack>
-              ) : null}
-
-              <XStack alignItems="flex-end" gap={10}>
-                <TextInput
-                  value={content}
-                  onChangeText={setContent}
-                  placeholder="Ajouter un commentaire..."
-                  placeholderTextColor="#8E8E93"
-                  multiline
-                  maxLength={500}
-                  style={styles.input}
-                  returnKeyType="default"
-                />
-
-                <Button
-                  width={42}
-                  height={42}
-                  borderRadius={999}
-                  padding={0}
-                  alignItems="center"
-                  justifyContent="center"
-                  backgroundColor={trimmedContent ? '#10D970' : '$surfaceElevated'}
-                  disabled={!trimmedContent || createComment.isPending}
-                  onPress={() => void handleSend()}
-                  pressStyle={{ opacity: 0.86, scale: 0.98 }}
-                >
-                  {createComment.isPending ? (
-                    <ActivityIndicator color="#000000" size="small" />
-                  ) : (
-                    <Send size={18} color={trimmedContent ? '#000000' : '#8E8E93'} />
-                  )}
-                </Button>
-              </XStack>
-            </YStack>
+              <Button
+                width={42}
+                height={42}
+                borderRadius={999}
+                padding={0}
+                alignItems="center"
+                justifyContent="center"
+                backgroundColor={trimmedContent ? '#10D970' : '$surfaceElevated'}
+                disabled={!trimmedContent || createComment.isPending}
+                onPress={() => void handleSend()}
+                pressStyle={{ opacity: 0.86, scale: 0.98 }}
+              >
+                {createComment.isPending ? (
+                  <ActivityIndicator color="#000000" size="small" />
+                ) : (
+                  <Send size={18} color={trimmedContent ? '#000000' : '#8E8E93'} />
+                )}
+              </Button>
+            </XStack>
           </YStack>
-        </KeyboardAvoidingView>
+        </YStack>
       </Sheet.Frame>
     </Sheet>
   );
@@ -264,6 +276,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  composer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
   input: {
     flex: 1,
     minHeight: 42,
@@ -277,12 +294,10 @@ const styles = StyleSheet.create({
     paddingTop: 11,
     paddingBottom: 10,
   },
-  keyboardAvoiding: {
-    flex: 1,
-  },
   listContainer: {
     flex: 1,
     minHeight: 0,
+    paddingBottom: 82,
   },
   listContent: {
     paddingBottom: 12,
