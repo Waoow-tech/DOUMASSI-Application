@@ -6,6 +6,7 @@ import {
   Alert,
   Keyboard,
   type KeyboardEvent,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -31,6 +32,19 @@ type CommentsSheetProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+const KEYBOARD_COMPOSER_OFFSET = Platform.OS === 'android' ? 56 : 12;
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+
+  return 'Impossible de publier ce commentaire pour le moment.';
+}
+
 export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps) {
   const insets = useSafeAreaInsets();
   const commentsQuery = useComments(postId);
@@ -44,6 +58,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
 
   const comments = commentsQuery.data ?? [];
   const trimmedContent = content.trim();
+  const keyboardOffset = keyboardHeight > 0 ? keyboardHeight + KEYBOARD_COMPOSER_OFFSET : 0;
 
   const countLabel = useMemo(() => {
     if (comments.length === 0) return '0';
@@ -99,10 +114,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
       setReplyTo(null);
       Keyboard.dismiss();
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Impossible de publier ce commentaire pour le moment.';
+      const message = getErrorMessage(error);
 
       Alert.alert('Commentaire non envoyé', `${message} Réessayez dans un instant.`);
     }
@@ -167,7 +179,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
             </XStack>
           </YStack>
 
-          <View style={[styles.listContainer, { marginBottom: keyboardHeight }]}>
+          <View style={[styles.listContainer, { marginBottom: keyboardOffset }]}>
             {commentsQuery.isLoading ? (
               <YStack flex={1} alignItems="center" justifyContent="center">
                 <ActivityIndicator color="#FFFFFF" />
@@ -204,7 +216,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
             paddingBottom={Math.max(insets.bottom, 12)}
             backgroundColor="$background"
             gap={8}
-            style={[styles.composer, { bottom: keyboardHeight }]}
+            style={[styles.composer, { bottom: keyboardOffset }]}
           >
             {replyTo ? (
               <XStack
