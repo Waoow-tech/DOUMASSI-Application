@@ -201,6 +201,7 @@ async function runUploadAttempt(
   url: string,
   localUri: string,
   accessToken: string,
+  contentType: string,
   onProgress: (pct: number) => void,
   signal: AbortSignal | undefined
 ) {
@@ -213,7 +214,7 @@ async function runUploadAttempt(
         // Les DEUX en-têtes sont requis, sinon Storage refuse la requête.
         apikey: env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'image/jpeg',
+        'Content-Type': contentType,
         'Cache-Control': CACHE_CONTROL,
         'x-upsert': 'false',
       },
@@ -243,18 +244,18 @@ async function runUploadAttempt(
 }
 
 /**
- * Upload du fichier local dans le bucket `posts`, avec progression.
- * Retry 3x (backoff exponentiel 1s/2s/4s) autour de createUploadTask ;
- * token rafraîchi à chaque tentative. Lève une UploadError('upload') si
- * toutes les tentatives échouent.
+ * Upload du fichier local dans le bucket Supabase Storage indiqué, avec progression.
+ * Retry 3x (backoff exponentiel 1s/2s/4s). Token rafraîchi à chaque tentative.
  */
 async function uploadToStorage(
   localUri: string,
   path: string,
+  bucket: string,
+  contentType: string,
   options: { onProgress?: (pct: number) => void; signal?: AbortSignal }
 ): Promise<void> {
   const { signal } = options;
-  const url = `${env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`;
+  const url = `${env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/${bucket}/${path}`;
 
   // Progression monotone : on n'émet jamais une valeur < à la précédente
   // (sinon la barre recule à chaque retry, qui repart de 0 octet).
@@ -278,7 +279,14 @@ async function uploadToStorage(
     try {
       // Token FRAIS à chaque tentative (il peut expirer entre 2 retries).
       const { access_token } = await getFreshSession();
-      const response = await runUploadAttempt(url, localUri, access_token, emitProgress, signal);
+      const response = await runUploadAttempt(
+        url,
+        localUri,
+        access_token,
+        contentType,
+        emitProgress,
+        signal
+      );
 
       // Upload physiquement terminé → succès, même si un abort tardif a eu lieu.
       if (response && response.status >= 200 && response.status < 300) {
@@ -341,7 +349,7 @@ export async function uploadPostImage(
     const path = `${session.user.id}/${uuidv4()}.jpg`;
 
     try {
-      await uploadToStorage(compressedUri, path, { onProgress, signal });
+      await uploadToStorage(compressedUri, path, BUCKET, 'image/jpeg', { onProgress, signal });
     } finally {
       // L'image compressée est traitée (uploadée ou échec) → on libère le temp.
       await cleanupTempFiles([compressedUri]);
@@ -359,6 +367,63 @@ export async function uploadPostImage(
       logger.debug('upload_post_image_cancelled');
     } else {
       logger.error('upload_post_image_failed', uploadError);
+    }
+    throw uploadError;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Stories upload (E4-12)
+// ---------------------------------------------------------------------------
+
+const STORIES_BUCKET = 'stories';
+
+export interface UploadStoryMediaResult {
+  publicUrl: string;
+  path: string;
+}
+
+/**
+ * Upload un média (image compressée ou vidéo mp4 brute) dans le bucket `stories`.
+ * Images : même pipeline de compression que uploadPostImage.
+ * Vidéos  : upload direct (expo-camera livre déjà du mp4, pas de recompression).
+ */
+export async function uploadStoryMedia(
+  uri: string,
+  mediaType: 'image' | 'video',
+  options?: { signal?: AbortSignal }
+): Promise<UploadStoryMediaResult> {
+  const signal = options?.signal;
+
+  try {
+    if (signal?.aborted) throw abortedError();
+
+    const session = await getFreshSession();
+    const ext = mediaType === 'image' ? 'jpg' : 'mp4';
+    const contentType = mediaType === 'image' ? 'image/jpeg' : 'video/mp4';
+    const path = `${session.user.id}/${uuidv4()}.${ext}`;
+
+    let localUri = uri;
+    if (mediaType === 'image') {
+      localUri = await compressImage(uri, DEFAULT_QUALITY);
+    }
+
+    try {
+      await uploadToStorage(localUri, path, STORIES_BUCKET, contentType, { signal });
+    } finally {
+      if (mediaType === 'image') {
+        await cleanupTempFiles([localUri]);
+      }
+    }
+
+    const { data } = supabase.storage.from(STORIES_BUCKET).getPublicUrl(path);
+    return { publicUrl: data.publicUrl, path };
+  } catch (error) {
+    const uploadError = error instanceof UploadError ? error : new UploadError('upload', error);
+    if (signal?.aborted) {
+      logger.debug('upload_story_media_cancelled');
+    } else {
+      logger.error('upload_story_media_failed', uploadError);
     }
     throw uploadError;
   }
