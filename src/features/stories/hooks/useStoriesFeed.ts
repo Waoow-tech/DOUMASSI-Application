@@ -92,3 +92,32 @@ export function useMarkStoryViewed() {
     // à true au prochain refetch naturel (next mount, focus, etc.).
   });
 }
+
+// ---------------------------------------------------------------------------
+// useStoryViewers — réservé à l'auteur d'une story (la RPC vérifie en interne)
+// ---------------------------------------------------------------------------
+
+export type StoryViewer = {
+  viewer_id: string;
+  viewer_username: string;
+  viewer_avatar_url: string | null;
+  viewed_at: string;
+};
+
+export function useStoryViewers(storyId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ['stories', 'viewers', storyId],
+    enabled: enabled && Boolean(storyId),
+    queryFn: async (): Promise<StoryViewer[]> => {
+      const { data, error } = await supabase.rpc('get_story_viewers', {
+        p_story_id: storyId,
+      });
+      if (error) {
+        logger.warn('get_story_viewers failed', { message: error.message, storyId });
+        throw error;
+      }
+      return (data ?? []) as StoryViewer[];
+    },
+    staleTime: 15_000,
+  });
+}

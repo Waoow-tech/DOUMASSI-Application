@@ -17,7 +17,7 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { X } from 'lucide-react-native';
+import { Eye, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -30,6 +30,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Text, XStack, YStack } from 'tamagui';
 
+import { StoryViewersSheet } from '@/features/stories/components/StoryViewersSheet';
 import {
   type StoryItem,
   type StoryUserGroup,
@@ -169,6 +170,15 @@ export function StoryViewerScreen() {
   const [userIndex, setUserIndex] = useState(0);
   const [storyIndex, setStoryIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [viewersOpen, setViewersOpen] = useState(false);
+
+  // Pause la story tant que la sheet « Vu par » est ouverte, reprend à la
+  // fermeture. Pattern Insta : on ne veut pas que la story avance pendant
+  // qu'on regarde la liste des viewers.
+  const handleViewersOpenChange = useCallback((open: boolean) => {
+    setViewersOpen(open);
+    setIsPaused(open);
+  }, []);
 
   const progress = useRef(new Animated.Value(0)).current;
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
@@ -364,6 +374,27 @@ export function StoryViewerScreen() {
           </Pressable>
         </XStack>
       </View>
+
+      {/* Footer « Vu par » — auteur seulement */}
+      {currentGroup.is_mine ? (
+        <Pressable
+          onPress={() => handleViewersOpenChange(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Voir qui a vu cette story"
+          style={[styles.viewersButton, { bottom: insets.bottom + 24 }]}
+        >
+          <Eye size={18} color="#FFFFFF" />
+          <Text color="#FFFFFF" fontSize={13} fontWeight="700">
+            Vu par
+          </Text>
+        </Pressable>
+      ) : null}
+
+      <StoryViewersSheet
+        storyId={currentStory.id}
+        open={viewersOpen}
+        onOpenChange={handleViewersOpenChange}
+      />
     </View>
   );
 }
@@ -424,5 +455,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  viewersButton: {
+    position: 'absolute',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
 });
