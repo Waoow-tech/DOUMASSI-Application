@@ -286,7 +286,7 @@ export function FeedScreen() {
     if (!selectedPost) return;
 
     try {
-      const result = await Share.share({ message: `doumassi://post/${selectedPost.id}` });
+      const result = await Share.share({ message: `https://doumassi.app/post/${selectedPost.id}` });
       if (result.action === Share.sharedAction) {
         await supabase.rpc('increment_share_count', { p_post_id: selectedPost.id });
       }

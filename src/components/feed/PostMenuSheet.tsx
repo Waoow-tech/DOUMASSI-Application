@@ -41,7 +41,7 @@ export function PostMenuSheet({
   };
 
   const handleCopyLink = async () => {
-    await Clipboard.setStringAsync(`doumassi://post/${postId}`);
+    await Clipboard.setStringAsync(`https://doumassi.app/post/${postId}`);
     close();
     onCopyLink?.();
     Alert.alert('Lien copié', 'Le lien du post est prêt à être partagé.');
