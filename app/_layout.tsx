@@ -3,6 +3,7 @@
 
 import { Inter_400Regular, Inter_700Bold, useFonts } from '@expo-google-fonts/inter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as Notifications from 'expo-notifications';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -19,6 +20,19 @@ import config from '../tamagui.config';
 // Init Sentry au top du module (avant le premier render).
 // No-op si EXPO_PUBLIC_SENTRY_DSN n'est pas défini.
 initSentry();
+
+// Comportement des notifs reçues quand l'app est au foreground (E4-14).
+// shouldShowBanner+List : affiche la notif même si l'app est ouverte
+// (sinon les notifs reçues en foreground sont silencieuses, ce qui rend
+// le debug + l'UX bizarres pendant la démo).
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 // Garde le splash natif visible pendant le chargement des fonts
 SplashScreen.preventAutoHideAsync().catch(() => {
