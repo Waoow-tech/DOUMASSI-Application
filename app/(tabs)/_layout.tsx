@@ -8,7 +8,9 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import GuardLoader from '@/components/GuardLoader';
 import { useAuthGuard } from '@/features/auth/hooks/useAuthGuard';
+import { usePushToken } from '@/features/auth/hooks/usePushToken';
 import { useNotificationsUnreadCount } from '@/features/notifications/hooks/useNotifications';
+import { usePushNotificationsHandler } from '@/features/notifications/hooks/usePushNotificationsHandler';
 
 const ACTIVE_COLOR = '#FFFFFF';
 const INACTIVE_COLOR = '#A0A0A0';
@@ -38,6 +40,13 @@ function TabIcon({ Icon, focused }: TabIconProps) {
 // niveau du parent qui short-circuit avec des Redirect).
 function AuthenticatedTabs() {
   const unreadCount = useNotificationsUnreadCount();
+  // E4-14 : enregistrement du push token + handler de tap. Montés ici
+  // (sous le guard auth) car on a besoin d'une session valide pour le
+  // PATCH profiles.push_token, et il est inutile d'écouter les taps
+  // avant que l'app soit dans son état authentifié.
+  usePushToken();
+  usePushNotificationsHandler();
+
   return (
     <Tabs
       screenOptions={{
