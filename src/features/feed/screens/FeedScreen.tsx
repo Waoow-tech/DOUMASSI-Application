@@ -274,7 +274,15 @@ export function FeedScreen() {
   );
 
   const handleStoryPress = useCallback((story: FeedStory) => {
-    router.push(story.isMe ? '/story/create' : `/profile/${story.id}`);
+    // E4-13 : si la story est la mienne et qu'elle a `hasUnseenStory` à
+    // false (= pas de story active ou toutes vues), j'ouvre l'écran de
+    // création. Sinon je vais à la visionneuse pour voir mes stories ou
+    // celles d'un autre user.
+    if (story.isMe && !story.hasUnseenStory) {
+      router.push('/story/create');
+      return;
+    }
+    router.push(`/story/${story.id}`);
   }, []);
 
   const handleMenuPress = useCallback((post: PostCardPost) => {
