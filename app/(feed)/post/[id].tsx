@@ -349,8 +349,8 @@ export default function PostDetailRoute() {
     try {
       const result = await Share.share({
         message: post.content.trim()
-          ? `${post.content}\n\ndoumassi://post/${post.id}`
-          : `doumassi://post/${post.id}`,
+          ? `${post.content}\n\nhttps://doumassi.app/post/${post.id}`
+          : `https://doumassi.app/post/${post.id}`,
       });
 
       if (result.action === Share.sharedAction) {

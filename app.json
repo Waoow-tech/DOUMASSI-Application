@@ -14,7 +14,8 @@
       "backgroundColor": "#000000"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "associatedDomains": ["applinks:doumassi.app"]
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +32,31 @@
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "package": "com.doumassi.app"
+      "package": "com.doumassi.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "doumassi.app",
+              "pathPrefix": "/post"
+            },
+            {
+              "scheme": "https",
+              "host": "doumassi.app",
+              "pathPrefix": "/profile"
+            },
+            {
+              "scheme": "https",
+              "host": "doumassi.app",
+              "pathPrefix": "/story"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
