@@ -83,7 +83,8 @@
         {
           "color": "#10D970"
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "extra": {
       "router": {},

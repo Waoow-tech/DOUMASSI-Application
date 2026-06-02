@@ -8,6 +8,7 @@ import {
   Bell,
   ChevronLeft,
   ChevronRight,
+  Download,
   EyeOff,
   FileText,
   Info,
@@ -30,6 +31,7 @@ import { type ReactNode, useMemo, useState } from 'react';
 import { Alert, Linking, Platform } from 'react-native';
 import { Button, ScrollView, Sheet, Spinner, Switch, Text, XStack, YStack } from 'tamagui';
 
+import { useExportMyData } from '@/features/auth/hooks/useExportMyData';
 import { useLogout } from '@/features/auth/hooks/useLogout';
 import { useBlockedUsers } from '@/features/profile/hooks/useBlockedUsers';
 import {
@@ -299,7 +301,33 @@ export default function SettingsScreen() {
   const profileQuery = useCurrentProfile();
   const blockedUsersQuery = useBlockedUsers();
   const privacyToggle = usePrivacyToggle();
+  const exportMyData = useExportMyData();
   const copy = t.auth.settings;
+
+  const handleExportData = async () => {
+    try {
+      const result = await exportMyData.mutateAsync();
+      logger.info('Settings export OK', {
+        sizeBytes: result.sizeBytes,
+        truncated: result.truncated,
+      });
+      // Pas d'Alert de succès : le sheet de partage natif a déjà été présenté.
+      // Si l'export est tronqué (volume > 10 MB, rarissime en bêta), on alerte.
+      if (result.truncated) {
+        Alert.alert(
+          'Export partiel',
+          'Votre export contient un très grand volume de données. Les messages les plus anciens ont été tronqués. Contactez le support pour un export complet.'
+        );
+      }
+    } catch (err) {
+      Alert.alert(
+        'Export impossible',
+        err instanceof Error
+          ? err.message
+          : "L'export a échoué. Réessayez dans un instant ou contactez le support."
+      );
+    }
+  };
 
   // MOCK - sera cable au sprint Notifications.
   const [pushNotifications, setPushNotifications] = useState(true);
@@ -431,6 +459,14 @@ export default function SettingsScreen() {
               icon={KeyRound}
               label="Changer le mot de passe"
               onPress={() => router.push('/(feed)/settings/change-password')}
+            />
+            <SettingRow
+              icon={Download}
+              label="Exporter mes données"
+              trailing={exportMyData.isPending ? <Spinner color="$accentNeon" /> : null}
+              onPress={() => {
+                if (!exportMyData.isPending) void handleExportData();
+              }}
             />
             <SettingRow
               icon={Trash2}
