@@ -25,8 +25,14 @@ async function getCurrentUserId(): Promise<string | null> {
 }
 
 /**
- * Récupère la demande de suppression active (cancelled_at IS NULL) pour
- * l'user courant, si elle existe.
+ * Récupère la demande de suppression active (cancelled_at IS NULL,
+ * processed_at IS NULL) pour l'user courant, si elle existe.
+ *
+ * Le filtre `processed_at IS NULL` est important : depuis E8-08, un job
+ * cron quotidien marque les demandes traitées avec un timestamp dans cette
+ * colonne. Une row processed correspond à un compte déjà anonymisé — l'user
+ * concerné ne peut plus se reconnecter (ban_until), mais par défense en
+ * profondeur on filtre quand même côté lecture.
  */
 export function useDeletionRequest() {
   return useQuery({
@@ -40,6 +46,7 @@ export function useDeletionRequest() {
         .select('user_id, requested_at, reason, scheduled_delete_at, cancelled_at')
         .eq('user_id', userId)
         .is('cancelled_at', null)
+        .is('processed_at', null)
         .maybeSingle();
 
       if (error) {
@@ -98,7 +105,8 @@ export function useCancelDeletion() {
         .from('deletion_requests')
         .update({ cancelled_at: new Date().toISOString() })
         .eq('user_id', userId)
-        .is('cancelled_at', null);
+        .is('cancelled_at', null)
+        .is('processed_at', null);
 
       if (error) throw error;
 
