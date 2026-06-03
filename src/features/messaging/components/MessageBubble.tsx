@@ -1,0 +1,124 @@
+// MessageBubble — E6-03.
+//
+// Affichage d'un message dans la liste. Bulle à droite si c'est moi, à
+// gauche sinon. Gère trois états :
+//   - normal : contenu + horodatage relatif
+//   - edited : ajoute « modifié » à côté de l'horodatage
+//   - deleted : remplace le contenu par « 🚫 Message supprimé » en italique
+// Long-press sur ma propre bulle → ouvre la sheet d'actions (parent).
+
+import { memo, useCallback } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
+import { Text, XStack, YStack } from 'tamagui';
+
+import type { MessageRow } from '../hooks/useConversationMessages';
+
+const COLORS = {
+  myBubble: '#10D970', // accent neon
+  myText: '#000000',
+  otherBubble: '#1A1A1A',
+  otherText: '#FFFFFF',
+  metaText: '#A0A0A0',
+  deletedText: '#6B6B6B',
+};
+
+function formatTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  // Format HH:MM pour les messages du jour. Pour la bêta on garde simple.
+  return date.toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+export interface MessageBubbleProps {
+  message: MessageRow;
+  isMine: boolean;
+  onLongPress?: (message: MessageRow) => void;
+}
+
+function MessageBubbleComponent({ message, isMine, onLongPress }: MessageBubbleProps) {
+  const isDeleted = message.deleted_at !== null;
+  const isEdited = message.edited_at !== null;
+  const isOptimistic = message.id.startsWith('temp-');
+  const isFailed = message.id.startsWith('failed-');
+
+  const handleLongPress = useCallback(() => {
+    if (!isMine || isDeleted) return;
+    onLongPress?.(message);
+  }, [isMine, isDeleted, onLongPress, message]);
+
+  return (
+    <XStack
+      paddingHorizontal="$3"
+      paddingVertical={3}
+      justifyContent={isMine ? 'flex-end' : 'flex-start'}
+    >
+      <Pressable
+        onLongPress={handleLongPress}
+        delayLongPress={350}
+        style={[
+          styles.bubble,
+          {
+            backgroundColor: isMine ? COLORS.myBubble : COLORS.otherBubble,
+            borderBottomRightRadius: isMine ? 4 : 18,
+            borderBottomLeftRadius: isMine ? 18 : 4,
+            opacity: isOptimistic || isFailed ? 0.6 : 1,
+          },
+        ]}
+      >
+        <YStack gap={2}>
+          {isDeleted ? (
+            <Text
+              fontSize={14}
+              fontStyle="italic"
+              color={isMine ? COLORS.myText : COLORS.deletedText}
+            >
+              🚫 Message supprimé
+            </Text>
+          ) : (
+            <Text fontSize={15} lineHeight={20} color={isMine ? COLORS.myText : COLORS.otherText}>
+              {message.content ?? ''}
+            </Text>
+          )}
+
+          <XStack gap={4} alignItems="center" justifyContent="flex-end">
+            {isFailed ? (
+              <Text fontSize={11} color="#FF3B30" fontWeight="600">
+                Échec — taper pour réessayer
+              </Text>
+            ) : (
+              <>
+                {isEdited && !isDeleted ? (
+                  <Text
+                    fontSize={11}
+                    color={isMine ? 'rgba(0,0,0,0.55)' : COLORS.metaText}
+                    fontStyle="italic"
+                  >
+                    modifié
+                  </Text>
+                ) : null}
+                <Text fontSize={11} color={isMine ? 'rgba(0,0,0,0.55)' : COLORS.metaText}>
+                  {formatTime(message.created_at)}
+                </Text>
+              </>
+            )}
+          </XStack>
+        </YStack>
+      </Pressable>
+    </XStack>
+  );
+}
+
+const styles = StyleSheet.create({
+  bubble: {
+    maxWidth: '78%',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+  },
+});
+
+export const MessageBubble = memo(MessageBubbleComponent);
