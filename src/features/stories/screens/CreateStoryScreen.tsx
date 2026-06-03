@@ -405,14 +405,26 @@ export function CreateStoryScreen() {
             justifyContent="space-between"
           >
             {/* Bouton fermer */}
-            <YStack onPress={() => router.back()} padding="$2" pressStyle={{ opacity: 0.6 }}>
+            <YStack
+              onPress={() => router.back()}
+              padding="$2"
+              pressStyle={{ opacity: 0.6 }}
+              accessibilityRole="button"
+              accessibilityLabel="Fermer la caméra"
+            >
               <Text color="#FFFFFF" fontSize={22} fontWeight="700">
                 ✕
               </Text>
             </YStack>
 
             {/* Toggle Photo / Vidéo */}
-            <XStack backgroundColor="rgba(0,0,0,0.5)" borderRadius="$10" padding={4} gap={2}>
+            <XStack
+              backgroundColor="rgba(0,0,0,0.5)"
+              borderRadius="$10"
+              padding={4}
+              gap={2}
+              accessibilityRole="tablist"
+            >
               {(['image', 'video'] as CameraMode[]).map((m) => (
                 <YStack
                   key={m}
@@ -422,6 +434,9 @@ export function CreateStoryScreen() {
                   paddingHorizontal="$3"
                   paddingVertical="$1"
                   pressStyle={{ opacity: 0.7 }}
+                  accessibilityRole="tab"
+                  accessibilityLabel={m === 'image' ? 'Mode photo' : 'Mode vidéo'}
+                  accessibilityState={{ selected: mode === m }}
                 >
                   <Text color={mode === m ? '#000000' : '#FFFFFF'} fontSize={13} fontWeight="600">
                     {m === 'image' ? 'Photo' : 'Vidéo'}
@@ -435,6 +450,8 @@ export function CreateStoryScreen() {
               onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
               padding="$2"
               pressStyle={{ opacity: 0.6 }}
+              accessibilityRole="button"
+              accessibilityLabel="Changer de caméra (avant / arrière)"
             >
               <SwitchCamera size={26} color="#FFFFFF" />
             </YStack>
@@ -474,6 +491,8 @@ export function CreateStoryScreen() {
               onPress={() => void handlePickFromGallery()}
               padding="$3"
               pressStyle={{ opacity: 0.6 }}
+              accessibilityRole="button"
+              accessibilityLabel="Choisir depuis la galerie"
             >
               <ImageIcon size={30} color="#FFFFFF" />
             </YStack>
@@ -484,6 +503,10 @@ export function CreateStoryScreen() {
               onLongPress={mode === 'video' ? () => void handleStartRecording() : undefined}
               onPressOut={handlePressOut}
               delayLongPress={200}
+              accessibilityRole="button"
+              accessibilityLabel={
+                mode === 'image' ? 'Prendre une photo' : 'Maintenir pour enregistrer une vidéo'
+              }
             >
               <YStack
                 width={72}

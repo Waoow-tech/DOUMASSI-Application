@@ -337,7 +337,12 @@ export function StoryViewerScreen() {
           gap={10}
           pointerEvents="box-none"
         >
-          <Pressable onPress={handleOpenAuthor} style={styles.authorRow}>
+          <Pressable
+            onPress={handleOpenAuthor}
+            style={styles.authorRow}
+            accessibilityRole="button"
+            accessibilityLabel={`Ouvrir le profil de @${currentGroup.author_username}`}
+          >
             {currentGroup.author_avatar_url ? (
               <Image
                 source={{ uri: currentGroup.author_avatar_url }}
