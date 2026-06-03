@@ -405,6 +405,9 @@ export default function SettingsScreen() {
               pressStyle={{ opacity: 0.6 }}
               cursor="pointer"
               padding="$1"
+              accessibilityRole="button"
+              accessibilityLabel="Retour"
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <ChevronLeft size={24} color="#FFFFFF" />
             </YStack>
