@@ -167,8 +167,8 @@ describe('useRealtimeConversation', () => {
       });
 
       const data = qc.getQueryData<InfiniteData<Page>>(conversationMessagesQueryKey(CONV));
-      expect(data?.pages[0].messages[0]).toEqual(newMsg);
-      expect(data?.pages[0].messages).toHaveLength(2);
+      expect(data?.pages[0]?.messages[0]).toEqual(newMsg);
+      expect(data?.pages[0]?.messages).toHaveLength(2);
     });
 
     it('ne duplique pas un message déjà présent (dédoublonnage)', () => {
@@ -181,7 +181,7 @@ describe('useRealtimeConversation', () => {
       });
 
       const data = qc.getQueryData<InfiniteData<Page>>(conversationMessagesQueryKey(CONV));
-      expect(data?.pages[0].messages).toHaveLength(1);
+      expect(data?.pages[0]?.messages).toHaveLength(1);
     });
 
     it('ne plante pas si le cache est vide (pages non initialisées)', () => {
@@ -207,8 +207,8 @@ describe('useRealtimeConversation', () => {
       });
 
       const data = qc.getQueryData<InfiniteData<Page>>(conversationMessagesQueryKey(CONV));
-      expect(data?.pages[0].messages[0].content).toBe('modifié');
-      expect(data?.pages[0].messages[0].edited_at).toBe('2026-06-04T10:01:00.000Z');
+      expect(data?.pages[0]?.messages[0]?.content).toBe('modifié');
+      expect(data?.pages[0]?.messages[0]?.edited_at).toBe('2026-06-04T10:01:00.000Z');
     });
 
     it('applique le soft-delete (deleted_at) dans le cache', () => {
@@ -222,7 +222,7 @@ describe('useRealtimeConversation', () => {
       });
 
       const data = qc.getQueryData<InfiniteData<Page>>(conversationMessagesQueryKey(CONV));
-      expect(data?.pages[0].messages[0].deleted_at).toBe('2026-06-04T10:01:00.000Z');
+      expect(data?.pages[0]?.messages[0]?.deleted_at).toBe('2026-06-04T10:01:00.000Z');
     });
 
     it('ne plante pas si le message est absent du cache (ghost UPDATE)', () => {
@@ -235,8 +235,8 @@ describe('useRealtimeConversation', () => {
       });
 
       const data = qc.getQueryData<InfiniteData<Page>>(conversationMessagesQueryKey(CONV));
-      expect(data?.pages[0].messages).toHaveLength(1);
-      expect(data?.pages[0].messages[0].id).toBe('msg-1');
+      expect(data?.pages[0]?.messages).toHaveLength(1);
+      expect(data?.pages[0]?.messages[0]?.id).toBe('msg-1');
     });
 
     it('met à jour un message dans une page paginée (page 2)', () => {
@@ -261,8 +261,8 @@ describe('useRealtimeConversation', () => {
       });
 
       const data = qc.getQueryData<InfiniteData<Page>>(conversationMessagesQueryKey(CONV));
-      expect(data?.pages[1].messages[0].content).toBe('mis à jour');
-      expect(data?.pages[0].messages[0].id).toBe('msg-p1'); // page 1 intacte
+      expect(data?.pages[1]?.messages[0]?.content).toBe('mis à jour');
+      expect(data?.pages[0]?.messages[0]?.id).toBe('msg-p1'); // page 1 intacte
     });
   });
 
@@ -447,9 +447,9 @@ describe('useRealtimeConversation', () => {
 
       const data = qc.getQueryData<InfiniteData<Page>>(conversationMessagesQueryKey(CONV));
       // Les deux coexistent jusqu'à ce que useSendMessage.onSuccess supprime le temp
-      expect(data?.pages[0].messages).toHaveLength(2);
-      expect(data?.pages[0].messages[0].id).toBe('real-uuid-123');
-      expect(data?.pages[0].messages[1].id).toBe('temp-abc');
+      expect(data?.pages[0]?.messages).toHaveLength(2);
+      expect(data?.pages[0]?.messages[0]?.id).toBe('real-uuid-123');
+      expect(data?.pages[0]?.messages[1]?.id).toBe('temp-abc');
     });
   });
 });
