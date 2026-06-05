@@ -21,6 +21,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,6 +40,7 @@ import {
   useEditMessage,
   useMarkConversationRead,
 } from '@/features/messaging/hooks/useMessageActions';
+import { useRealtimeConversation } from '@/features/messaging/hooks/useRealtimeConversation';
 import { useSendMessage } from '@/features/messaging/hooks/useSendMessage';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
@@ -54,10 +56,12 @@ export function ConversationScreen() {
   const markRead = useMarkConversationRead();
   const editMessage = useEditMessage(convId ?? '');
   const deleteMessage = useDeleteMessage(convId ?? '');
+  const { isRealtimeDown } = useRealtimeConversation(convId);
 
   const [meId, setMeId] = useState<string | null>(null);
   const [actionSheetOpen, setActionSheetOpen] = useState(false);
   const [actionMessage, setActionMessage] = useState<MessageRow | null>(null);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   // Récupère mon user_id au mount pour identifier les bulles "à moi"
   useEffect(() => {
@@ -124,6 +128,12 @@ export function ConversationScreen() {
     if (messagesQuery.hasNextPage && !messagesQuery.isFetchingNextPage) {
       void messagesQuery.fetchNextPage();
     }
+  }, [messagesQuery]);
+
+  const handlePullToRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    await messagesQuery.refetch();
+    setIsManualRefreshing(false);
   }, [messagesQuery]);
 
   const renderMessage = useCallback(
@@ -194,6 +204,20 @@ export function ConversationScreen() {
         {/* Pas de bouton appel pour la bêta (Daily.co Sprint 6+) */}
       </XStack>
 
+      {/* Bannière dégradée : Realtime indisponible → tirez pour rafraîchir */}
+      {isRealtimeDown && (
+        <YStack
+          backgroundColor="$surface"
+          paddingHorizontal="$3"
+          paddingVertical={6}
+          alignItems="center"
+        >
+          <Text fontSize={12} color="$textSecondary" textAlign="center">
+            Connexion temps réel indisponible — tirez pour rafraîchir
+          </Text>
+        </YStack>
+      )}
+
       {/* Liste messages */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -214,6 +238,14 @@ export function ConversationScreen() {
               onEndReached={handleLoadMore}
               onEndReachedThreshold={0.3}
               contentContainerStyle={styles.listContent}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isManualRefreshing}
+                  onRefresh={() => void handlePullToRefresh()}
+                  tintColor="#10D970"
+                  colors={['#10D970']}
+                />
+              }
               ListFooterComponent={
                 messagesQuery.isFetchingNextPage ? (
                   <YStack paddingVertical="$3" alignItems="center">
