@@ -18,51 +18,63 @@ de contournements ci-dessous. Le résultat attendu est toujours **bloqué**
 3. Cocher la case ci-dessous correspondante
 4. Si un test échoue (`ok=f`), créer un ticket bug et corriger AVANT la bêta
 
-## Matrice de résultats — DEV
+## Matrice de résultats — DEV (exécuté 2026-06-05)
 
 | #    | Test                                                                 | Table             | Op     | Attendu | Observé | OK  |
 | ---- | -------------------------------------------------------------------- | ----------------- | ------ | ------- | ------- | --- |
-| 3.1  | Alice lit le post privé de Bob                                       | posts             | SELECT | 0 ligne | \_\_\_  | ☐   |
-| 3.2  | Alice insère un post au nom de Bob                                   | posts             | INSERT | bloqué  | \_\_\_  | ☐   |
-| 3.3  | Alice modifie le post de Bob                                         | posts             | UPDATE | 0 ligne | \_\_\_  | ☐   |
-| 3.4  | Alice supprime le post de Bob                                        | posts             | DELETE | 0 ligne | \_\_\_  | ☐   |
-| 3.5  | Alice lit les messages d'une conv où elle n'est pas participante     | messages          | SELECT | 0 ligne | \_\_\_  | ☐   |
-| 3.6  | Alice insère un message dans une conv où elle n'est pas participante | messages          | INSERT | bloqué  | \_\_\_  | ☐   |
-| 3.7  | Alice insère un message avec `sender_id = Bob` (usurpation)          | messages          | INSERT | bloqué  | \_\_\_  | ☐   |
-| 3.8  | Alice modifie un message envoyé par Bob                              | messages          | UPDATE | 0 ligne | \_\_\_  | ☐   |
-| 3.9  | Alice lit la deletion_request de Bob                                 | deletion_requests | SELECT | 0 ligne | \_\_\_  | ☐   |
-| 3.10 | Alice appelle `_anonymize_user_profile(Bob)` (escalade privilèges)   | (RPC)             | EXEC   | bloqué  | \_\_\_  | ☐   |
-| 3.11 | Alice lit les notifications de Bob                                   | notifications     | SELECT | 0 ligne | \_\_\_  | ☐   |
-| 3.12 | Alice lit la table blocks de Bob                                     | blocks            | SELECT | 0 ligne | \_\_\_  | ☐   |
+| 3.1  | Alice lit le post privé de Bob                                       | posts             | SELECT | 0 ligne | 0 ligne | ✅  |
+| 3.2  | Alice insère un post au nom de Bob                                   | posts             | INSERT | bloqué  | BLOCKED | ✅  |
+| 3.3  | Alice modifie le post de Bob                                         | posts             | UPDATE | 0 ligne | 0 rows  | ✅  |
+| 3.4  | Alice supprime le post de Bob                                        | posts             | DELETE | 0 ligne | 0 rows  | ✅  |
+| 3.5  | Alice lit les messages d'une conv où elle n'est pas participante     | messages          | SELECT | 0 ligne | 0 ligne | ✅  |
+| 3.6  | Alice insère un message dans une conv où elle n'est pas participante | messages          | INSERT | bloqué  | BLOCKED | ✅  |
+| 3.7  | Alice insère un message avec `sender_id = Bob` (usurpation)          | messages          | INSERT | bloqué  | BLOCKED | ✅  |
+| 3.8  | Alice modifie un message envoyé par Bob                              | messages          | UPDATE | 0 ligne | 0 rows  | ✅  |
+| 3.9  | Alice lit la deletion_request de Bob                                 | deletion_requests | SELECT | 0 ligne | 0 ligne | ✅  |
+| 3.10 | Alice appelle `_anonymize_user_profile(Bob)` (escalade privilèges)   | (RPC)             | EXEC   | bloqué  | BLOCKED | ✅  |
+| 3.11 | Alice lit les notifications de Bob                                   | notifications     | SELECT | 0 ligne | 0 ligne | ✅  |
+| 3.12 | Alice lit la table blocks de Bob                                     | blocks            | SELECT | 0 ligne | 0 ligne | ✅  |
 
-## Matrice de résultats — STAGING
+## Matrice de résultats — STAGING (exécuté 2026-06-05)
 
-Reproduire l'audit sur STAGING après DEV.
+| #    | Test            | Table             | Op     | Attendu | Observé | OK  |
+| ---- | --------------- | ----------------- | ------ | ------- | ------- | --- |
+| 3.1  | Identique à DEV | posts             | SELECT | 0 ligne | 0 ligne | ✅  |
+| 3.2  | Identique à DEV | posts             | INSERT | bloqué  | BLOCKED | ✅  |
+| 3.3  | Identique à DEV | posts             | UPDATE | 0 ligne | 0 rows  | ✅  |
+| 3.4  | Identique à DEV | posts             | DELETE | 0 ligne | 0 rows  | ✅  |
+| 3.5  | Identique à DEV | messages          | SELECT | 0 ligne | 0 ligne | ✅  |
+| 3.6  | Identique à DEV | messages          | INSERT | bloqué  | BLOCKED | ✅  |
+| 3.7  | Identique à DEV | messages          | INSERT | bloqué  | BLOCKED | ✅  |
+| 3.8  | Identique à DEV | messages          | UPDATE | 0 ligne | 0 rows  | ✅  |
+| 3.9  | Identique à DEV | deletion_requests | SELECT | 0 ligne | 0 ligne | ✅  |
+| 3.10 | Identique à DEV | (RPC)             | EXEC   | bloqué  | BLOCKED | ✅  |
+| 3.11 | Identique à DEV | notifications     | SELECT | 0 ligne | 0 ligne | ✅  |
+| 3.12 | Identique à DEV | blocks            | SELECT | 0 ligne | 0 ligne | ✅  |
 
-| #    | Test | Table             | Op     | Attendu | Observé | OK  |
-| ---- | ---- | ----------------- | ------ | ------- | ------- | --- |
-| 3.1  | …    | posts             | SELECT | 0 ligne | \_\_\_  | ☐   |
-| 3.2  | …    | posts             | INSERT | bloqué  | \_\_\_  | ☐   |
-| 3.3  | …    | posts             | UPDATE | 0 ligne | \_\_\_  | ☐   |
-| 3.4  | …    | posts             | DELETE | 0 ligne | \_\_\_  | ☐   |
-| 3.5  | …    | messages          | SELECT | 0 ligne | \_\_\_  | ☐   |
-| 3.6  | …    | messages          | INSERT | bloqué  | \_\_\_  | ☐   |
-| 3.7  | …    | messages          | INSERT | bloqué  | \_\_\_  | ☐   |
-| 3.8  | …    | messages          | UPDATE | 0 ligne | \_\_\_  | ☐   |
-| 3.9  | …    | deletion_requests | SELECT | 0 ligne | \_\_\_  | ☐   |
-| 3.10 | …    | (RPC)             | EXEC   | bloqué  | \_\_\_  | ☐   |
-| 3.11 | …    | notifications     | SELECT | 0 ligne | \_\_\_  | ☐   |
-| 3.12 | …    | blocks            | SELECT | 0 ligne | \_\_\_  | ☐   |
+## 🚨 Bug critique découvert et corrigé pendant l'audit
+
+**Récursion infinie sur `conversation_participants` SELECT policy** — la policy créée dans PR #192 (20260602120000_messaging_schema.sql) contenait un `EXISTS (SELECT FROM conversation_participants WHERE ...)` qui se référençait elle-même. Toute lecture sur cette table déclenchait l'erreur Postgres :
+
+> `infinite recursion detected in policy for relation "conversation_participants"` (SQLSTATE 42P17)
+
+**Impact évité** : les écrans messagerie (PR #196 conversation, PR #203 liste conversations, PR #201 Realtime) auraient tous crashé en bêta dès qu'un user authentifié ouvrait un fil de discussion. Le bug n'était pas visible en dev local parce que les fixtures de test direct via SQL bypassaient la RLS.
+
+**Fix appliqué** : migration `20260605120100_fix_conversation_participants_rls_recursion.sql` qui :
+
+1. Crée une fonction `fn_is_conversation_participant(uuid)` `SECURITY DEFINER STABLE` qui lit la table sans déclencher la RLS
+2. Remplace le subquery récursif de la policy par un appel à cette fonction
+
+Audit re-exécuté après fix : **12/12 OK**.
 
 ## Conclusion
 
-À remplir après exécution :
-
-- Date : **\_\_\_\_**
-- Nombre de tests : 12 par environnement
-- Nombre de succès : **_ / 12 (DEV) — _** / 12 (STAGING)
-- Failles identifiées : aucune ou voir tickets ouverts
-- Validation bêta : ☐ Go ☐ No-go
+- **Date** : 2026-06-05
+- **Nombre de tests** : 12 par environnement
+- **Nombre de succès** : **12 / 12 (DEV)** — **12 / 12 (STAGING)**
+- **Failles identifiées** :
+  - 1 bug critique de **récursion infinie sur `conversation_participants`** SELECT policy — corrigé via migration `20260605120100_fix_conversation_participants_rls_recursion.sql` (fonction helper SECURITY DEFINER `fn_is_conversation_participant`)
+- **Validation bêta** : ✅ **Go** — la sécurité RLS de l'application est validée pour l'ouverture de la bêta du 12 juin
 
 ## Limites de cet audit
 
