@@ -49,6 +49,10 @@ module.exports = defineConfig([
       // Edge Functions Supabase tournent en Deno (imports URL, env.Deno...).
       // Pas le même runtime que l'app RN ; on les exclut du lint Node/RN.
       'supabase/functions/**',
+      // Tests Jest — runtime de test, pas couvert par les configs RN.
+      '**/__tests__/**',
+      '**/*.test.ts',
+      '**/*.test.tsx',
     ],
   },
 

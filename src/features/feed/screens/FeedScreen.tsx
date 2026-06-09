@@ -56,7 +56,7 @@ const PLACEHOLDERS = {
   },
   ai: {
     Icon: Sparkles,
-    title: 'Studio AI bientôt disponible',
+    title: 'Doumassi AI bientôt disponible',
     subtitle: "Assistant IA, génération d'images et plus.",
   },
   wallet: {
