@@ -1,4 +1,4 @@
-// Tab Hash — placeholder Studio AI, vrai écran livré en Sprint 5-6.
+// Tab Hash — placeholder Doumassi AI, vrai écran livré en Sprint 5-6.
 
 import { Sparkles } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
@@ -10,7 +10,7 @@ export default function StudioAIRoute() {
       <YStack flex={1} alignItems="center" justifyContent="center" gap="$3" paddingHorizontal="$6">
         <Sparkles size={64} color="#A0A0A0" strokeWidth={1.5} />
         <Text color="$color" fontSize={18} fontWeight="700" textAlign="center">
-          Studio AI bientôt disponible
+          Doumassi AI bientôt disponible
         </Text>
         <Text color="$textSecondary" fontSize={14} textAlign="center">
           Assistant IA, génération d&apos;images et plus.
