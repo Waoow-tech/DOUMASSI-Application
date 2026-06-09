@@ -104,7 +104,12 @@ function Avatar({
         overflow="hidden"
       >
         {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.avatarImage} contentFit="cover" />
+          <Image
+            source={{ uri: avatarUrl }}
+            style={styles.avatarImage}
+            contentFit="cover"
+            transition={200}
+          />
         ) : (
           <Text color="$color" fontSize={16} fontWeight="700">
             {initial}

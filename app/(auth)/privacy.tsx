@@ -19,7 +19,7 @@ import {
   privacyFrSections,
 } from '@/features/legal/content/privacy';
 
-const logoSource = require('../../assets/Logo-Doumassi.png') as number;
+const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
 function SectionList({ sections }: { sections: LegalSection[] }) {
   return (

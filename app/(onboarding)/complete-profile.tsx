@@ -23,7 +23,7 @@ import { useAvatarPicker } from '@/features/auth/hooks/useAvatarPicker';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
-const logoSource = require('../../assets/Logo-Doumassi.png') as number;
+const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
 // ---------------------------------------------------------------------------
 // Types
