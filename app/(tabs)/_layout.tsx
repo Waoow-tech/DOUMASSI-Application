@@ -1,10 +1,11 @@
 // Layout TabBar 5 onglets — Sprint 3 E8-04
-// Onglets : Home / Bell / Hash (Studio AI) / Send (Messages) / User (Profile)
+// Onglets : Home / Bell / Hash (Doumassi AI) / Send (Messages) / User (Profile)
 // Auth guard + redirect vers welcome/onboarding si pas connecté.
 
 import { Redirect, Tabs } from 'expo-router';
 import { Bell, Hash, Home, Send, User } from 'lucide-react-native';
 import { Platform, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import GuardLoader from '@/components/GuardLoader';
 import { useAuthGuard } from '@/features/auth/hooks/useAuthGuard';
@@ -40,6 +41,7 @@ function TabIcon({ Icon, focused }: TabIconProps) {
 // niveau du parent qui short-circuit avec des Redirect).
 function AuthenticatedTabs() {
   const unreadCount = useNotificationsUnreadCount();
+  const insets = useSafeAreaInsets();
   // E4-14 : enregistrement du push token + handler de tap. Montés ici
   // (sous le guard auth) car on a besoin d'une session valide pour le
   // PATCH profiles.push_token, et il est inutile d'écouter les taps
@@ -47,12 +49,23 @@ function AuthenticatedTabs() {
   usePushToken();
   usePushNotificationsHandler();
 
+  // Tab bar dynamique : on remonte la barre de la zone safe area système
+  // (gesture navigation Android moderne + home indicator iOS). Sans ça,
+  // la barre est posée au ras du bas → icônes coupées par la zone gestes.
+  const tabBarStyle = [
+    styles.tabBar,
+    {
+      height: styles.tabBar.height + insets.bottom,
+      paddingBottom: Math.max(styles.tabBar.paddingBottom, insets.bottom + 4),
+    },
+  ];
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: tabBarStyle,
         tabBarActiveTintColor: ACTIVE_COLOR,
         tabBarInactiveTintColor: INACTIVE_COLOR,
       }}
@@ -78,7 +91,7 @@ function AuthenticatedTabs() {
         name="studio-ai"
         options={{
           tabBarIcon: ({ focused }) => <TabIcon Icon={Hash} focused={focused} />,
-          tabBarAccessibilityLabel: 'Studio AI',
+          tabBarAccessibilityLabel: 'Doumassi AI',
         }}
       />
       <Tabs.Screen
