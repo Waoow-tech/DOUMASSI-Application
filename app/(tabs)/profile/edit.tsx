@@ -28,7 +28,7 @@ import {
   type EditProfileFormValues,
 } from '@/features/profile/schemas/editProfileSchema';
 
-const logoSource = require('../../../assets/Logo-Doumassi.png') as number;
+const logoSource = require('../../../assets/Logo-Doumassi.webp') as number;
 
 const USERNAME_COOLDOWN_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;

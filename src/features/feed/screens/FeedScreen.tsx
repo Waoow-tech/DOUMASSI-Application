@@ -25,7 +25,7 @@ import { useUnhidePost } from '@/features/feed/hooks/useHiddenPosts';
 import { SearchBar } from '@/features/profile/components/SearchBar';
 import { supabase } from '@/lib/supabase';
 
-const logoSource = require('../../../../assets/Logo-Doumassi.png') as number;
+const logoSource = require('../../../../assets/Logo-Doumassi.webp') as number;
 
 type FeedTabId = 'social' | 'business' | 'ai' | 'wallet' | 'soon';
 

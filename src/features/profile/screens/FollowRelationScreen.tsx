@@ -34,7 +34,7 @@ interface FollowRelationScreenProps {
 const PAGE_SIZE = 20;
 
 // Logo Doumassi — affiché uniquement sur cet écran
-const logoSource = require('../../../../assets/Logo-Doumassi.png') as number;
+const logoSource = require('../../../../assets/Logo-Doumassi.webp') as number;
 
 // ─── Action Button (extracted for hook rules) ────────────────────────
 

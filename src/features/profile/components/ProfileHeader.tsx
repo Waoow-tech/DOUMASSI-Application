@@ -11,7 +11,7 @@ import { Text, XStack, YStack } from 'tamagui';
 
 import { VerifiedBadge } from './VerifiedBadge';
 
-const logoSource = require('../../../../assets/Logo-Doumassi.png') as number;
+const logoSource = require('../../../../assets/Logo-Doumassi.webp') as number;
 
 const AVATAR_SIZE = 90;
 const AVATAR_BORDER_WIDTH = 3;
