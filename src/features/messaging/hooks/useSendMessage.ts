@@ -24,6 +24,10 @@ export interface SendMessagePayload {
   conversationId: string;
   content: string;
   /**
+   * ID du message ciblé par une réponse (E6-06). `null`/`undefined` = message normal.
+   */
+  replyToId?: string | null;
+  /**
    * ID temporaire généré côté client. Sert à matcher la bulle optimistic
    * avec celle qui revient via Realtime.
    */
@@ -44,7 +48,7 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
 
   return useMutation<MessageRow, Error, SendMessagePayload, OptimisticContext>({
-    mutationFn: async ({ conversationId, content }) => {
+    mutationFn: async ({ conversationId, content, replyToId }) => {
       const trimmed = content.trim();
       if (trimmed.length === 0) throw new Error('Message vide');
       if (trimmed.length > MAX_CONTENT_LENGTH) {
@@ -63,6 +67,7 @@ export function useSendMessage() {
           sender_id: session.session.user.id,
           attachment_type: 'text',
           content: trimmed,
+          ...(replyToId ? { reply_to_id: replyToId } : {}),
         })
         .select(
           'id, conversation_id, sender_id, attachment_type, content, attachment_url, reply_to_id, created_at, edited_at, deleted_at'
@@ -79,7 +84,7 @@ export function useSendMessage() {
       return data as MessageRow;
     },
 
-    onMutate: async ({ conversationId, content, clientTempId }) => {
+    onMutate: async ({ conversationId, content, replyToId, clientTempId }) => {
       const tempId = clientTempId ?? `temp-${uuidv4()}`;
 
       // Annule les fetchs en cours pour éviter qu'ils écrasent l'optimistic
@@ -98,7 +103,7 @@ export function useSendMessage() {
         attachment_type: 'text',
         content: content.trim(),
         attachment_url: null,
-        reply_to_id: null,
+        reply_to_id: replyToId ?? null,
         created_at: new Date().toISOString(),
         edited_at: null,
         deleted_at: null,

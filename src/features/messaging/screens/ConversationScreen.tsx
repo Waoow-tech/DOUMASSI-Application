@@ -1,21 +1,21 @@
-// ConversationScreen — E6-03 + E6-05.
+// ConversationScreen — E6-03 + E6-05 + E6-06.
 //
 // Écran de conversation 1-to-1. Header avec avatar + username de l'autre.
 // FlashList inversée des messages, paginée vers le haut (cursor created_at).
 // Input texte en bas (KeyboardAvoidingView).
 // Marquage lu auto au mount + au focus.
 // Long-press sur mes bulles → sheet d'actions (Modifier / Supprimer).
+// Long-press sur les bulles des autres → sheet d'actions (Répondre).
 //
 // Hors scope bêta (cohérent avec spec recadrée le 02/06/2026) :
 //   - Boutons d'appel audio/vidéo Daily.co (Sprint 6+ tickets #85-88)
 //   - Pièces jointes image/voice/video
-//   - Réponses (reply_to_id)
 
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -62,6 +62,8 @@ export function ConversationScreen() {
   const [actionSheetOpen, setActionSheetOpen] = useState(false);
   const [actionMessage, setActionMessage] = useState<MessageRow | null>(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [replyTarget, setReplyTarget] = useState<MessageRow | null>(null);
+  const flashListRef = useRef<FlashListRef<MessageRow>>(null);
 
   // Récupère mon user_id au mount pour identifier les bulles "à moi"
   useEffect(() => {
@@ -85,17 +87,26 @@ export function ConversationScreen() {
     return messagesQuery.data?.pages.flatMap((p) => p.messages) ?? [];
   }, [messagesQuery.data]);
 
+  // Lookup O(1) du message parent pour chaque réponse (reply_to_id), évite un
+  // .find() par bulle rendue dans la liste.
+  const messagesById = useMemo(() => {
+    const map = new Map<string, MessageRow>();
+    for (const m of messages) map.set(m.id, m);
+    return map;
+  }, [messages]);
+
   const handleSend = useCallback(
-    (content: string) => {
+    (content: string, replyToId?: string | null) => {
       if (!convId) return;
       sendMessage.mutate(
-        { conversationId: convId, content },
+        { conversationId: convId, content, replyToId },
         {
           onError: (err) => {
             logger.warn('Send message failed', { message: err.message });
           },
         }
       );
+      setReplyTarget(null);
     },
     [convId, sendMessage]
   );
@@ -104,6 +115,24 @@ export function ConversationScreen() {
     setActionMessage(message);
     setActionSheetOpen(true);
   }, []);
+
+  const handleReply = useCallback((message: MessageRow) => {
+    setReplyTarget(message);
+    setActionSheetOpen(false);
+  }, []);
+
+  const handleCancelReply = useCallback(() => {
+    setReplyTarget(null);
+  }, []);
+
+  const handleReplyPress = useCallback(
+    (parentId: string) => {
+      const parent = messagesById.get(parentId);
+      if (!parent) return;
+      flashListRef.current?.scrollToItem({ item: parent, animated: true });
+    },
+    [messagesById]
+  );
 
   const handleEdit = useCallback(
     async (messageId: string, newContent: string) => {
@@ -136,23 +165,38 @@ export function ConversationScreen() {
     setIsManualRefreshing(false);
   }, [messagesQuery]);
 
-  const renderMessage = useCallback(
-    ({ item }: { item: MessageRow }) => (
-      <MessageBubble
-        message={item}
-        isMine={item.sender_id === meId}
-        onLongPress={handleLongPressBubble}
-      />
-    ),
-    [meId, handleLongPressBubble]
-  );
-
   // Header
   const header = headerQuery.data;
   const initial =
     header?.display_name && header.display_name.length > 0
       ? header.display_name.charAt(0).toUpperCase()
       : '?';
+
+  // 1-to-1 uniquement pour la bêta : l'auteur d'un message est soit moi, soit
+  // l'autre participant affiché dans le header.
+  const authorLabel = useCallback(
+    (senderId: string) => (senderId === meId ? 'Toi' : (header?.display_name ?? '')),
+    [meId, header?.display_name]
+  );
+
+  const renderMessage = useCallback(
+    ({ item }: { item: MessageRow }) => {
+      const parentMessage = item.reply_to_id ? (messagesById.get(item.reply_to_id) ?? null) : null;
+      return (
+        <MessageBubble
+          message={item}
+          isMine={item.sender_id === meId}
+          parentMessage={parentMessage}
+          parentAuthorLabel={parentMessage ? authorLabel(parentMessage.sender_id) : undefined}
+          onLongPress={handleLongPressBubble}
+          onReplyPress={handleReplyPress}
+        />
+      );
+    },
+    [meId, messagesById, authorLabel, handleLongPressBubble, handleReplyPress]
+  );
+
+  const actionMessageIsMine = actionMessage ? actionMessage.sender_id === meId : true;
 
   return (
     <YStack flex={1} backgroundColor="$background" paddingTop={insets.top}>
@@ -231,6 +275,7 @@ export function ConversationScreen() {
             </YStack>
           ) : (
             <FlashList
+              ref={flashListRef}
               data={messages}
               renderItem={renderMessage}
               keyExtractor={(item) => item.id}
@@ -264,17 +309,25 @@ export function ConversationScreen() {
           )}
         </View>
 
-        <MessageInput onSend={handleSend} disabled={sendMessage.isPending} />
+        <MessageInput
+          onSend={handleSend}
+          disabled={sendMessage.isPending}
+          replyTo={replyTarget}
+          replyToAuthorLabel={replyTarget ? authorLabel(replyTarget.sender_id) : undefined}
+          onCancelReply={handleCancelReply}
+        />
         <View style={{ height: insets.bottom }} backgroundColor="$surface" />
       </KeyboardAvoidingView>
 
       {/* Sheet d'actions sur long-press */}
       <MessageActionSheet
         message={actionMessage}
+        isMine={actionMessageIsMine}
         open={actionSheetOpen}
         onOpenChange={setActionSheetOpen}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onReply={() => actionMessage && handleReply(actionMessage)}
         editIsPending={editMessage.isPending}
         deleteIsPending={deleteMessage.isPending}
       />

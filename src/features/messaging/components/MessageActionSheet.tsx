@@ -5,7 +5,7 @@
 // Édition : passe en mode `editing` qui remplace le sheet par un input
 // pré-rempli + bouton de validation.
 
-import { Edit3, Trash2 } from 'lucide-react-native';
+import { Edit3, Reply, Trash2 } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 import { Button, Sheet, Spinner, Text, TextArea, XStack, YStack } from 'tamagui';
@@ -14,10 +14,13 @@ import type { MessageRow } from '../hooks/useConversationMessages';
 
 export interface MessageActionSheetProps {
   message: MessageRow | null;
+  /** true si le message ciblé est le mien (Modifier/Supprimer), false sinon (Répondre uniquement). */
+  isMine: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEdit: (messageId: string, newContent: string) => Promise<void>;
   onDelete: (messageId: string) => Promise<void>;
+  onReply?: () => void;
   editIsPending?: boolean;
   deleteIsPending?: boolean;
 }
@@ -26,10 +29,12 @@ const MAX_CONTENT_LENGTH = 4000;
 
 export function MessageActionSheet({
   message,
+  isMine,
   open,
   onOpenChange,
   onEdit,
   onDelete,
+  onReply,
   editIsPending = false,
   deleteIsPending = false,
 }: MessageActionSheetProps) {
@@ -46,6 +51,8 @@ export function MessageActionSheet({
 
   const isText = message?.attachment_type === 'text';
   const canEdit = isText && message?.content;
+  // E6-06 : réponse compatible texte uniquement pour la bêta (pièces jointes hors scope)
+  const canReply = isText;
 
   const handleStartEdit = useCallback(() => {
     if (!message?.content) return;
@@ -70,6 +77,11 @@ export function MessageActionSheet({
       );
     }
   }, [message, editingContent, onEdit, onOpenChange]);
+
+  const handleReply = useCallback(() => {
+    onReply?.();
+    onOpenChange(false);
+  }, [onReply, onOpenChange]);
 
   const handleDelete = useCallback(() => {
     if (!message) return;
@@ -102,7 +114,7 @@ export function MessageActionSheet({
       modal
       open={open}
       onOpenChange={onOpenChange}
-      snapPoints={mode === 'editing' ? [60] : [30]}
+      snapPoints={mode === 'editing' ? [60] : isMine ? [30] : [20]}
       dismissOnSnapToBottom
     >
       <Sheet.Overlay backgroundColor="rgba(0,0,0,0.6)" />
@@ -117,20 +129,35 @@ export function MessageActionSheet({
 
         {mode === 'menu' ? (
           <YStack gap="$2">
-            {canEdit ? (
-              <Pressable onPress={handleStartEdit} style={styles.row}>
-                <Edit3 size={20} color="#FFFFFF" />
+            {isMine ? (
+              <>
+                {canEdit ? (
+                  <Pressable onPress={handleStartEdit} style={styles.row}>
+                    <Edit3 size={20} color="#FFFFFF" />
+                    <Text color="$color" fontSize={16}>
+                      Modifier
+                    </Text>
+                  </Pressable>
+                ) : null}
+                <Pressable onPress={handleDelete} style={styles.row}>
+                  {deleteIsPending ? (
+                    <Spinner color="#FF3B30" />
+                  ) : (
+                    <Trash2 size={20} color="#FF3B30" />
+                  )}
+                  <Text color="$danger" fontSize={16} fontWeight="600">
+                    Supprimer
+                  </Text>
+                </Pressable>
+              </>
+            ) : canReply ? (
+              <Pressable onPress={handleReply} style={styles.row}>
+                <Reply size={20} color="#FFFFFF" />
                 <Text color="$color" fontSize={16}>
-                  Modifier
+                  Répondre
                 </Text>
               </Pressable>
             ) : null}
-            <Pressable onPress={handleDelete} style={styles.row}>
-              {deleteIsPending ? <Spinner color="#FF3B30" /> : <Trash2 size={20} color="#FF3B30" />}
-              <Text color="$danger" fontSize={16} fontWeight="600">
-                Supprimer
-              </Text>
-            </Pressable>
           </YStack>
         ) : (
           <YStack gap="$3">

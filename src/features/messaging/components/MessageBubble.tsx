@@ -32,22 +32,42 @@ function formatTime(iso: string): string {
   });
 }
 
+const REPLY_PREVIEW_MAX_CHARS = 50;
+
 export interface MessageBubbleProps {
   message: MessageRow;
   isMine: boolean;
+  /** Message ciblé par `message.reply_to_id`, déjà résolu par le parent (lookup O(1)). */
+  parentMessage?: MessageRow | null;
+  /** Libellé auteur du message parent ("Toi" ou le nom de l'autre), pour l'encart de réponse. */
+  parentAuthorLabel?: string;
   onLongPress?: (message: MessageRow) => void;
+  /** Appelé au tap sur l'encart de réponse, avec l'id du message parent, pour scroller vers lui. */
+  onReplyPress?: (parentId: string) => void;
 }
 
-function MessageBubbleComponent({ message, isMine, onLongPress }: MessageBubbleProps) {
+function MessageBubbleComponent({
+  message,
+  isMine,
+  parentMessage,
+  parentAuthorLabel,
+  onLongPress,
+  onReplyPress,
+}: MessageBubbleProps) {
   const isDeleted = message.deleted_at !== null;
   const isEdited = message.edited_at !== null;
   const isOptimistic = message.id.startsWith('temp-');
   const isFailed = message.id.startsWith('failed-');
+  const replyToId = message.reply_to_id;
 
   const handleLongPress = useCallback(() => {
-    if (!isMine || isDeleted) return;
+    if (isDeleted) return;
     onLongPress?.(message);
-  }, [isMine, isDeleted, onLongPress, message]);
+  }, [isDeleted, onLongPress, message]);
+
+  const handleReplyPreviewPress = useCallback(() => {
+    if (replyToId) onReplyPress?.(replyToId);
+  }, [replyToId, onReplyPress]);
 
   return (
     <XStack
@@ -69,6 +89,44 @@ function MessageBubbleComponent({ message, isMine, onLongPress }: MessageBubbleP
         ]}
       >
         <YStack gap={2}>
+          {replyToId ? (
+            <Pressable onPress={handleReplyPreviewPress} disabled={!parentMessage}>
+              <YStack
+                backgroundColor={isMine ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.08)'}
+                borderRadius={8}
+                paddingHorizontal={8}
+                paddingVertical={5}
+                marginBottom={4}
+                borderLeftWidth={3}
+                borderLeftColor={isMine ? 'rgba(0,0,0,0.4)' : '#10D970'}
+              >
+                {parentMessage ? (
+                  <Text
+                    fontSize={11}
+                    fontWeight="700"
+                    color={isMine ? 'rgba(0,0,0,0.6)' : '#10D970'}
+                  >
+                    {parentAuthorLabel ?? ''}
+                  </Text>
+                ) : null}
+                <Text
+                  fontSize={12}
+                  fontStyle={
+                    !parentMessage || parentMessage.deleted_at !== null ? 'italic' : undefined
+                  }
+                  color={isMine ? 'rgba(0,0,0,0.55)' : COLORS.metaText}
+                  numberOfLines={2}
+                >
+                  {!parentMessage
+                    ? 'Message non disponible'
+                    : parentMessage.deleted_at !== null
+                      ? '🚫 Message supprimé'
+                      : (parentMessage.content ?? '').slice(0, REPLY_PREVIEW_MAX_CHARS)}
+                </Text>
+              </YStack>
+            </Pressable>
+          ) : null}
+
           {isDeleted ? (
             <Text
               fontSize={14}
