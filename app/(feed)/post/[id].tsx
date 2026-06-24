@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Text, XStack, YStack } from 'tamagui';
 
 import type { PostCardPost } from '@/components/feed/PostCard';
+import { MentionsText } from '@/components/MentionsText';
 import { CommentsSheet } from '@/features/comments/components/CommentsSheet';
 import {
   useIncrementPostShare,
@@ -212,9 +213,12 @@ function Footer({ post, onOpenProfile }: { post: PostCardPost; onOpenProfile: ()
 
       {post.content.trim() ? (
         <YStack>
-          <RNText style={styles.captionText} numberOfLines={3} onTextLayout={handleCaptionLayout}>
-            {post.content}
-          </RNText>
+          <MentionsText
+            content={post.content}
+            style={styles.captionText}
+            numberOfLines={3}
+            onTextLayout={handleCaptionLayout}
+          />
           {captionTruncated ? <RNText style={styles.moreText}>...plus</RNText> : null}
         </YStack>
       ) : null}

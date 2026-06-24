@@ -4,6 +4,7 @@ import { Heart } from 'lucide-react-native';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
+import { MentionsText } from '@/components/MentionsText';
 import type { Comment } from '@/features/comments/hooks/useComments';
 import { formatViewCount } from '@/utils/formatCount';
 
@@ -123,9 +124,10 @@ export function CommentCard({
           </Text>
         </XStack>
 
-        <Text color="$color" fontSize={14} lineHeight={20}>
-          {comment.content}
-        </Text>
+        <MentionsText
+          content={comment.content}
+          style={{ color: '#FFFFFF', fontSize: 14, lineHeight: 20 }}
+        />
 
         {!nested ? (
           <Pressable
