@@ -8,7 +8,9 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import GuardLoader from '@/components/GuardLoader';
+import { PendingDeletionModal } from '@/features/auth/components/PendingDeletionModal';
 import { useAuthGuard } from '@/features/auth/hooks/useAuthGuard';
+import { usePendingDeletionReminder } from '@/features/auth/hooks/usePendingDeletionReminder';
 import { usePushToken } from '@/features/auth/hooks/usePushToken';
 import { useNotificationsUnreadCount } from '@/features/notifications/hooks/useNotifications';
 import { usePushNotificationsHandler } from '@/features/notifications/hooks/usePushNotificationsHandler';
@@ -49,6 +51,11 @@ function AuthenticatedTabs() {
   usePushToken();
   usePushNotificationsHandler();
 
+  // Ticket #214 : rappel de suppression de compte programmée. La modale
+  // s'affiche 1× par session si une `deletion_requests` active existe pour
+  // l'user courant.
+  const deletionReminder = usePendingDeletionReminder();
+
   // Tab bar dynamique : on remonte la barre de la zone safe area système
   // (gesture navigation Android moderne + home indicator iOS). Sans ça,
   // la barre est posée au ras du bas → icônes coupées par la zone gestes.
@@ -61,54 +68,63 @@ function AuthenticatedTabs() {
   ];
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarStyle: tabBarStyle,
-        tabBarActiveTintColor: ACTIVE_COLOR,
-        tabBarInactiveTintColor: INACTIVE_COLOR,
-      }}
-    >
-      <Tabs.Screen
-        name="feed"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon Icon={Home} focused={focused} />,
-          tabBarAccessibilityLabel: 'Accueil',
+    <>
+      {deletionReminder.shouldShow && deletionReminder.request ? (
+        <PendingDeletionModal
+          open={deletionReminder.shouldShow}
+          request={deletionReminder.request}
+          onClose={deletionReminder.dismiss}
+        />
+      ) : null}
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarShowLabel: false,
+          tabBarStyle: tabBarStyle,
+          tabBarActiveTintColor: ACTIVE_COLOR,
+          tabBarInactiveTintColor: INACTIVE_COLOR,
         }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon Icon={Bell} focused={focused} />,
-          tabBarAccessibilityLabel: 'Notifications',
-          // Cap à "99+" pour éviter un débordement visuel du badge sur les
-          // gros volumes (la cible MVP n'y arrivera pas mais c'est défensif).
-          tabBarBadge: unreadCount > 99 ? '99+' : unreadCount > 0 ? unreadCount : undefined,
-        }}
-      />
-      <Tabs.Screen
-        name="studio-ai"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon Icon={Hash} focused={focused} />,
-          tabBarAccessibilityLabel: 'Doumassi AI',
-        }}
-      />
-      <Tabs.Screen
-        name="messages"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon Icon={Send} focused={focused} />,
-          tabBarAccessibilityLabel: 'Messages',
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon Icon={User} focused={focused} />,
-          tabBarAccessibilityLabel: 'Mon profil',
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="feed"
+          options={{
+            tabBarIcon: ({ focused }) => <TabIcon Icon={Home} focused={focused} />,
+            tabBarAccessibilityLabel: 'Accueil',
+          }}
+        />
+        <Tabs.Screen
+          name="notifications"
+          options={{
+            tabBarIcon: ({ focused }) => <TabIcon Icon={Bell} focused={focused} />,
+            tabBarAccessibilityLabel: 'Notifications',
+            // Cap à "99+" pour éviter un débordement visuel du badge sur les
+            // gros volumes (la cible MVP n'y arrivera pas mais c'est défensif).
+            tabBarBadge: unreadCount > 99 ? '99+' : unreadCount > 0 ? unreadCount : undefined,
+          }}
+        />
+        <Tabs.Screen
+          name="studio-ai"
+          options={{
+            tabBarIcon: ({ focused }) => <TabIcon Icon={Hash} focused={focused} />,
+            tabBarAccessibilityLabel: 'Doumassi AI',
+          }}
+        />
+        <Tabs.Screen
+          name="messages"
+          options={{
+            tabBarIcon: ({ focused }) => <TabIcon Icon={Send} focused={focused} />,
+            tabBarAccessibilityLabel: 'Messages',
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            tabBarIcon: ({ focused }) => <TabIcon Icon={User} focused={focused} />,
+            tabBarAccessibilityLabel: 'Mon profil',
+          }}
+        />
+      </Tabs>
+    </>
   );
 }
 
