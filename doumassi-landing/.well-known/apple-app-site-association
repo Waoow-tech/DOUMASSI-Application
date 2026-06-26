@@ -4,7 +4,7 @@
     "details": [
       {
         "appID": "TEAMID_PLACEHOLDER.com.doumassi.app",
-        "paths": ["/post/*", "/profile/*", "/story/*"]
+        "paths": ["/post/*", "/profile/*", "/story/*", "/u/*"]
       }
     ]
   }
