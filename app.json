@@ -52,6 +52,11 @@
               "scheme": "https",
               "host": "doumassi.app",
               "pathPrefix": "/story"
+            },
+            {
+              "scheme": "https",
+              "host": "doumassi.app",
+              "pathPrefix": "/u"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
