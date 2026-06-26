@@ -155,10 +155,13 @@ export default function OtherUserProfileScreen() {
   }, [targetUserId]);
 
   const handleShareProfileOutside = useCallback(async () => {
+    const username = profile?.username;
+    if (!username) return;
     try {
-      const username = profile?.username ?? '';
+      // URL incluse dans `message` car Android ignore la prop `url` de
+      // Share.share et ne lit que `message` (cf bug remonté 2026-06-24).
       await Share.share({
-        message: `Check out @${username} on DOUMASSI! 🚀`,
+        message: `Découvre le profil de @${username} sur DOUMASSI ! 🚀\nhttps://doumassi.app/u/${username}`,
       });
     } catch {
       // Annulé
