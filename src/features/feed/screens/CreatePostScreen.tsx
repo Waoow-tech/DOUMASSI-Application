@@ -3,8 +3,9 @@
 // uploadPostImage (E4-04) puis crée le post via useCreatePost (E4-05, qui
 // invalide déjà le cache feed). Modale full-screen, header custom.
 //
-// Hors scope : vidéos, mentions @, hashtags #, géoloc, audience, brouillons,
+// Hors scope : vidéos, hashtags #, géoloc, audience, brouillons,
 // preview plein écran d'une image (optionnel MVP du ticket).
+// Mentions @ : ajoutées via ticket #213 (PR B) — dropdown au-dessus du clavier.
 
 import * as ImagePicker from 'expo-image-picker';
 import { router, useNavigation } from 'expo-router';
@@ -22,7 +23,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, ScrollView, Text, TextArea, XStack, YStack } from 'tamagui';
 
 import { useCreatePost } from '@/features/feed/hooks/useCreatePost';
+import { MentionSuggestionsList } from '@/features/mentions/components/MentionSuggestionsList';
+import { useMentionSuggestions } from '@/features/mentions/hooks/useMentionSuggestions';
+import {
+  countMentions,
+  MAX_MENTIONS_PER_CONTENT,
+} from '@/features/mentions/schemas/mentionsSchema';
 import { useCurrentProfile } from '@/features/profile/hooks/useProfile';
+import type { SearchUserResult } from '@/features/profile/hooks/useSearchUsers';
 import { logger } from '@/lib/logger';
 import { uploadPostImage } from '@/lib/storage';
 
@@ -55,9 +63,24 @@ export function CreatePostScreen() {
   const createPost = useCreatePost();
 
   const [content, setContent] = useState('');
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+
+  const { activeQuery, suggestions, isLoading, replaceMention } = useMentionSuggestions(
+    content,
+    selection.end
+  );
+
+  const mentionsCount = countMentions(content);
+  const tooManyMentions = mentionsCount > MAX_MENTIONS_PER_CONTENT;
+
+  const handleSuggestionPick = (user: SearchUserResult) => {
+    const next = replaceMention(user.username);
+    setContent(next.text);
+    setSelection({ start: next.cursor, end: next.cursor });
+  };
 
   const abortRef = useRef<AbortController | null>(null);
   // Flag pour court-circuiter la confirmation quand la nav est déjà validée.
@@ -65,7 +88,7 @@ export function CreatePostScreen() {
 
   const hasContent = content.trim().length > 0 || media.length > 0;
   const isAnyUploading = media.some((m) => m.status === 'uploading');
-  const publishDisabled = !hasContent || isPublishing || isAnyUploading;
+  const publishDisabled = !hasContent || isPublishing || isAnyUploading || tooManyMentions;
   const profile = profileQuery.data;
 
   // Intercepte sortie d'écran (X, back hardware, swipe) si du contenu en cours.
@@ -304,7 +327,9 @@ export function CreatePostScreen() {
             <TextArea
               flex={1}
               value={content}
+              selection={selection}
               onChangeText={setContent}
+              onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
               maxLength={MAX_CONTENT}
               placeholder="Quoi de neuf ?"
               placeholderTextColor="$placeholderColor"
@@ -416,6 +441,30 @@ export function CreatePostScreen() {
               >
                 Réessayer
               </Button>
+            </XStack>
+          ) : null}
+
+          {/* Dropdown suggestions @mentions (au-dessus de la toolbar) */}
+          <MentionSuggestionsList
+            suggestions={suggestions}
+            isLoading={isLoading}
+            visible={activeQuery !== null}
+            onSelect={handleSuggestionPick}
+          />
+
+          {/* Garde-fou max 5 mentions */}
+          {tooManyMentions ? (
+            <XStack
+              alignItems="center"
+              backgroundColor="rgba(239,68,68,0.15)"
+              paddingHorizontal="$3"
+              paddingVertical="$2"
+              borderTopWidth={1}
+              borderColor="rgba(239,68,68,0.3)"
+            >
+              <Text flex={1} color={ERROR_RED} fontSize={13}>
+                Maximum {MAX_MENTIONS_PER_CONTENT} mentions par post.
+              </Text>
             </XStack>
           ) : null}
 
