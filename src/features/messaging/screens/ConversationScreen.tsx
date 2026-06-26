@@ -8,16 +8,18 @@
 //
 // Hors scope bêta (cohérent avec spec recadrée le 02/06/2026) :
 //   - Boutons d'appel audio/vidéo Daily.co (Sprint 6+ tickets #85-88)
-//   - Pièces jointes image/voice/video
+//   - Pièces jointes voice/video (image arrive ticket #210)
 //   - Réponses (reply_to_id)
 
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -43,6 +45,7 @@ import {
 import { useRealtimeConversation } from '@/features/messaging/hooks/useRealtimeConversation';
 import { useSendMessage } from '@/features/messaging/hooks/useSendMessage';
 import { logger } from '@/lib/logger';
+import { uploadMessageImage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 
 export function ConversationScreen() {
@@ -99,6 +102,84 @@ export function ConversationScreen() {
     },
     [convId, sendMessage]
   );
+
+  // Ticket #210 — pièce jointe image.
+  const [isAttaching, setIsAttaching] = useState(false);
+
+  const handleSendImage = useCallback(
+    async (imageUri: string) => {
+      if (!convId) return;
+      setIsAttaching(true);
+      try {
+        const { publicUrl } = await uploadMessageImage(imageUri);
+        sendMessage.mutate(
+          {
+            conversationId: convId,
+            content: '',
+            attachmentType: 'image',
+            attachmentUrl: publicUrl,
+          },
+          {
+            onError: (err) => {
+              logger.warn('Send image message failed', { message: err.message });
+              Alert.alert("Échec de l'envoi", err.message);
+            },
+          }
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Upload échoué';
+        logger.warn('Upload message image failed', { message: msg });
+        Alert.alert("Échec de l'upload", msg);
+      } finally {
+        setIsAttaching(false);
+      }
+    },
+    [convId, sendMessage]
+  );
+
+  const handleAttach = useCallback(() => {
+    if (isAttaching) return;
+    Alert.alert('Ajouter une image', undefined, [
+      {
+        text: 'Galerie',
+        onPress: async () => {
+          let perm = await ImagePicker.getMediaLibraryPermissionsAsync();
+          if (!perm.granted) perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (!perm.granted) {
+            Alert.alert('Permission refusée', "Active l'accès aux photos dans Réglages.");
+            return;
+          }
+          const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsMultipleSelection: false,
+            quality: 1,
+          });
+          if (result.canceled) return;
+          const asset = result.assets[0];
+          if (asset) await handleSendImage(asset.uri);
+        },
+      },
+      {
+        text: 'Caméra',
+        onPress: async () => {
+          let perm = await ImagePicker.getCameraPermissionsAsync();
+          if (!perm.granted) perm = await ImagePicker.requestCameraPermissionsAsync();
+          if (!perm.granted) {
+            Alert.alert('Permission refusée', "Active l'accès à la caméra dans Réglages.");
+            return;
+          }
+          const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ['images'],
+            quality: 1,
+          });
+          if (result.canceled) return;
+          const asset = result.assets[0];
+          if (asset) await handleSendImage(asset.uri);
+        },
+      },
+      { text: 'Annuler', style: 'cancel' },
+    ]);
+  }, [handleSendImage, isAttaching]);
 
   const handleLongPressBubble = useCallback((message: MessageRow) => {
     setActionMessage(message);
@@ -264,7 +345,12 @@ export function ConversationScreen() {
           )}
         </View>
 
-        <MessageInput onSend={handleSend} disabled={sendMessage.isPending} />
+        <MessageInput
+          onSend={handleSend}
+          onAttach={handleAttach}
+          isAttaching={isAttaching}
+          disabled={sendMessage.isPending || isAttaching}
+        />
         <View style={{ height: insets.bottom }} backgroundColor="$surface" />
       </KeyboardAvoidingView>
 

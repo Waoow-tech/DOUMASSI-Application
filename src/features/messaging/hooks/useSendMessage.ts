@@ -28,6 +28,14 @@ export interface SendMessagePayload {
    * avec celle qui revient via Realtime.
    */
   clientTempId?: string;
+  /**
+   * Type d'attachment. 'text' par défaut. Pour 'image', 'voice', 'video' :
+   * `attachmentUrl` est requis et `content` peut être vide (= pas de caption).
+   * Ajouté par ticket #210 (image) — extensible pour #211 (voice).
+   */
+  attachmentType?: 'text' | 'image' | 'voice' | 'video';
+  /** URL publique de l'attachment (Storage). Requise si attachmentType !== 'text'. */
+  attachmentUrl?: string | null;
 }
 
 interface OptimisticContext {
@@ -44,11 +52,19 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
 
   return useMutation<MessageRow, Error, SendMessagePayload, OptimisticContext>({
-    mutationFn: async ({ conversationId, content }) => {
+    mutationFn: async ({ conversationId, content, attachmentType = 'text', attachmentUrl }) => {
       const trimmed = content.trim();
-      if (trimmed.length === 0) throw new Error('Message vide');
+      const isText = attachmentType === 'text';
+
+      // Pour un message texte, content obligatoire. Pour un attachment, content
+      // optionnel (caption) — la CHECK constraint DB exige juste qu'au moins
+      // `content` OU `attachment_url` soit présent.
+      if (isText && trimmed.length === 0) throw new Error('Message vide');
       if (trimmed.length > MAX_CONTENT_LENGTH) {
         throw new Error(`Message trop long (max ${MAX_CONTENT_LENGTH} caractères)`);
+      }
+      if (!isText && !attachmentUrl) {
+        throw new Error('Attachment URL requise pour ce type de message');
       }
 
       const { data: session, error: sessionError } = await supabase.auth.getSession();
@@ -61,8 +77,9 @@ export function useSendMessage() {
         .insert({
           conversation_id: conversationId,
           sender_id: session.session.user.id,
-          attachment_type: 'text',
-          content: trimmed,
+          attachment_type: attachmentType,
+          content: trimmed.length > 0 ? trimmed : null,
+          attachment_url: attachmentUrl ?? null,
         })
         .select(
           'id, conversation_id, sender_id, attachment_type, content, attachment_url, reply_to_id, created_at, edited_at, deleted_at'
@@ -79,7 +96,13 @@ export function useSendMessage() {
       return data as MessageRow;
     },
 
-    onMutate: async ({ conversationId, content, clientTempId }) => {
+    onMutate: async ({
+      conversationId,
+      content,
+      clientTempId,
+      attachmentType = 'text',
+      attachmentUrl = null,
+    }) => {
       const tempId = clientTempId ?? `temp-${uuidv4()}`;
 
       // Annule les fetchs en cours pour éviter qu'ils écrasent l'optimistic
@@ -95,9 +118,9 @@ export function useSendMessage() {
         id: tempId,
         conversation_id: conversationId,
         sender_id: meId ?? 'unknown',
-        attachment_type: 'text',
-        content: content.trim(),
-        attachment_url: null,
+        attachment_type: attachmentType,
+        content: content.trim().length > 0 ? content.trim() : null,
+        attachment_url: attachmentUrl,
         reply_to_id: null,
         created_at: new Date().toISOString(),
         edited_at: null,
