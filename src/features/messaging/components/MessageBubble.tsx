@@ -21,7 +21,9 @@ const COLORS = {
   otherBubble: '#1A1A1A',
   otherText: '#FFFFFF',
   metaText: '#A0A0A0',
-  deletedText: '#6B6B6B',
+  // #8A8A8A pour atteindre ratio WCAG AA ≥ 4.5:1 sur otherBubble (#1A1A1A).
+  // Ticket #215.
+  deletedText: '#8A8A8A',
 };
 
 function formatTime(iso: string): string {

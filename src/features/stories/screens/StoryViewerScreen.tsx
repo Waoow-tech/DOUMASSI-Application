@@ -308,18 +308,21 @@ export function StoryViewerScreen() {
         style={[styles.tapZone, { width: tapZoneWidth, left: 0 }]}
         accessibilityRole="button"
         accessibilityLabel="Story précédente"
+        accessibilityHint="Tap pour revenir à la story précédente"
       />
       <Pressable
         onPress={handleTogglePause}
         style={[styles.tapZone, { width: tapZoneWidth, left: tapZoneWidth }]}
         accessibilityRole="button"
         accessibilityLabel={isPaused ? 'Reprendre' : 'Pause'}
+        accessibilityHint={isPaused ? 'Tap pour reprendre la lecture' : 'Tap pour mettre en pause'}
       />
       <Pressable
         onPress={goToNextStory}
         style={[styles.tapZone, { width: tapZoneWidth, left: tapZoneWidth * 2 }]}
         accessibilityRole="button"
         accessibilityLabel="Story suivante"
+        accessibilityHint="Tap pour passer à la story suivante"
       />
 
       {/* Overlays : progress bars + header. Sont au-dessus des tap zones. */}
@@ -386,6 +389,7 @@ export function StoryViewerScreen() {
           onPress={() => handleViewersOpenChange(true)}
           accessibilityRole="button"
           accessibilityLabel="Voir qui a vu cette story"
+          accessibilityHint="Voir la liste des personnes ayant vu cette story"
           style={[styles.viewersButton, { bottom: insets.bottom + 24 }]}
         >
           <Eye size={18} color="#FFFFFF" />
