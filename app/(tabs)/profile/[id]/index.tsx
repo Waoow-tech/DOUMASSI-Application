@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Share, StyleSheet, useWindowDimensions } from 'react-native';
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
+import { InternalShareOptionsSheet } from '@/components/share/InternalShareOptionsSheet';
 import { BlockConfirmModal } from '@/features/profile/components/BlockConfirmModal';
 import { FollowButton } from '@/features/profile/components/FollowButton';
 import { ListingCard } from '@/features/profile/components/ListingCard';
@@ -61,6 +62,7 @@ export default function OtherUserProfileScreen() {
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('grid');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [isUnfollowModalOpen, setIsUnfollowModalOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [blockChecked, setBlockChecked] = useState(false);
@@ -152,8 +154,7 @@ export default function OtherUserProfileScreen() {
     }
   }, [targetUserId]);
 
-  const handleShareProfile = useCallback(async () => {
-    setIsMenuOpen(false);
+  const handleShareProfileOutside = useCallback(async () => {
     try {
       const username = profile?.username ?? '';
       await Share.share({
@@ -163,6 +164,19 @@ export default function OtherUserProfileScreen() {
       // Annulé
     }
   }, [profile?.username]);
+
+  const handleShareProfileInside = useCallback(() => {
+    if (!profile?.username) return;
+    router.push({
+      pathname: '/messages/share',
+      params: { type: 'profile', username: profile.username },
+    });
+  }, [profile?.username]);
+
+  const handleShareProfile = useCallback(() => {
+    setIsMenuOpen(false);
+    setShareSheetOpen(true);
+  }, []);
 
   const handleBlockUser = useCallback(() => {
     setIsMenuOpen(false);
@@ -419,7 +433,7 @@ export default function OtherUserProfileScreen() {
               height={48}
               justifyContent="flex-start"
               paddingHorizontal="$3"
-              onPress={() => void handleShareProfile()}
+              onPress={handleShareProfile}
               pressStyle={{ backgroundColor: '$surfaceElevated' }}
               borderRadius="$md"
               icon={<Share2 size={20} color="#FFFFFF" />}
@@ -477,6 +491,13 @@ export default function OtherUserProfileScreen() {
         username={profile.username}
         onConfirm={() => void handleBlockConfirm()}
         isPending={isBlocking}
+      />
+
+      <InternalShareOptionsSheet
+        open={shareSheetOpen}
+        onOpenChange={setShareSheetOpen}
+        onShareOutside={() => void handleShareProfileOutside()}
+        onShareInside={handleShareProfileInside}
       />
 
       {/* Toast "User blocked" — E3-09 */}

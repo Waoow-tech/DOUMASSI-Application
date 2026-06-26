@@ -14,7 +14,7 @@ import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { t } from '@/i18n';
 
-const logoSource = require('../../assets/Logo-Doumassi.png') as number;
+const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
 /**
  * Logo DOUMASSI — affiché via expo-image.

@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { Bookmark, Heart, MessageCircle, MoreHorizontal, Play, Send } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -13,6 +14,7 @@ import {
 import { Text, XStack, YStack } from 'tamagui';
 
 import { MentionsText } from '@/components/MentionsText';
+import { InternalShareOptionsSheet } from '@/components/share/InternalShareOptionsSheet';
 import { supabase } from '@/lib/supabase';
 import { formatViewCount } from '@/utils/formatCount';
 
@@ -104,7 +106,12 @@ function Avatar({
         overflow="hidden"
       >
         {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.avatarImage} contentFit="cover" />
+          <Image
+            source={{ uri: avatarUrl }}
+            style={styles.avatarImage}
+            contentFit="cover"
+            transition={200}
+          />
         ) : (
           <Text color="$color" fontSize={16} fontWeight="700">
             {initial}
@@ -287,6 +294,7 @@ export const PostCard = memo(function PostCard({
 }: PostCardProps) {
   const likeScale = useRef(new Animated.Value(1)).current;
   const bookmarkSpin = useRef(new Animated.Value(0)).current;
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
 
   useEffect(() => {
     bookmarkSpin.setValue(0);
@@ -324,7 +332,7 @@ export const PostCard = memo(function PostCard({
     onBookmark?.();
   }, [bookmarkSpin, onBookmark]);
 
-  const handleShare = useCallback(async () => {
+  const handleShareOutside = useCallback(async () => {
     if (onShare) {
       onShare();
       return;
@@ -341,6 +349,13 @@ export const PostCard = memo(function PostCard({
     }
   }, [onShare, post.id]);
 
+  const handleShareInside = useCallback(() => {
+    router.push({
+      pathname: '/messages/share',
+      params: { type: 'post', postId: post.id },
+    });
+  }, [post.id]);
+
   const bookmarkRotation = bookmarkSpin.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -353,107 +368,116 @@ export const PostCard = memo(function PostCard({
   }
 
   return (
-    <YStack
-      width="100%"
-      paddingHorizontal={16}
-      paddingTop={14}
-      paddingBottom={12}
-      borderBottomWidth={StyleSheet.hairlineWidth}
-      borderBottomColor="$borderColor"
-      backgroundColor="$background"
-    >
-      <XStack alignItems="center" gap={10}>
-        <Avatar
-          username={post.author_username}
-          avatarUrl={post.author_avatar_url}
-          onPress={onOpenProfile}
-        />
+    <>
+      <YStack
+        width="100%"
+        paddingHorizontal={16}
+        paddingTop={14}
+        paddingBottom={12}
+        borderBottomWidth={StyleSheet.hairlineWidth}
+        borderBottomColor="$borderColor"
+        backgroundColor="$background"
+      >
+        <XStack alignItems="center" gap={10}>
+          <Avatar
+            username={post.author_username}
+            avatarUrl={post.author_avatar_url}
+            onPress={onOpenProfile}
+          />
 
-        <Pressable
-          onPress={onOpenProfile}
-          hitSlop={HIT_SLOP}
-          accessibilityRole="button"
-          accessibilityLabel={`Voir le profil de @${post.author_username}`}
-          style={styles.authorPressable}
-        >
-          <XStack alignItems="baseline" flexShrink={1} gap={5}>
-            <Text color="$color" fontSize={15} fontWeight="700" numberOfLines={1}>
-              @{post.author_username}
-            </Text>
-            <Text color="$textSecondary" fontSize={13} numberOfLines={1}>
-              · {relativeTime}
-            </Text>
-          </XStack>
-        </Pressable>
-
-        <XStack flex={1} />
-
-        {onMenuPress ? (
           <Pressable
-            onPress={onMenuPress}
+            onPress={onOpenProfile}
             hitSlop={HIT_SLOP}
             accessibilityRole="button"
-            accessibilityLabel={`Ouvrir le menu du post de @${post.author_username}`}
+            accessibilityLabel={`Voir le profil de @${post.author_username}`}
+            style={styles.authorPressable}
           >
-            <MoreHorizontal size={20} color="#FFFFFF" />
+            <XStack alignItems="baseline" flexShrink={1} gap={5}>
+              <Text color="$color" fontSize={15} fontWeight="700" numberOfLines={1}>
+                @{post.author_username}
+              </Text>
+              <Text color="$textSecondary" fontSize={13} numberOfLines={1}>
+                · {relativeTime}
+              </Text>
+            </XStack>
           </Pressable>
-        ) : null}
-      </XStack>
-
-      <YStack marginTop={10}>
-        <PostContent content={post.content} onOpenDetail={onOpenDetail} />
-        {hasMedia ? <PostMedia post={post} onOpenDetail={onOpenDetail} /> : null}
-      </YStack>
-
-      {variant === 'detail' ? null : (
-        <XStack alignItems="center" gap={20} marginTop={12} width="100%">
-          <CountAction
-            label={`Aimer le post de @${post.author_username}`}
-            count={post.like_count}
-            onPress={handleLike}
-          >
-            <Animated.View style={{ transform: [{ scale: likeScale }] }}>
-              <Heart
-                size={22}
-                color={post.liked_by_me ? '#FF3B30' : '#FFFFFF'}
-                fill={post.liked_by_me ? '#FF3B30' : 'transparent'}
-              />
-            </Animated.View>
-          </CountAction>
-
-          <CountAction
-            label={`Commenter le post de @${post.author_username}`}
-            count={post.comment_count}
-            onPress={onOpenComments}
-          >
-            <MessageCircle size={22} color="#FFFFFF" />
-          </CountAction>
-
-          <CountAction
-            label={`Partager le post de @${post.author_username}`}
-            count={post.share_count}
-            onPress={() => void handleShare()}
-          >
-            <Send size={22} color="#FFFFFF" />
-          </CountAction>
 
           <XStack flex={1} />
 
-          <CountAction
-            label={`Sauvegarder le post de @${post.author_username}`}
-            onPress={handleBookmark}
-          >
-            <Animated.View style={{ transform: [{ rotate: bookmarkRotation }] }}>
-              <Bookmark
-                size={22}
-                color={post.bookmarked_by_me ? '#10D970' : '#FFFFFF'}
-                fill={post.bookmarked_by_me ? '#10D970' : 'transparent'}
-              />
-            </Animated.View>
-          </CountAction>
+          {onMenuPress ? (
+            <Pressable
+              onPress={onMenuPress}
+              hitSlop={HIT_SLOP}
+              accessibilityRole="button"
+              accessibilityLabel={`Ouvrir le menu du post de @${post.author_username}`}
+            >
+              <MoreHorizontal size={20} color="#FFFFFF" />
+            </Pressable>
+          ) : null}
         </XStack>
-      )}
-    </YStack>
+
+        <YStack marginTop={10}>
+          <PostContent content={post.content} onOpenDetail={onOpenDetail} />
+          {hasMedia ? <PostMedia post={post} onOpenDetail={onOpenDetail} /> : null}
+        </YStack>
+
+        {variant === 'detail' ? null : (
+          <XStack alignItems="center" gap={20} marginTop={12} width="100%">
+            <CountAction
+              label={`Aimer le post de @${post.author_username}`}
+              count={post.like_count}
+              onPress={handleLike}
+            >
+              <Animated.View style={{ transform: [{ scale: likeScale }] }}>
+                <Heart
+                  size={22}
+                  color={post.liked_by_me ? '#FF3B30' : '#FFFFFF'}
+                  fill={post.liked_by_me ? '#FF3B30' : 'transparent'}
+                />
+              </Animated.View>
+            </CountAction>
+
+            <CountAction
+              label={`Commenter le post de @${post.author_username}`}
+              count={post.comment_count}
+              onPress={onOpenComments}
+            >
+              <MessageCircle size={22} color="#FFFFFF" />
+            </CountAction>
+
+            <CountAction
+              label={`Partager le post de @${post.author_username}`}
+              count={post.share_count}
+              onPress={() => setShareSheetOpen(true)}
+            >
+              <Send size={22} color="#FFFFFF" />
+            </CountAction>
+
+            <XStack flex={1} />
+
+            <CountAction
+              label={`Sauvegarder le post de @${post.author_username}`}
+              onPress={handleBookmark}
+            >
+              <Animated.View style={{ transform: [{ rotate: bookmarkRotation }] }}>
+                <Bookmark
+                  size={22}
+                  color={post.bookmarked_by_me ? '#10D970' : '#FFFFFF'}
+                  fill={post.bookmarked_by_me ? '#10D970' : 'transparent'}
+                />
+              </Animated.View>
+            </CountAction>
+          </XStack>
+        )}
+      </YStack>
+
+      <InternalShareOptionsSheet
+        open={shareSheetOpen}
+        onOpenChange={setShareSheetOpen}
+        onShareOutside={() => void handleShareOutside()}
+        onShareInside={handleShareInside}
+      />
+    </>
   );
 });
 

@@ -27,7 +27,7 @@ import {
   type NotificationItem,
 } from '@/features/notifications/hooks/useNotifications';
 
-const logoSource = require('../../../../assets/Logo-Doumassi.png') as number;
+const logoSource = require('../../../../assets/Logo-Doumassi.webp') as number;
 
 const FILTERS: { id: NotificationFilter; label: string }[] = [
   { id: 'all', label: 'Toutes' },

@@ -7,7 +7,6 @@ import { Bookmark, Heart, MessageCircle, Send, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Pressable,
   Share,
@@ -22,6 +21,7 @@ import { Button, Text, XStack, YStack } from 'tamagui';
 
 import type { PostCardPost } from '@/components/feed/PostCard';
 import { MentionsText } from '@/components/MentionsText';
+import { InternalShareOptionsSheet } from '@/components/share/InternalShareOptionsSheet';
 import { CommentsSheet } from '@/features/comments/components/CommentsSheet';
 import {
   useIncrementPostShare,
@@ -300,6 +300,7 @@ export default function PostDetailRoute() {
   const insets = useSafeAreaInsets();
   const [overlaysVisible, setOverlaysVisible] = useState(true);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
 
   const postQuery = usePostDetail(postId);
   const likeMutation = useTogglePostLike(postId ?? '');
@@ -347,7 +348,7 @@ export default function PostDetailRoute() {
     setCommentsOpen(true);
   }, []);
 
-  const handleShare = useCallback(async () => {
+  const handleShareOutside = useCallback(async () => {
     if (!post) return;
 
     try {
@@ -361,9 +362,17 @@ export default function PostDetailRoute() {
         shareMutation.mutate();
       }
     } catch {
-      Alert.alert('Partage indisponible', 'Impossible d’ouvrir le partage pour le moment.');
+      // Annulation par l'utilisateur ou erreur native.
     }
   }, [post, shareMutation]);
+
+  const handleShareInside = useCallback(() => {
+    if (!post) return;
+    router.push({
+      pathname: '/messages/share',
+      params: { type: 'post', postId: post.id },
+    });
+  }, [post]);
 
   const handleOpenProfile = useCallback(() => {
     if (!post) return;
@@ -436,7 +445,7 @@ export default function PostDetailRoute() {
               <ActionButton
                 label={`Partager le post de @${post.author_username}`}
                 count={post.share_count}
-                onPress={() => void handleShare()}
+                onPress={() => setShareSheetOpen(true)}
               >
                 <Send size={32} color="#FFFFFF" />
               </ActionButton>
@@ -462,6 +471,12 @@ export default function PostDetailRoute() {
       {postId ? (
         <CommentsSheet postId={postId} open={commentsOpen} onOpenChange={setCommentsOpen} />
       ) : null}
+      <InternalShareOptionsSheet
+        open={shareSheetOpen}
+        onOpenChange={setShareSheetOpen}
+        onShareOutside={() => void handleShareOutside()}
+        onShareInside={handleShareInside}
+      />
     </>
   );
 }

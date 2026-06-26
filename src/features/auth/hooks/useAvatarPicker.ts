@@ -16,7 +16,7 @@ export function useAvatarPicker() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   /**
-   * Crop to 1:1, resize to max 800×800, compress < 200 Ko.
+   * Crop to 1:1, resize to max 400×400, compress < 200 Ko.
    * Falls back to original URI if manipulation fails.
    */
   const processImage = async (uri: string) => {
@@ -24,7 +24,7 @@ export function useAvatarPicker() {
     try {
       const result = await ImageManipulator.manipulateAsync(
         uri,
-        [{ resize: { width: 800, height: 800 } }],
+        [{ resize: { width: 400, height: 400 } }],
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
 

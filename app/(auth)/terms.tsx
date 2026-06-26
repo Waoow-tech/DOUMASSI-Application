@@ -15,7 +15,7 @@ import {
   type LegalSection,
 } from '@/features/legal/content/cgv';
 
-const logoSource = require('../../assets/Logo-Doumassi.png') as number;
+const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
 function SectionList({ sections }: { sections: LegalSection[] }) {
   return (

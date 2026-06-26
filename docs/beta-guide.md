@@ -71,13 +71,23 @@ Ce guide vous explique comment installer la bêta, ce que vous pouvez tester, et
 Les fonctions suivantes apparaissent en placeholder « Bientôt » dans l'app, c'est normal :
 
 - 🛒 Marketplace
-- 🤖 Studio AI
+- 🤖 Doumassi AI
 - 💳 Wallet (portefeuille)
 - 📞 Appels audio / vidéo
 - 💬 Conversations de groupe
 - 📷 Envoi d'images / messages vocaux dans les messages
 
 Ces fonctionnalités arriveront dans les prochaines versions, on travaille dessus.
+
+## 4 bis. Limites connues de cette bêta
+
+Quelques fonctionnalités sont volontairement réduites pour cette première version. On les ajoutera dans les prochaines mises à jour :
+
+- **Partage interne d'un post ou d'un profil vers un ami DOUMASSI** : pour l'instant, le bouton « Partager » sur un post copie un lien `https://doumassi.app/post/...` que vous pouvez envoyer par SMS, WhatsApp, etc. L'envoi direct dans une conversation DOUMASSI arrive Sprint 6.
+- **Réponse à un message spécifique** : la réponse à un message précis dans une conversation arrive Sprint 6 (le schéma est déjà en place côté serveur).
+- **Mentions `@username` dans les posts et messages** : arrive Sprint 6.
+- **Hashtags `#tag`** : arrive Sprint 6.
+- **Modale de rappel d'annulation au login** si une suppression de compte est en cours : pour la bêta, vous accédez quand même au feed normalement et vous voyez le statut dans `Paramètres → Compte → Supprimer mon compte`. Une modale d'annulation directement au login viendra plus tard.
 
 ## 5. Comment remonter vos retours
 
