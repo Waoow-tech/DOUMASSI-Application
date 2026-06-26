@@ -11,6 +11,8 @@ import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
+import { MentionsText } from '@/components/MentionsText';
+
 import type { MessageRow } from '../hooks/useConversationMessages';
 
 const COLORS = {
@@ -78,9 +80,16 @@ function MessageBubbleComponent({ message, isMine, onLongPress }: MessageBubbleP
               🚫 Message supprimé
             </Text>
           ) : (
-            <Text fontSize={15} lineHeight={20} color={isMine ? COLORS.myText : COLORS.otherText}>
-              {message.content ?? ''}
-            </Text>
+            <MentionsText
+              content={message.content ?? ''}
+              style={{
+                fontSize: 15,
+                lineHeight: 20,
+                color: isMine ? COLORS.myText : COLORS.otherText,
+              }}
+              mentionColor={isMine ? COLORS.myText : '#10D970'}
+              mentionUnderline={isMine}
+            />
           )}
 
           <XStack gap={4} alignItems="center" justifyContent="flex-end">

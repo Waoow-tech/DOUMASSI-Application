@@ -8,12 +8,12 @@ import {
   Pressable,
   Share,
   StyleSheet,
-  Text as RNText,
   type NativeSyntheticEvent,
   type TextLayoutEventData,
 } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
+import { MentionsText } from '@/components/MentionsText';
 import { InternalShareOptionsSheet } from '@/components/share/InternalShareOptionsSheet';
 import { supabase } from '@/lib/supabase';
 import { formatViewCount } from '@/utils/formatCount';
@@ -175,13 +175,12 @@ function PostContent({ content, onOpenDetail }: { content: string; onOpenDetail?
       accessibilityLabel="Ouvrir le post"
       style={styles.contentPressable}
     >
-      <RNText
+      <MentionsText
+        content={content}
         style={styles.contentText}
         numberOfLines={MAX_CONTENT_LINES}
         onTextLayout={onTextLayout}
-      >
-        {content}
-      </RNText>
+      />
       {isTruncated ? (
         <Text color="$textSecondary" fontSize={15} lineHeight={TEXT_LINE_HEIGHT} marginTop={2}>
           ...plus
