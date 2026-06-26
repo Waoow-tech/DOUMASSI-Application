@@ -45,7 +45,7 @@ import {
 import { useRealtimeConversation } from '@/features/messaging/hooks/useRealtimeConversation';
 import { useSendMessage } from '@/features/messaging/hooks/useSendMessage';
 import { logger } from '@/lib/logger';
-import { uploadMessageImage } from '@/lib/storage';
+import { uploadMessageAudio, uploadMessageImage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 
 export function ConversationScreen() {
@@ -132,6 +132,40 @@ export function ConversationScreen() {
         Alert.alert("Échec de l'upload", msg);
       } finally {
         setIsAttaching(false);
+      }
+    },
+    [convId, sendMessage]
+  );
+
+  // Ticket #211 — envoi vocal.
+  const [isSendingVoice, setIsSendingVoice] = useState(false);
+
+  const handleSendVoice = useCallback(
+    async (audioUri: string, durationSeconds: number) => {
+      if (!convId) return;
+      setIsSendingVoice(true);
+      try {
+        const { publicUrl } = await uploadMessageAudio(audioUri);
+        sendMessage.mutate(
+          {
+            conversationId: convId,
+            content: String(durationSeconds),
+            attachmentType: 'voice',
+            attachmentUrl: publicUrl,
+          },
+          {
+            onError: (err) => {
+              logger.warn('Send voice message failed', { message: err.message });
+              Alert.alert("Échec de l'envoi", err.message);
+            },
+          }
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Upload audio échoué';
+        logger.warn('Upload message audio failed', { message: msg });
+        Alert.alert("Échec de l'upload", msg);
+      } finally {
+        setIsSendingVoice(false);
       }
     },
     [convId, sendMessage]
@@ -349,7 +383,9 @@ export function ConversationScreen() {
           onSend={handleSend}
           onAttach={handleAttach}
           isAttaching={isAttaching}
-          disabled={sendMessage.isPending || isAttaching}
+          onSendVoice={handleSendVoice}
+          isSendingVoice={isSendingVoice}
+          disabled={sendMessage.isPending || isAttaching || isSendingVoice}
         />
         <View style={{ height: insets.bottom }} backgroundColor="$surface" />
       </KeyboardAvoidingView>
