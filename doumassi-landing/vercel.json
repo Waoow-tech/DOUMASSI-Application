@@ -21,6 +21,7 @@
   "rewrites": [
     { "source": "/post/:id", "destination": "/" },
     { "source": "/profile/:id", "destination": "/" },
-    { "source": "/story/:id", "destination": "/" }
+    { "source": "/story/:id", "destination": "/" },
+    { "source": "/u/:username", "destination": "/" }
   ]
 }
