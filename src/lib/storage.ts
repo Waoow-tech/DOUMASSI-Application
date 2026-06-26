@@ -373,6 +373,59 @@ export async function uploadPostImage(
 }
 
 // ---------------------------------------------------------------------------
+// Messaging upload (#210)
+// ---------------------------------------------------------------------------
+
+const MESSAGING_BUCKET = 'messaging_media';
+
+export interface UploadMessageImageResult {
+  publicUrl: string;
+  path: string;
+}
+
+/**
+ * Compresse puis upload une image locale dans le bucket `messaging_media`.
+ * Pipeline identique à uploadPostImage : compression côté client (qualité 0.8,
+ * resize 1920px max), upload via SDK Supabase Storage, path `{user_id}/{uuid}.jpg`.
+ */
+export async function uploadMessageImage(
+  uri: string,
+  options?: { signal?: AbortSignal; onProgress?: (p: number) => void; quality?: number }
+): Promise<UploadMessageImageResult> {
+  const quality = clamp01(options?.quality ?? DEFAULT_QUALITY);
+  const signal = options?.signal;
+  const onProgress = options?.onProgress;
+
+  try {
+    if (signal?.aborted) throw abortedError();
+
+    const session = await getFreshSession();
+    const compressedUri = await compressImage(uri, quality);
+    const path = `${session.user.id}/${uuidv4()}.jpg`;
+
+    try {
+      await uploadToStorage(compressedUri, path, MESSAGING_BUCKET, 'image/jpeg', {
+        onProgress,
+        signal,
+      });
+    } finally {
+      await cleanupTempFiles([compressedUri]);
+    }
+
+    const { data } = supabase.storage.from(MESSAGING_BUCKET).getPublicUrl(path);
+    return { publicUrl: data.publicUrl, path };
+  } catch (error) {
+    const uploadError = error instanceof UploadError ? error : new UploadError('upload', error);
+    if (signal?.aborted) {
+      logger.debug('upload_message_image_cancelled');
+    } else {
+      logger.error('upload_message_image_failed', uploadError);
+    }
+    throw uploadError;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Stories upload (E4-12)
 // ---------------------------------------------------------------------------
 
