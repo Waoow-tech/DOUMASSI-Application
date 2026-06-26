@@ -42,12 +42,18 @@ export function ProfileScreen() {
   }, []);
 
   const handleShare = useCallback(async () => {
+    const username = profile?.username;
+    if (!username) return;
     try {
-      await Share.share({ message: copy.shareMessage });
+      // URL incluse dans `message` car Android ignore la prop `url` de
+      // Share.share et ne lit que `message` (cf bug remonté 2026-06-24).
+      await Share.share({
+        message: `${copy.shareMessage}\nhttps://doumassi.app/u/${username}`,
+      });
     } catch {
       // L'utilisateur a annulé le partage.
     }
-  }, [copy.shareMessage]);
+  }, [copy.shareMessage, profile?.username]);
 
   const handleKebabPress = useCallback(() => setIsMenuOpen(true), []);
 
