@@ -1,15 +1,17 @@
-// MessageInput — E6-03 / E6-05 + ticket #213 PR B (mentions composer).
+// MessageInput — E6-03 / E6-05 + ticket #213 PR B (mentions composer)
+//                + ticket #210 (image attachment via bouton "+" à gauche).
 //
 // Composant sticky bottom : input multiline (max 6 lignes) + bouton Send.
 // Quand l'utilisateur tape `@`, ouvre une dropdown de suggestions au-dessus
 // du TextArea. Tap sur une suggestion insère `@username ` à la position du
-// curseur.
+// curseur. Le bouton "+" à gauche ouvre le picker d'image (le parent gère
+// le choix Galerie/Caméra via `onAttach`).
 //
 // Send désactivé si vide, whitespace only, ou > 5 mentions dans le message.
 
-import { Send } from 'lucide-react-native';
+import { Plus, Send } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { Text, TextArea, XStack, YStack } from 'tamagui';
 
 import { MentionSuggestionsList } from '@/features/mentions/components/MentionSuggestionsList';
@@ -22,6 +24,13 @@ import type { SearchUserResult } from '@/features/profile/hooks/useSearchUsers';
 
 export interface MessageInputProps {
   onSend: (content: string) => void;
+  /**
+   * Ouvre le picker d'image (Galerie/Caméra). Le parent doit gérer le choix
+   * + l'appel à `uploadMessageImage` + `useSendMessage` avec attachmentType.
+   */
+  onAttach?: () => void;
+  /** Vrai pendant l'upload d'une image — désactive le bouton et affiche un spinner. */
+  isAttaching?: boolean;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -31,6 +40,8 @@ const MAX_CONTENT_LENGTH = 4000;
 
 export function MessageInput({
   onSend,
+  onAttach,
+  isAttaching = false,
   disabled = false,
   placeholder = 'Écrire un message…',
 }: MessageInputProps) {
@@ -100,6 +111,27 @@ export function MessageInput({
         paddingTop="$2"
         paddingBottom="$2"
       >
+        {onAttach ? (
+          <Pressable
+            onPress={onAttach}
+            disabled={isAttaching || disabled}
+            style={[
+              styles.attachButton,
+              { backgroundColor: isAttaching || disabled ? '#2A2A2A' : '#1A1A1A' },
+            ]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Ajouter une image"
+            accessibilityHint="Tap pour ouvrir la galerie ou prendre une photo"
+            accessibilityState={{ disabled: isAttaching || disabled }}
+          >
+            {isAttaching ? (
+              <ActivityIndicator size="small" color="#10D970" />
+            ) : (
+              <Plus size={22} color="#FFFFFF" />
+            )}
+          </Pressable>
+        ) : null}
         <TextArea
           flex={1}
           value={content}
@@ -141,6 +173,14 @@ export function MessageInput({
 }
 
 const styles = StyleSheet.create({
+  attachButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 1,
+  },
   sendButton: {
     width: 40,
     height: 40,

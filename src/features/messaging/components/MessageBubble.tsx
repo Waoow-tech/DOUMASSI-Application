@@ -1,12 +1,15 @@
-// MessageBubble — E6-03.
+// MessageBubble — E6-03 + ticket #210 (image attachment).
 //
 // Affichage d'un message dans la liste. Bulle à droite si c'est moi, à
-// gauche sinon. Gère trois états :
-//   - normal : contenu + horodatage relatif
+// gauche sinon. Gère plusieurs états :
+//   - normal : contenu texte + horodatage relatif
 //   - edited : ajoute « modifié » à côté de l'horodatage
 //   - deleted : remplace le contenu par « 🚫 Message supprimé » en italique
+//   - image : affiche une thumbnail 220×260 contentFit cover, content
+//     optionnel rendu en dessous (caption)
 // Long-press sur ma propre bulle → ouvre la sheet d'actions (parent).
 
+import { Image } from 'expo-image';
 import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
@@ -70,7 +73,7 @@ function MessageBubbleComponent({ message, isMine, onLongPress }: MessageBubbleP
           },
         ]}
       >
-        <YStack gap={2}>
+        <YStack gap={6}>
           {isDeleted ? (
             <Text
               fontSize={14}
@@ -80,16 +83,30 @@ function MessageBubbleComponent({ message, isMine, onLongPress }: MessageBubbleP
               🚫 Message supprimé
             </Text>
           ) : (
-            <MentionsText
-              content={message.content ?? ''}
-              style={{
-                fontSize: 15,
-                lineHeight: 20,
-                color: isMine ? COLORS.myText : COLORS.otherText,
-              }}
-              mentionColor={isMine ? COLORS.myText : '#10D970'}
-              mentionUnderline={isMine}
-            />
+            <>
+              {message.attachment_type === 'image' && message.attachment_url ? (
+                <Image
+                  source={{ uri: message.attachment_url }}
+                  style={styles.imageAttachment}
+                  contentFit="cover"
+                  transition={150}
+                  recyclingKey={message.id}
+                  accessibilityLabel="Image envoyée"
+                />
+              ) : null}
+              {message.content ? (
+                <MentionsText
+                  content={message.content}
+                  style={{
+                    fontSize: 15,
+                    lineHeight: 20,
+                    color: isMine ? COLORS.myText : COLORS.otherText,
+                  }}
+                  mentionColor={isMine ? COLORS.myText : '#10D970'}
+                  mentionUnderline={isMine}
+                />
+              ) : null}
+            </>
           )}
 
           <XStack gap={4} alignItems="center" justifyContent="flex-end">
@@ -127,6 +144,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
+  },
+  imageAttachment: {
+    width: 220,
+    height: 260,
+    borderRadius: 12,
+    backgroundColor: '#2A2A2A',
   },
 });
 
