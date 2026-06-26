@@ -124,11 +124,13 @@ function Avatar({
 
 function CountAction({
   label,
+  hint,
   count,
   children,
   onPress,
 }: {
   label: string;
+  hint?: string;
   count?: number;
   children: React.ReactNode;
   onPress?: () => void;
@@ -139,6 +141,7 @@ function CountAction({
       hitSlop={HIT_SLOP}
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityHint={hint}
       style={styles.actionPressable}
     >
       <XStack alignItems="center" gap={6}>
@@ -425,6 +428,7 @@ export const PostCard = memo(function PostCard({
           <XStack alignItems="center" gap={20} marginTop={12} width="100%">
             <CountAction
               label={`Aimer le post de @${post.author_username}`}
+              hint={post.liked_by_me ? 'Tap pour retirer votre like' : 'Tap pour aimer ce post'}
               count={post.like_count}
               onPress={handleLike}
             >
@@ -457,6 +461,11 @@ export const PostCard = memo(function PostCard({
 
             <CountAction
               label={`Sauvegarder le post de @${post.author_username}`}
+              hint={
+                post.bookmarked_by_me
+                  ? 'Tap pour retirer ce post de vos favoris'
+                  : 'Tap pour sauvegarder ce post dans vos favoris'
+              }
               onPress={handleBookmark}
             >
               <Animated.View style={{ transform: [{ rotate: bookmarkRotation }] }}>

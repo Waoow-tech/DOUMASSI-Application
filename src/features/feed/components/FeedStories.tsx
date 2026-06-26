@@ -31,6 +31,11 @@ export function FeedStories({ stories, onStoryPress }: FeedStoriesProps) {
           accessibilityLabel={
             story.isMe ? 'Ajouter à votre story' : `Ouvrir la story de @${story.username}`
           }
+          accessibilityHint={
+            story.isMe
+              ? 'Tap pour créer une nouvelle story'
+              : `Tap pour visionner la story de @${story.username}`
+          }
         >
           <YStack
             width={72}
