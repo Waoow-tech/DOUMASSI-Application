@@ -13,7 +13,7 @@
 // Send désactivé si vide, whitespace only, ou > 5 mentions dans le message.
 
 import { RecordingPresets, requestRecordingPermissionsAsync, useAudioRecorder } from 'expo-audio';
-import { Mic, Plus, Send, StopCircle } from 'lucide-react-native';
+import { CornerUpLeft, Mic, Plus, Send, StopCircle, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { Text, TextArea, XStack, YStack } from 'tamagui';
@@ -42,8 +42,22 @@ export interface MessageInputProps {
   onSendVoice?: (uri: string, durationSeconds: number) => Promise<void> | void;
   /** Vrai pendant l'upload/send vocal — bloque toute autre interaction. */
   isSendingVoice?: boolean;
+  /**
+   * Ticket #209 — message en cours de réponse. Affiche un encart sticky au-dessus
+   * du composer avec preview du message ciblé + bouton X pour annuler.
+   */
+  replyingTo?: ReplyingPreview | null;
+  /** Appelé quand l'utilisateur tape sur la croix de l'encart de réponse. */
+  onCancelReply?: () => void;
   disabled?: boolean;
   placeholder?: string;
+}
+
+export interface ReplyingPreview {
+  /** Auteur formaté (`@username` ou "votre message"). */
+  authorLabel: string;
+  /** 50 premiers caractères du message ciblé (ou label d'attachment). */
+  preview: string;
 }
 
 const MAX_LINES = 6;
@@ -57,6 +71,8 @@ export function MessageInput({
   isAttaching = false,
   onSendVoice,
   isSendingVoice = false,
+  replyingTo,
+  onCancelReply,
   disabled = false,
   placeholder = 'Écrire un message…',
 }: MessageInputProps) {
@@ -187,6 +203,37 @@ export function MessageInput({
       borderTopWidth={StyleSheet.hairlineWidth}
       borderTopColor="$borderColor"
     >
+      {replyingTo ? (
+        <XStack
+          paddingHorizontal="$3"
+          paddingVertical="$2"
+          gap="$3"
+          alignItems="center"
+          backgroundColor="rgba(16,217,112,0.10)"
+          borderTopWidth={StyleSheet.hairlineWidth}
+          borderTopColor="$borderColor"
+        >
+          <CornerUpLeft size={16} color="#10D970" />
+          <YStack flex={1} minWidth={0}>
+            <Text fontSize={12} color="$accentNeon" fontWeight="700">
+              Réponse à {replyingTo.authorLabel}
+            </Text>
+            <Text fontSize={13} color="$textSecondary" numberOfLines={1}>
+              {replyingTo.preview}
+            </Text>
+          </YStack>
+          {onCancelReply ? (
+            <Pressable
+              onPress={onCancelReply}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Annuler la réponse"
+            >
+              <X size={18} color="#A0A0A0" />
+            </Pressable>
+          ) : null}
+        </XStack>
+      ) : null}
       <MentionSuggestionsList
         suggestions={suggestions}
         isLoading={isLoading}
