@@ -47,6 +47,7 @@ import {
 } from '@/features/messaging/hooks/useMessageActions';
 import { useRealtimeConversation } from '@/features/messaging/hooks/useRealtimeConversation';
 import { useSendMessage } from '@/features/messaging/hooks/useSendMessage';
+import { useProfilesByIds } from '@/features/profile/hooks/useProfilesByIds';
 import { logger } from '@/lib/logger';
 import { uploadMessageAudio, uploadMessageImage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
@@ -102,6 +103,14 @@ export function ConversationScreen() {
     return map;
   }, [messages]);
 
+  // Follow-up #212/#209 — résolution des senders en batch (1 query).
+  const senderIds = useMemo(
+    () => Array.from(new Set(messages.map((m) => m.sender_id).filter((id) => id !== meId))),
+    [meId, messages]
+  );
+  const { profilesById } = useProfilesByIds(senderIds);
+  const isGroup = headerQuery.data?.is_group ?? false;
+
   /** Construit le preview à afficher dans l'encart "Réponse à" ou la bulle. */
   const buildReplyPreview = useCallback(
     (parent: MessageRow): { authorLabel: string; preview: string; isDeleted: boolean } => {
@@ -117,19 +126,25 @@ export function ConversationScreen() {
       } else {
         preview = (parent.content ?? '').slice(0, 50);
       }
-      // Pour les DMs, on connaît le display_name de l'autre via le header. Pour
-      // les groupes, on n'a pas encore le username par sender (chantier follow-up
-      // post-#209) — on utilise "@un membre" comme placeholder.
-      const otherLabel = headerQuery.data?.display_name
-        ? `@${headerQuery.data.display_name}`
-        : '@un membre';
+      // Résolution du username depuis le batch profilesById (follow-up #212).
+      // Fallback sur display_name du header pour les DMs si le profile n'est
+      // pas encore chargé, puis "@un membre" en dernier recours.
+      const senderProfile = profilesById.get(parent.sender_id);
+      let otherLabel: string;
+      if (senderProfile?.username) {
+        otherLabel = `@${senderProfile.username}`;
+      } else if (headerQuery.data?.display_name && !headerQuery.data.is_group) {
+        otherLabel = `@${headerQuery.data.display_name}`;
+      } else {
+        otherLabel = '@un membre';
+      }
       return {
         authorLabel: isParentMine ? 'votre message' : otherLabel,
         preview,
         isDeleted,
       };
     },
-    [headerQuery.data?.display_name, meId]
+    [headerQuery.data?.display_name, headerQuery.data?.is_group, meId, profilesById]
   );
 
   const handleSend = useCallback(
@@ -344,6 +359,8 @@ export function ConversationScreen() {
 
   const renderMessage = useCallback(
     ({ item }: { item: MessageRow }) => {
+      const isMine = item.sender_id === meId;
+      const senderProfile = !isMine ? profilesById.get(item.sender_id) : undefined;
       let replyParent: ReplyParentPreview | null = null;
       if (item.reply_to_id) {
         const parent = messagesById.get(item.reply_to_id);
@@ -363,14 +380,28 @@ export function ConversationScreen() {
       return (
         <MessageBubble
           message={item}
-          isMine={item.sender_id === meId}
+          isMine={isMine}
+          isGroup={isGroup}
+          senderProfile={
+            senderProfile
+              ? { username: senderProfile.username, avatar_url: senderProfile.avatar_url }
+              : null
+          }
           replyParent={replyParent}
           onReplyPress={handleScrollToParent}
           onLongPress={handleLongPressBubble}
         />
       );
     },
-    [buildReplyPreview, handleLongPressBubble, handleScrollToParent, meId, messagesById]
+    [
+      buildReplyPreview,
+      handleLongPressBubble,
+      handleScrollToParent,
+      isGroup,
+      meId,
+      messagesById,
+      profilesById,
+    ]
   );
 
   // Header
