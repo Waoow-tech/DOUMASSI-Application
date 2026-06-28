@@ -18,6 +18,8 @@ import { MentionsText } from '@/components/MentionsText';
 
 import type { MessageRow } from '../hooks/useConversationMessages';
 
+import { VoiceMessage } from './VoiceMessage';
+
 const COLORS = {
   myBubble: '#10D970', // accent neon
   myText: '#000000',
@@ -96,7 +98,17 @@ function MessageBubbleComponent({ message, isMine, onLongPress }: MessageBubbleP
                   accessibilityLabel="Image envoyée"
                 />
               ) : null}
-              {message.content ? (
+              {message.attachment_type === 'voice' && message.attachment_url ? (
+                <VoiceMessage
+                  audioUrl={message.attachment_url}
+                  durationSeconds={
+                    message.content ? Number.parseInt(message.content, 10) || undefined : undefined
+                  }
+                  textColor={isMine ? COLORS.myText : COLORS.otherText}
+                  iconColor={isMine ? COLORS.myText : '#10D970'}
+                />
+              ) : null}
+              {message.attachment_type !== 'voice' && message.content ? (
                 <MentionsText
                   content={message.content}
                   style={{

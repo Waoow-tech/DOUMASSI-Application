@@ -373,7 +373,7 @@ export async function uploadPostImage(
 }
 
 // ---------------------------------------------------------------------------
-// Messaging upload (#210)
+// Messaging upload (#210 image + #211 voice)
 // ---------------------------------------------------------------------------
 
 const MESSAGING_BUCKET = 'messaging_media';
@@ -384,9 +384,9 @@ export interface UploadMessageImageResult {
 }
 
 /**
- * Compresse puis upload une image locale dans le bucket `messaging_media`.
- * Pipeline identique à uploadPostImage : compression côté client (qualité 0.8,
- * resize 1920px max), upload via SDK Supabase Storage, path `{user_id}/{uuid}.jpg`.
+ * Compresse + upload une image dans le bucket `messaging_media`. Pipeline
+ * identique à uploadPostImage (quality 0.8, resize 1920px max). Path :
+ * `{user_id}/{uuid}.jpg`.
  */
 export async function uploadMessageImage(
   uri: string,
@@ -398,11 +398,9 @@ export async function uploadMessageImage(
 
   try {
     if (signal?.aborted) throw abortedError();
-
     const session = await getFreshSession();
     const compressedUri = await compressImage(uri, quality);
     const path = `${session.user.id}/${uuidv4()}.jpg`;
-
     try {
       await uploadToStorage(compressedUri, path, MESSAGING_BUCKET, 'image/jpeg', {
         onProgress,
@@ -411,16 +409,44 @@ export async function uploadMessageImage(
     } finally {
       await cleanupTempFiles([compressedUri]);
     }
-
     const { data } = supabase.storage.from(MESSAGING_BUCKET).getPublicUrl(path);
     return { publicUrl: data.publicUrl, path };
   } catch (error) {
     const uploadError = error instanceof UploadError ? error : new UploadError('upload', error);
-    if (signal?.aborted) {
-      logger.debug('upload_message_image_cancelled');
-    } else {
-      logger.error('upload_message_image_failed', uploadError);
-    }
+    if (signal?.aborted) logger.debug('upload_message_image_cancelled');
+    else logger.error('upload_message_image_failed', uploadError);
+    throw uploadError;
+  }
+}
+
+export interface UploadMessageAudioResult {
+  publicUrl: string;
+  path: string;
+}
+
+/**
+ * Upload un fichier audio (.m4a / AAC produit par expo-audio) dans le bucket
+ * `messaging_media`. Pas de compression côté client (expo-audio produit déjà
+ * de l'AAC compressé). Path : `{user_id}/{uuid}.m4a`.
+ */
+export async function uploadMessageAudio(
+  uri: string,
+  options?: { signal?: AbortSignal; onProgress?: (p: number) => void }
+): Promise<UploadMessageAudioResult> {
+  const signal = options?.signal;
+  const onProgress = options?.onProgress;
+
+  try {
+    if (signal?.aborted) throw abortedError();
+    const session = await getFreshSession();
+    const path = `${session.user.id}/${uuidv4()}.m4a`;
+    await uploadToStorage(uri, path, MESSAGING_BUCKET, 'audio/m4a', { onProgress, signal });
+    const { data } = supabase.storage.from(MESSAGING_BUCKET).getPublicUrl(path);
+    return { publicUrl: data.publicUrl, path };
+  } catch (error) {
+    const uploadError = error instanceof UploadError ? error : new UploadError('upload', error);
+    if (signal?.aborted) logger.debug('upload_message_audio_cancelled');
+    else logger.error('upload_message_audio_failed', uploadError);
     throw uploadError;
   }
 }
