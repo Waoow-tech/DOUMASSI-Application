@@ -8,15 +8,15 @@
 //
 // Hors scope bêta (cohérent avec spec recadrée le 02/06/2026) :
 //   - Boutons d'appel audio/vidéo Daily.co (Sprint 6+ tickets #85-88)
-//   - Pièces jointes voice/video (image arrive ticket #210)
-//   - Réponses (reply_to_id)
+//   - Voice/video : voice livré #211
+//   - Réponses : livré #209 (state replyingTo + scroll vers parent)
 
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -30,8 +30,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View, XStack, YStack } from 'tamagui';
 
 import { MessageActionSheet } from '@/features/messaging/components/MessageActionSheet';
-import { MessageBubble } from '@/features/messaging/components/MessageBubble';
-import { MessageInput } from '@/features/messaging/components/MessageInput';
+import {
+  MessageBubble,
+  type ReplyParentPreview,
+} from '@/features/messaging/components/MessageBubble';
+import { MessageInput, type ReplyingPreview } from '@/features/messaging/components/MessageInput';
 import { useConversationHeader } from '@/features/messaging/hooks/useConversationHeader';
 import {
   type MessageRow,
@@ -65,6 +68,9 @@ export function ConversationScreen() {
   const [actionSheetOpen, setActionSheetOpen] = useState(false);
   const [actionMessage, setActionMessage] = useState<MessageRow | null>(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  // Ticket #209 — message en cours de réponse (sélectionné via ActionSheet).
+  const [replyingTo, setReplyingTo] = useState<MessageRow | null>(null);
+  const listRef = useRef<FlashListRef<MessageRow>>(null);
 
   // Récupère mon user_id au mount pour identifier les bulles "à moi"
   useEffect(() => {
@@ -88,19 +94,61 @@ export function ConversationScreen() {
     return messagesQuery.data?.pages.flatMap((p) => p.messages) ?? [];
   }, [messagesQuery.data]);
 
+  // Ticket #209 — index id→message pour résoudre les parents en O(1) au
+  // moment du rendu des bulles.
+  const messagesById = useMemo(() => {
+    const map = new Map<string, MessageRow>();
+    for (const m of messages) map.set(m.id, m);
+    return map;
+  }, [messages]);
+
+  /** Construit le preview à afficher dans l'encart "Réponse à" ou la bulle. */
+  const buildReplyPreview = useCallback(
+    (parent: MessageRow): { authorLabel: string; preview: string; isDeleted: boolean } => {
+      const isParentMine = parent.sender_id === meId;
+      const isDeleted = parent.deleted_at !== null;
+      let preview: string;
+      if (parent.attachment_type === 'image') {
+        preview = '📷 Photo';
+      } else if (parent.attachment_type === 'voice') {
+        preview = '🎙️ Message vocal';
+      } else if (parent.attachment_type === 'video') {
+        preview = '🎬 Vidéo';
+      } else {
+        preview = (parent.content ?? '').slice(0, 50);
+      }
+      // Pour les DMs, on connaît le display_name de l'autre via le header. Pour
+      // les groupes, on n'a pas encore le username par sender (chantier follow-up
+      // post-#209) — on utilise "@un membre" comme placeholder.
+      const otherLabel = headerQuery.data?.display_name
+        ? `@${headerQuery.data.display_name}`
+        : '@un membre';
+      return {
+        authorLabel: isParentMine ? 'votre message' : otherLabel,
+        preview,
+        isDeleted,
+      };
+    },
+    [headerQuery.data?.display_name, meId]
+  );
+
   const handleSend = useCallback(
     (content: string) => {
       if (!convId) return;
+      const replyToId = replyingTo?.id ?? null;
       sendMessage.mutate(
-        { conversationId: convId, content },
+        { conversationId: convId, content, replyToId },
         {
           onError: (err) => {
             logger.warn('Send message failed', { message: err.message });
           },
         }
       );
+      // On reset l'état de réponse immédiatement (UX) — si l'envoi échoue,
+      // la bulle apparaît en "failed" mais le composer est libre pour autre chose.
+      setReplyingTo(null);
     },
-    [convId, sendMessage]
+    [convId, replyingTo, sendMessage]
   );
 
   // Ticket #210 — pièce jointe image.
@@ -110,6 +158,7 @@ export function ConversationScreen() {
     async (imageUri: string) => {
       if (!convId) return;
       setIsAttaching(true);
+      const replyToId = replyingTo?.id ?? null;
       try {
         const { publicUrl } = await uploadMessageImage(imageUri);
         sendMessage.mutate(
@@ -118,6 +167,7 @@ export function ConversationScreen() {
             content: '',
             attachmentType: 'image',
             attachmentUrl: publicUrl,
+            replyToId,
           },
           {
             onError: (err) => {
@@ -132,9 +182,10 @@ export function ConversationScreen() {
         Alert.alert("Échec de l'upload", msg);
       } finally {
         setIsAttaching(false);
+        setReplyingTo(null);
       }
     },
-    [convId, sendMessage]
+    [convId, replyingTo, sendMessage]
   );
 
   // Ticket #211 — envoi vocal.
@@ -144,6 +195,7 @@ export function ConversationScreen() {
     async (audioUri: string, durationSeconds: number) => {
       if (!convId) return;
       setIsSendingVoice(true);
+      const replyToId = replyingTo?.id ?? null;
       try {
         const { publicUrl } = await uploadMessageAudio(audioUri);
         sendMessage.mutate(
@@ -152,6 +204,7 @@ export function ConversationScreen() {
             content: String(durationSeconds),
             attachmentType: 'voice',
             attachmentUrl: publicUrl,
+            replyToId,
           },
           {
             onError: (err) => {
@@ -166,9 +219,10 @@ export function ConversationScreen() {
         Alert.alert("Échec de l'upload", msg);
       } finally {
         setIsSendingVoice(false);
+        setReplyingTo(null);
       }
     },
-    [convId, sendMessage]
+    [convId, replyingTo, sendMessage]
   );
 
   const handleAttach = useCallback(() => {
@@ -220,6 +274,43 @@ export function ConversationScreen() {
     setActionSheetOpen(true);
   }, []);
 
+  // Ticket #209 — réponses.
+  const handleReplyFromSheet = useCallback((message: MessageRow) => {
+    setReplyingTo(message);
+  }, []);
+
+  const handleCancelReply = useCallback(() => {
+    setReplyingTo(null);
+  }, []);
+
+  /**
+   * Scroll vers le message parent dans la liste. La liste est INVERTED
+   * (la plus récente en haut), donc l'index 0 = bas visuel du composer.
+   * Si le parent n'est pas dans les pages déjà chargées, on signale via Alert
+   * (charger plus en arrière nécessiterait un fetchNextPage en boucle — pas
+   * dans le scope MVP).
+   */
+  const handleScrollToParent = useCallback(
+    (parentId: string) => {
+      const index = messages.findIndex((m) => m.id === parentId);
+      if (index === -1) {
+        Alert.alert(
+          'Message non chargé',
+          'Le message parent est trop ancien. Faites défiler vers le haut puis réessayez.'
+        );
+        return;
+      }
+      listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+    },
+    [messages]
+  );
+
+  const replyingPreview = useMemo<ReplyingPreview | null>(() => {
+    if (!replyingTo) return null;
+    const { authorLabel, preview } = buildReplyPreview(replyingTo);
+    return { authorLabel, preview: preview || '...' };
+  }, [buildReplyPreview, replyingTo]);
+
   const handleEdit = useCallback(
     async (messageId: string, newContent: string) => {
       await editMessage.mutateAsync({ messageId, newContent });
@@ -252,14 +343,34 @@ export function ConversationScreen() {
   }, [messagesQuery]);
 
   const renderMessage = useCallback(
-    ({ item }: { item: MessageRow }) => (
-      <MessageBubble
-        message={item}
-        isMine={item.sender_id === meId}
-        onLongPress={handleLongPressBubble}
-      />
-    ),
-    [meId, handleLongPressBubble]
+    ({ item }: { item: MessageRow }) => {
+      let replyParent: ReplyParentPreview | null = null;
+      if (item.reply_to_id) {
+        const parent = messagesById.get(item.reply_to_id);
+        if (parent) {
+          const { authorLabel, preview, isDeleted } = buildReplyPreview(parent);
+          replyParent = { id: parent.id, authorLabel, preview, isDeleted };
+        } else {
+          // Parent pas dans les pages chargées : on rend l'encart en mode "déchargé".
+          replyParent = {
+            id: item.reply_to_id,
+            authorLabel: 'Message',
+            preview: 'Faire défiler pour voir le message original…',
+            isDeleted: false,
+          };
+        }
+      }
+      return (
+        <MessageBubble
+          message={item}
+          isMine={item.sender_id === meId}
+          replyParent={replyParent}
+          onReplyPress={handleScrollToParent}
+          onLongPress={handleLongPressBubble}
+        />
+      );
+    },
+    [buildReplyPreview, handleLongPressBubble, handleScrollToParent, meId, messagesById]
   );
 
   // Header
@@ -346,6 +457,7 @@ export function ConversationScreen() {
             </YStack>
           ) : (
             <FlashList
+              ref={listRef}
               data={messages}
               renderItem={renderMessage}
               keyExtractor={(item) => item.id}
@@ -385,6 +497,8 @@ export function ConversationScreen() {
           isAttaching={isAttaching}
           onSendVoice={handleSendVoice}
           isSendingVoice={isSendingVoice}
+          replyingTo={replyingPreview}
+          onCancelReply={handleCancelReply}
           disabled={sendMessage.isPending || isAttaching || isSendingVoice}
         />
         <View style={{ height: insets.bottom }} backgroundColor="$surface" />
@@ -393,10 +507,12 @@ export function ConversationScreen() {
       {/* Sheet d'actions sur long-press */}
       <MessageActionSheet
         message={actionMessage}
+        isMine={actionMessage?.sender_id === meId}
         open={actionSheetOpen}
         onOpenChange={setActionSheetOpen}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onReply={handleReplyFromSheet}
         editIsPending={editMessage.isPending}
         deleteIsPending={deleteMessage.isPending}
       />

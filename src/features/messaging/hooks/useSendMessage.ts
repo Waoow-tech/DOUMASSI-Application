@@ -36,6 +36,12 @@ export interface SendMessagePayload {
   attachmentType?: 'text' | 'image' | 'voice' | 'video';
   /** URL publique de l'attachment (Storage). Requise si attachmentType !== 'text'. */
   attachmentUrl?: string | null;
+  /**
+   * ID du message auquel on répond. Ticket #209 — UI réponses.
+   * Si présent, le INSERT pose `reply_to_id` pour rendre la bulle avec un
+   * encart "réponse à X" cliquable.
+   */
+  replyToId?: string | null;
 }
 
 interface OptimisticContext {
@@ -52,7 +58,13 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
 
   return useMutation<MessageRow, Error, SendMessagePayload, OptimisticContext>({
-    mutationFn: async ({ conversationId, content, attachmentType = 'text', attachmentUrl }) => {
+    mutationFn: async ({
+      conversationId,
+      content,
+      attachmentType = 'text',
+      attachmentUrl,
+      replyToId,
+    }) => {
       const trimmed = content.trim();
       const isText = attachmentType === 'text';
 
@@ -80,6 +92,7 @@ export function useSendMessage() {
           attachment_type: attachmentType,
           content: trimmed.length > 0 ? trimmed : null,
           attachment_url: attachmentUrl ?? null,
+          reply_to_id: replyToId ?? null,
         })
         .select(
           'id, conversation_id, sender_id, attachment_type, content, attachment_url, reply_to_id, created_at, edited_at, deleted_at'
@@ -102,6 +115,7 @@ export function useSendMessage() {
       clientTempId,
       attachmentType = 'text',
       attachmentUrl = null,
+      replyToId = null,
     }) => {
       const tempId = clientTempId ?? `temp-${uuidv4()}`;
 
@@ -121,7 +135,7 @@ export function useSendMessage() {
         attachment_type: attachmentType,
         content: content.trim().length > 0 ? content.trim() : null,
         attachment_url: attachmentUrl,
-        reply_to_id: null,
+        reply_to_id: replyToId,
         created_at: new Date().toISOString(),
         edited_at: null,
         deleted_at: null,

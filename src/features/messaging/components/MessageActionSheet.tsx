@@ -1,11 +1,15 @@
-// MessageActionSheet — E6-03.
+// MessageActionSheet — E6-03 + #209 (Répondre).
 //
-// Sheet contextuel qui s'ouvre au long-press sur une bulle "à moi".
-// Propose : Modifier (texte seulement), Supprimer.
-// Édition : passe en mode `editing` qui remplace le sheet par un input
+// Sheet contextuel ouvert au long-press sur une bulle. Selon le message et
+// la prop reçue, propose :
+//   - Répondre (toutes bulles non supprimées, si `onReply` fourni)
+//   - Modifier (seulement mes bulles texte)
+//   - Supprimer (seulement mes bulles)
+//
+// Édition : passe en mode `editing` qui remplace le menu par un input
 // pré-rempli + bouton de validation.
 
-import { Edit3, Trash2 } from 'lucide-react-native';
+import { CornerUpLeft, Edit3, Trash2 } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 import { Button, Sheet, Spinner, Text, TextArea, XStack, YStack } from 'tamagui';
@@ -14,10 +18,14 @@ import type { MessageRow } from '../hooks/useConversationMessages';
 
 export interface MessageActionSheetProps {
   message: MessageRow | null;
+  /** Vrai si le message ciblé est de l'user courant (active Modifier/Supprimer). */
+  isMine?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEdit: (messageId: string, newContent: string) => Promise<void>;
   onDelete: (messageId: string) => Promise<void>;
+  /** Ticket #209 — option "Répondre" en tête du menu. Appelle setReplyTo côté parent. */
+  onReply?: (message: MessageRow) => void;
   editIsPending?: boolean;
   deleteIsPending?: boolean;
 }
@@ -26,10 +34,12 @@ const MAX_CONTENT_LENGTH = 4000;
 
 export function MessageActionSheet({
   message,
+  isMine = false,
   open,
   onOpenChange,
   onEdit,
   onDelete,
+  onReply,
   editIsPending = false,
   deleteIsPending = false,
 }: MessageActionSheetProps) {
@@ -45,7 +55,16 @@ export function MessageActionSheet({
   }, [open, message]);
 
   const isText = message?.attachment_type === 'text';
-  const canEdit = isText && message?.content;
+  const isDeleted = message?.deleted_at != null;
+  const canEdit = isMine && isText && message?.content;
+  const canDelete = isMine && !isDeleted;
+  const canReply = !!onReply && !isDeleted && message != null;
+
+  const handleReply = useCallback(() => {
+    if (!message || !onReply) return;
+    onReply(message);
+    onOpenChange(false);
+  }, [message, onOpenChange, onReply]);
 
   const handleStartEdit = useCallback(() => {
     if (!message?.content) return;
@@ -117,20 +136,49 @@ export function MessageActionSheet({
 
         {mode === 'menu' ? (
           <YStack gap="$2">
+            {canReply ? (
+              <Pressable
+                onPress={handleReply}
+                style={styles.row}
+                accessibilityRole="button"
+                accessibilityLabel="Répondre à ce message"
+              >
+                <CornerUpLeft size={20} color="#FFFFFF" />
+                <Text color="$color" fontSize={16}>
+                  Répondre
+                </Text>
+              </Pressable>
+            ) : null}
             {canEdit ? (
-              <Pressable onPress={handleStartEdit} style={styles.row}>
+              <Pressable
+                onPress={handleStartEdit}
+                style={styles.row}
+                accessibilityRole="button"
+                accessibilityLabel="Modifier ce message"
+              >
                 <Edit3 size={20} color="#FFFFFF" />
                 <Text color="$color" fontSize={16}>
                   Modifier
                 </Text>
               </Pressable>
             ) : null}
-            <Pressable onPress={handleDelete} style={styles.row}>
-              {deleteIsPending ? <Spinner color="#FF3B30" /> : <Trash2 size={20} color="#FF3B30" />}
-              <Text color="$danger" fontSize={16} fontWeight="600">
-                Supprimer
-              </Text>
-            </Pressable>
+            {canDelete ? (
+              <Pressable
+                onPress={handleDelete}
+                style={styles.row}
+                accessibilityRole="button"
+                accessibilityLabel="Supprimer ce message"
+              >
+                {deleteIsPending ? (
+                  <Spinner color="#FF3B30" />
+                ) : (
+                  <Trash2 size={20} color="#FF3B30" />
+                )}
+                <Text color="$danger" fontSize={16} fontWeight="600">
+                  Supprimer
+                </Text>
+              </Pressable>
+            ) : null}
           </YStack>
         ) : (
           <YStack gap="$3">

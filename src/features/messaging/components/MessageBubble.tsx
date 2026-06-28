@@ -1,15 +1,20 @@
-// MessageBubble — E6-03 + ticket #210 (image attachment).
+// MessageBubble — E6-03 + ticket #210 (image) + #211 (voice) + #209 (reply).
 //
 // Affichage d'un message dans la liste. Bulle à droite si c'est moi, à
 // gauche sinon. Gère plusieurs états :
 //   - normal : contenu texte + horodatage relatif
 //   - edited : ajoute « modifié » à côté de l'horodatage
 //   - deleted : remplace le contenu par « 🚫 Message supprimé » en italique
-//   - image : affiche une thumbnail 220×260 contentFit cover, content
-//     optionnel rendu en dessous (caption)
-// Long-press sur ma propre bulle → ouvre la sheet d'actions (parent).
+//   - image : thumbnail 220×260 contentFit cover, caption optionnel dessous
+//   - voice : mini player Play/Pause + durée
+//   - reply : encart cliquable au-dessus du contenu avec auteur + preview
+//     du message parent. Tap → onReplyPress(parentId) (le parent scroll).
+//
+// Long-press sur N'IMPORTE QUELLE bulle non-supprimée → ouvre la sheet
+// d'actions (le parent gère l'affichage conditionnel selon `isMine`).
 
 import { Image } from 'expo-image';
+import { CornerUpLeft } from 'lucide-react-native';
 import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
@@ -41,22 +46,53 @@ function formatTime(iso: string): string {
   });
 }
 
+export interface ReplyParentPreview {
+  /** ID du parent (utilisé pour scroll). */
+  id: string;
+  /** Auteur formaté (`@username` ou "votre message"). */
+  authorLabel: string;
+  /** Texte preview (50 char), ou label d'attachment ("Photo", "Vocal"). */
+  preview: string;
+  /** Vrai si le parent est soft-deleted → l'encart affiche "Message supprimé". */
+  isDeleted: boolean;
+}
+
 export interface MessageBubbleProps {
   message: MessageRow;
   isMine: boolean;
+  /**
+   * Preview du message parent si `message.reply_to_id !== null`. Le parent
+   * (ConversationScreen) doit le résoudre en cherchant dans la liste flat.
+   */
+  replyParent?: ReplyParentPreview | null;
+  /** Tap sur l'encart de réponse → scroll vers le parent. */
+  onReplyPress?: (parentMessageId: string) => void;
   onLongPress?: (message: MessageRow) => void;
 }
 
-function MessageBubbleComponent({ message, isMine, onLongPress }: MessageBubbleProps) {
+function MessageBubbleComponent({
+  message,
+  isMine,
+  replyParent,
+  onReplyPress,
+  onLongPress,
+}: MessageBubbleProps) {
   const isDeleted = message.deleted_at !== null;
   const isEdited = message.edited_at !== null;
   const isOptimistic = message.id.startsWith('temp-');
   const isFailed = message.id.startsWith('failed-');
 
+  // #209 — long-press autorisé sur TOUTES les bulles non supprimées (pas
+  // juste les miennes), pour permettre "Répondre" sur les messages des autres.
   const handleLongPress = useCallback(() => {
-    if (!isMine || isDeleted) return;
+    if (isDeleted || isOptimistic || isFailed) return;
     onLongPress?.(message);
-  }, [isMine, isDeleted, onLongPress, message]);
+  }, [isDeleted, isOptimistic, isFailed, onLongPress, message]);
+
+  const handleReplyPress = useCallback(() => {
+    if (!message.reply_to_id || !onReplyPress) return;
+    onReplyPress(message.reply_to_id);
+  }, [message.reply_to_id, onReplyPress]);
 
   return (
     <XStack
@@ -78,6 +114,43 @@ function MessageBubbleComponent({ message, isMine, onLongPress }: MessageBubbleP
         ]}
       >
         <YStack gap={6}>
+          {message.reply_to_id && replyParent ? (
+            <Pressable
+              onPress={handleReplyPress}
+              accessibilityRole="button"
+              accessibilityLabel={`Aller au message de ${replyParent.authorLabel}`}
+              style={[
+                styles.replyEmbed,
+                {
+                  backgroundColor: isMine ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.06)',
+                  borderLeftColor: isMine ? '#000000' : '#10D970',
+                },
+              ]}
+            >
+              <XStack alignItems="center" gap={6}>
+                <CornerUpLeft size={12} color={isMine ? '#000000' : '#10D970'} />
+                <Text fontSize={12} fontWeight="700" color={isMine ? COLORS.myText : '#10D970'}>
+                  {replyParent.authorLabel}
+                </Text>
+              </XStack>
+              <Text
+                fontSize={13}
+                color={
+                  replyParent.isDeleted
+                    ? isMine
+                      ? 'rgba(0,0,0,0.5)'
+                      : COLORS.deletedText
+                    : isMine
+                      ? 'rgba(0,0,0,0.75)'
+                      : COLORS.metaText
+                }
+                fontStyle={replyParent.isDeleted ? 'italic' : 'normal'}
+                numberOfLines={2}
+              >
+                {replyParent.isDeleted ? '🚫 Message supprimé' : replyParent.preview}
+              </Text>
+            </Pressable>
+          ) : null}
           {isDeleted ? (
             <Text
               fontSize={14}
@@ -164,6 +237,14 @@ const styles = StyleSheet.create({
     height: 260,
     borderRadius: 12,
     backgroundColor: '#2A2A2A',
+  },
+  replyEmbed: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    gap: 2,
+    marginBottom: 2,
   },
 });
 
