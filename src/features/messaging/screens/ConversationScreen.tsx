@@ -29,7 +29,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { CallEntry } from '@/features/calls/components/CallEntry';
 import { requestCallPermissions } from '@/features/calls/hooks/useCallPermissions';
+import {
+  useConversationCalls,
+  type CallEntryRow,
+} from '@/features/calls/hooks/useConversationCalls';
 import { useStartCall, type CallType } from '@/features/calls/hooks/useStartCall';
 import { MessageActionSheet } from '@/features/messaging/components/MessageActionSheet';
 import {
@@ -54,6 +59,12 @@ import { logger } from '@/lib/logger';
 import { uploadMessageAudio, uploadMessageImage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 
+// Item de la timeline conversation : soit un message, soit une entrée d'appel
+// historique (#234). Mergés et triés par created_at desc côté composant.
+type FeedItem =
+  | { kind: 'message'; data: MessageRow; sortKey: string }
+  | { kind: 'call'; data: CallEntryRow; sortKey: string };
+
 export function ConversationScreen() {
   const insets = useSafeAreaInsets();
   const { id: conversationId } = useLocalSearchParams<{ id: string }>();
@@ -73,7 +84,7 @@ export function ConversationScreen() {
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   // Ticket #209 — message en cours de réponse (sélectionné via ActionSheet).
   const [replyingTo, setReplyingTo] = useState<MessageRow | null>(null);
-  const listRef = useRef<FlashListRef<MessageRow>>(null);
+  const listRef = useRef<FlashListRef<FeedItem>>(null);
 
   // Récupère mon user_id au mount pour identifier les bulles "à moi"
   useEffect(() => {
@@ -96,6 +107,27 @@ export function ConversationScreen() {
   const messages = useMemo<MessageRow[]>(() => {
     return messagesQuery.data?.pages.flatMap((p) => p.messages) ?? [];
   }, [messagesQuery.data]);
+
+  // Ticket #234 — historique des appels mergé dans la timeline.
+  const { calls } = useConversationCalls(convId);
+
+  const feedItems = useMemo<FeedItem[]>(() => {
+    const msgItems: FeedItem[] = messages.map((m) => ({
+      kind: 'message',
+      data: m,
+      sortKey: m.created_at,
+    }));
+    const callItems: FeedItem[] = calls.map((c) => ({
+      kind: 'call',
+      data: c,
+      sortKey: c.ended_at ?? c.created_at,
+    }));
+    // FlashList est inverted → on trie desc par created_at, la + récente en
+    // tête → s'affiche en bas de l'écran après inversion.
+    return [...msgItems, ...callItems].sort((a, b) =>
+      a.sortKey < b.sortKey ? 1 : a.sortKey > b.sortKey ? -1 : 0
+    );
+  }, [calls, messages]);
 
   // Ticket #209 — index id→message pour résoudre les parents en O(1) au
   // moment du rendu des bulles.
@@ -309,7 +341,10 @@ export function ConversationScreen() {
    */
   const handleScrollToParent = useCallback(
     (parentId: string) => {
-      const index = messages.findIndex((m) => m.id === parentId);
+      // L'index doit être celui dans `feedItems` (data passée à FlashList),
+      // pas dans `messages`. Sinon le scroll cible la mauvaise position avec
+      // des CallEntry mergées dans la liste.
+      const index = feedItems.findIndex((it) => it.kind === 'message' && it.data.id === parentId);
       if (index === -1) {
         Alert.alert(
           'Message non chargé',
@@ -319,7 +354,7 @@ export function ConversationScreen() {
       }
       listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
     },
-    [messages]
+    [feedItems]
   );
 
   const replyingPreview = useMemo<ReplyingPreview | null>(() => {
@@ -393,8 +428,19 @@ export function ConversationScreen() {
     setIsManualRefreshing(false);
   }, [messagesQuery]);
 
-  const renderMessage = useCallback(
-    ({ item }: { item: MessageRow }) => {
+  const renderFeedItem = useCallback(
+    ({ item: feed }: { item: FeedItem }) => {
+      if (feed.kind === 'call') {
+        const c = feed.data;
+        return (
+          <CallEntry
+            call={c}
+            isMine={c.initiator_id === meId}
+            onRecall={(type) => void handleStartCall(type)}
+          />
+        );
+      }
+      const item = feed.data;
       const isMine = item.sender_id === meId;
       const senderProfile = !isMine ? profilesById.get(item.sender_id) : undefined;
       let replyParent: ReplyParentPreview | null = null;
@@ -433,6 +479,7 @@ export function ConversationScreen() {
       buildReplyPreview,
       handleLongPressBubble,
       handleScrollToParent,
+      handleStartCall,
       isGroup,
       meId,
       messagesById,
@@ -564,9 +611,9 @@ export function ConversationScreen() {
           ) : (
             <FlashList
               ref={listRef}
-              data={messages}
-              renderItem={renderMessage}
-              keyExtractor={(item) => item.id}
+              data={feedItems}
+              renderItem={renderFeedItem}
+              keyExtractor={(item) => `${item.kind}-${item.data.id}`}
               inverted
               onEndReached={handleLoadMore}
               onEndReachedThreshold={0.3}
