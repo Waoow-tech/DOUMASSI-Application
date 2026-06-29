@@ -4,6 +4,7 @@
 
 import { Redirect, Tabs } from 'expo-router';
 import { Bell, Hash, Home, Send, User } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,8 +13,10 @@ import { PendingDeletionModal } from '@/features/auth/components/PendingDeletion
 import { useAuthGuard } from '@/features/auth/hooks/useAuthGuard';
 import { usePendingDeletionReminder } from '@/features/auth/hooks/usePendingDeletionReminder';
 import { usePushToken } from '@/features/auth/hooks/usePushToken';
+import { useIncomingCallListener } from '@/features/calls/hooks/useIncomingCallListener';
 import { useNotificationsUnreadCount } from '@/features/notifications/hooks/useNotifications';
 import { usePushNotificationsHandler } from '@/features/notifications/hooks/usePushNotificationsHandler';
+import { supabase } from '@/lib/supabase';
 
 const ACTIVE_COLOR = '#FFFFFF';
 const INACTIVE_COLOR = '#A0A0A0';
@@ -55,6 +58,18 @@ function AuthenticatedTabs() {
   // s'affiche 1× par session si une `deletion_requests` active existe pour
   // l'user courant.
   const deletionReminder = usePendingDeletionReminder();
+
+  // Ticket #233 : listener Realtime pour les appels entrants. Quand un autre
+  // user crée un call dans une de mes conversations → push vers l'écran
+  // ringtone (Accept/Decline).
+  const [meId, setMeId] = useState<string | null>(null);
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      setMeId(data.session?.user.id ?? null);
+    })();
+  }, []);
+  useIncomingCallListener(meId);
 
   // Tab bar dynamique : on remonte la barre de la zone safe area système
   // (gesture navigation Android moderne + home indicator iOS). Sans ça,
