@@ -15,7 +15,7 @@ import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle2, Phone, Video } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -29,6 +29,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { useStartCall, type CallType } from '@/features/calls/hooks/useStartCall';
 import { MessageActionSheet } from '@/features/messaging/components/MessageActionSheet';
 import {
   MessageBubble,
@@ -345,6 +346,37 @@ export function ConversationScreen() {
     else router.replace('/(tabs)/messages');
   }, []);
 
+  // Ticket #231 — démarrer un appel (DM only MVP).
+  const startCall = useStartCall();
+
+  const handleStartCall = useCallback(
+    (callType: CallType) => {
+      if (!convId || startCall.isPending) return;
+      startCall.mutate(
+        { conversationId: convId, callType },
+        {
+          onSuccess: ({ callId, roomUrl, token }) => {
+            router.push({
+              pathname: '/call/[id]',
+              params: {
+                id: callId,
+                roomUrl,
+                token,
+                callType,
+                isInitiator: '1',
+              },
+            });
+          },
+          onError: (err) => {
+            logger.warn('Start call failed', { message: err.message });
+            Alert.alert("Impossible de lancer l'appel", err.message);
+          },
+        }
+      );
+    },
+    [convId, startCall]
+  );
+
   const handleLoadMore = useCallback(() => {
     if (messagesQuery.hasNextPage && !messagesQuery.isFetchingNextPage) {
       void messagesQuery.fetchNextPage();
@@ -458,7 +490,42 @@ export function ConversationScreen() {
             <CheckCircle2 size={14} color="#10D970" fill="#10D970" />
           ) : null}
         </XStack>
-        {/* Pas de bouton appel pour la bêta (Daily.co Sprint 6+) */}
+
+        {/* Boutons d'appel #231 — DM only (les groupes arrivent en V2) */}
+        {!isGroup ? (
+          <XStack gap={14} alignItems="center">
+            <Pressable
+              onPress={() => handleStartCall('audio')}
+              disabled={startCall.isPending}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Appel audio"
+              accessibilityHint={`Tap pour appeler ${header?.display_name ?? ''} en audio`}
+              accessibilityState={{ disabled: startCall.isPending }}
+            >
+              {startCall.isPending && startCall.variables?.callType === 'audio' ? (
+                <ActivityIndicator color="#10D970" />
+              ) : (
+                <Phone size={22} color="#FFFFFF" />
+              )}
+            </Pressable>
+            <Pressable
+              onPress={() => handleStartCall('video')}
+              disabled={startCall.isPending}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Appel vidéo"
+              accessibilityHint={`Tap pour appeler ${header?.display_name ?? ''} en vidéo`}
+              accessibilityState={{ disabled: startCall.isPending }}
+            >
+              {startCall.isPending && startCall.variables?.callType === 'video' ? (
+                <ActivityIndicator color="#10D970" />
+              ) : (
+                <Video size={22} color="#FFFFFF" />
+              )}
+            </Pressable>
+          </XStack>
+        ) : null}
       </XStack>
 
       {/* Bannière dégradée : Realtime indisponible → tirez pour rafraîchir */}
