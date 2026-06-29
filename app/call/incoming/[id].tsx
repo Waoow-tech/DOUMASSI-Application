@@ -28,6 +28,7 @@ import { Animated, Easing, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { requestCallPermissions } from '@/features/calls/hooks/useCallPermissions';
 import { useConversationHeader } from '@/features/messaging/hooks/useConversationHeader';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
@@ -108,8 +109,17 @@ export default function IncomingCallScreen() {
     return () => clearTimeout(timer);
   }, [decided, updateCallStatus]);
 
-  const handleAccept = useCallback(() => {
+  const handleAccept = useCallback(async () => {
     if (decided || !roomUrl || !callId) return;
+    // Ticket #235 : permissions avant accept
+    const granted = await requestCallPermissions(callType);
+    if (!granted) {
+      // L'user a refusé les permissions → on rejette l'appel proprement
+      void updateCallStatus('rejected');
+      if (router.canGoBack()) router.back();
+      else router.replace('/(tabs)/messages');
+      return;
+    }
     setDecided(true);
     // On marque le call accepted, puis on navigue vers le screen call
     // standard avec le roomUrl reçu. Note MVP : pas de token destinataire
@@ -205,7 +215,9 @@ export default function IncomingCallScreen() {
           <PhoneOff size={32} color="#FFFFFF" />
         </Pressable>
         <Pressable
-          onPress={handleAccept}
+          onPress={() => {
+            void handleAccept();
+          }}
           disabled={decided}
           style={styles.acceptButton}
           accessibilityRole="button"
