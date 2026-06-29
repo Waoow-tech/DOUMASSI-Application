@@ -29,6 +29,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { requestCallPermissions } from '@/features/calls/hooks/useCallPermissions';
 import { useStartCall, type CallType } from '@/features/calls/hooks/useStartCall';
 import { MessageActionSheet } from '@/features/messaging/components/MessageActionSheet';
 import {
@@ -350,8 +351,11 @@ export function ConversationScreen() {
   const startCall = useStartCall();
 
   const handleStartCall = useCallback(
-    (callType: CallType) => {
+    async (callType: CallType) => {
       if (!convId || startCall.isPending) return;
+      // Ticket #235 : permissions micro (+ caméra si video) avant tout.
+      const granted = await requestCallPermissions(callType);
+      if (!granted) return;
       startCall.mutate(
         { conversationId: convId, callType },
         {
@@ -495,7 +499,9 @@ export function ConversationScreen() {
         {!isGroup ? (
           <XStack gap={14} alignItems="center">
             <Pressable
-              onPress={() => handleStartCall('audio')}
+              onPress={() => {
+                void handleStartCall('audio');
+              }}
               disabled={startCall.isPending}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
@@ -510,7 +516,9 @@ export function ConversationScreen() {
               )}
             </Pressable>
             <Pressable
-              onPress={() => handleStartCall('video')}
+              onPress={() => {
+                void handleStartCall('video');
+              }}
               disabled={startCall.isPending}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
