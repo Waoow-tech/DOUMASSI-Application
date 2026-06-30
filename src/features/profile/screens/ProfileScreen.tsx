@@ -174,7 +174,7 @@ export function ProfileScreen() {
           keyExtractor={keyExtractor}
           numColumns={NUM_COLUMNS}
           ListHeaderComponent={ListHeader}
-          ListEmptyComponent={ShopEmptyState}
+          ListEmptyComponent={<ShopEmptyState onCreatePress={() => router.push('/shop/create')} />}
           showsVerticalScrollIndicator={false}
           onRefresh={refetch}
           refreshing={false}
