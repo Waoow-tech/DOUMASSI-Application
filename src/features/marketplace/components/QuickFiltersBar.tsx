@@ -120,12 +120,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   scroll: {
+    // flex:1 = (flexBasis:0%, flexGrow:1, flexShrink:1). Combiné au
+    // height={52} fixe du XStack parent, le ScrollView prend toute la
+    // largeur restante sans s'étirer verticalement. NE PAS ajouter
+    // flexGrow:0 ici, sinon le ScrollView collapse en 0px de large et
+    // les pilules disparaissent.
     flex: 1,
-    flexShrink: 1,
-    // flexGrow:0 empêche le ScrollView de s'étirer verticalement (bug Android
-    // récurrent : un ScrollView horizontal sans contrainte prend la hauteur
-    // disponible de son parent).
-    flexGrow: 0,
   },
   scrollContent: {
     alignItems: 'center',
