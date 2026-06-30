@@ -49,6 +49,14 @@ export interface MessageInputProps {
   replyingTo?: ReplyingPreview | null;
   /** Appelé quand l'utilisateur tape sur la croix de l'encart de réponse. */
   onCancelReply?: () => void;
+  /**
+   * Ticket #244 (E7-13) — message pré-rempli dans le composer à l'ouverture
+   * de la conversation (typiquement depuis le CTA "Contacter le vendeur"
+   * d'une fiche marketplace). Appliqué une seule fois au mount via une key
+   * sentinelle pour ne pas écraser le texte que l'utilisateur a déjà
+   * commencé à éditer.
+   */
+  initialContent?: string;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -73,11 +81,19 @@ export function MessageInput({
   isSendingVoice = false,
   replyingTo,
   onCancelReply,
+  initialContent,
   disabled = false,
   placeholder = 'Écrire un message…',
 }: MessageInputProps) {
-  const [content, setContent] = useState('');
-  const [selection, setSelection] = useState({ start: 0, end: 0 });
+  // initialContent appliqué une seule fois au tout premier mount du composant.
+  // On utilise useState lazy initializer pour éviter qu'un changement futur
+  // de la prop initialContent n'écrase ce que l'utilisateur est en train de
+  // taper.
+  const [content, setContent] = useState(() => initialContent ?? '');
+  const [selection, setSelection] = useState(() => {
+    const init = initialContent ?? '';
+    return { start: init.length, end: init.length };
+  });
 
   const { activeQuery, suggestions, isLoading, replaceMention } = useMentionSuggestions(
     content,
