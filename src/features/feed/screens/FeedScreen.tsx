@@ -16,6 +16,7 @@ import { Button, Spinner, Text, XStack, YStack } from 'tamagui';
 
 import { PostCard, PostCardSkeleton, type PostCardPost } from '@/components/feed/PostCard';
 import { PostMenuSheet } from '@/components/feed/PostMenuSheet';
+import { BusinessHub } from '@/features/feed/components/BusinessHub';
 import { FeedStories } from '@/features/feed/components/FeedStories';
 import { FeedTabPlaceholder } from '@/features/feed/components/FeedTabPlaceholder';
 import { useDeletePost } from '@/features/feed/hooks/useDeletePost';
@@ -363,14 +364,18 @@ export function FeedScreen() {
   );
 
   if (activeTab !== 'social') {
-    const placeholder = PLACEHOLDERS[activeTab];
+    // E7-17 — l'onglet Business affiche le vrai Hub (grille catégories).
+    // Les autres onglets (ai/wallet/soon) restent en placeholder jusqu'à
+    // ce que les épiques correspondantes soient livrées.
+    const isBusinessHub = activeTab === 'business';
+    const placeholder = isBusinessHub ? null : PLACEHOLDERS[activeTab];
 
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
           ref={placeholderScrollRef}
           style={styles.screen}
-          contentContainerStyle={styles.placeholderContent}
+          contentContainerStyle={isBusinessHub ? undefined : styles.placeholderContent}
           onScroll={handlePlaceholderScroll}
           scrollEventThrottle={16}
         >
@@ -380,7 +385,11 @@ export function FeedScreen() {
             onSearchChange={setSearchValue}
             onTabPress={handleTabPress}
           />
-          <FeedTabPlaceholder {...placeholder} />
+          {isBusinessHub ? (
+            <BusinessHub />
+          ) : placeholder ? (
+            <FeedTabPlaceholder {...placeholder} />
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     );
