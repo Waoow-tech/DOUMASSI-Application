@@ -10,7 +10,7 @@
 
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { router, Stack } from 'expo-router';
-import { ArrowLeft, Bookmark, Search, X } from 'lucide-react-native';
+import { ArrowLeft, Bookmark, Plus, Search, X } from 'lucide-react-native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -84,6 +84,10 @@ export default function MarketplaceGridScreen() {
   const handleOpenBookmarks = useCallback(() => {
     // E7-16 livrera l'écran /shop/bookmarks
     router.push('/shop/bookmarks');
+  }, []);
+
+  const handleOpenCreate = useCallback(() => {
+    router.push('/shop/create');
   }, []);
 
   const handleOpenAdvanced = useCallback(() => {
@@ -170,6 +174,16 @@ export default function MarketplaceGridScreen() {
             accessibilityHint="Tap pour voir les annonces que tu as sauvegardées"
           >
             <Bookmark size={22} color="#FFFFFF" strokeWidth={2.2} />
+          </Pressable>
+          <Pressable
+            onPress={handleOpenCreate}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Publier une annonce"
+            accessibilityHint="Tap pour créer une nouvelle annonce"
+            style={styles.createButton}
+          >
+            <Plus size={20} color="#000000" strokeWidth={2.6} />
           </Pressable>
         </XStack>
 
@@ -291,6 +305,14 @@ export default function MarketplaceGridScreen() {
 }
 
 const styles = StyleSheet.create({
+  createButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#10D970',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   gridContent: {
     paddingTop: 8,
     paddingBottom: 24,

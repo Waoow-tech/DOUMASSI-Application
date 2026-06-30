@@ -467,6 +467,54 @@ export interface UploadStoryMediaResult {
  * Images : même pipeline de compression que uploadPostImage.
  * Vidéos  : upload direct (expo-camera livre déjà du mp4, pas de recompression).
  */
+// ---------------------------------------------------------------------------
+// Marketplace upload (#245 — E7-14 — création d'annonce)
+// ---------------------------------------------------------------------------
+
+const LISTINGS_BUCKET = 'listings';
+
+export interface UploadListingImageResult {
+  publicUrl: string;
+  path: string;
+}
+
+/**
+ * Compresse + upload une image dans le bucket `listings`. Même pipeline que
+ * uploadPostImage (quality 0.8, resize 1920px max). Path :
+ * `{user_id}/{uuid}.jpg` (les policies du bucket exigent que le 1er segment
+ * soit l'auth.uid()).
+ */
+export async function uploadListingImage(
+  uri: string,
+  options?: { signal?: AbortSignal; onProgress?: (p: number) => void; quality?: number }
+): Promise<UploadListingImageResult> {
+  const quality = clamp01(options?.quality ?? DEFAULT_QUALITY);
+  const signal = options?.signal;
+  const onProgress = options?.onProgress;
+
+  try {
+    if (signal?.aborted) throw abortedError();
+    const session = await getFreshSession();
+    const compressedUri = await compressImage(uri, quality);
+    const path = `${session.user.id}/${uuidv4()}.jpg`;
+    try {
+      await uploadToStorage(compressedUri, path, LISTINGS_BUCKET, 'image/jpeg', {
+        onProgress,
+        signal,
+      });
+    } finally {
+      await cleanupTempFiles([compressedUri]);
+    }
+    const { data } = supabase.storage.from(LISTINGS_BUCKET).getPublicUrl(path);
+    return { publicUrl: data.publicUrl, path };
+  } catch (error) {
+    const uploadError = error instanceof UploadError ? error : new UploadError('upload', error);
+    if (signal?.aborted) logger.debug('upload_listing_image_cancelled');
+    else logger.error('upload_listing_image_failed', uploadError);
+    throw uploadError;
+  }
+}
+
 export async function uploadStoryMedia(
   uri: string,
   mediaType: 'image' | 'video',
