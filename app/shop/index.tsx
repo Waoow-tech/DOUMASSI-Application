@@ -22,6 +22,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input, Text, View, XStack, YStack } from 'tamagui';
 
+import { AdvancedFiltersSheet } from '@/features/marketplace/components/AdvancedFiltersSheet';
 import { CategoryChips } from '@/features/marketplace/components/CategoryChips';
 import { ListingCard } from '@/features/marketplace/components/ListingCard';
 import { QuickFiltersBar } from '@/features/marketplace/components/QuickFiltersBar';
@@ -30,6 +31,8 @@ import {
   useToggleListingBookmark,
   type ListingCard as ListingCardData,
   type ListingCategory,
+  type ListingCondition,
+  type ListingSort,
   type ListingsFilters,
 } from '@/features/marketplace/hooks/useListings';
 
@@ -46,16 +49,28 @@ export default function MarketplaceGridScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
+  // E7-11 — filtres avancés (modale)
+  const [sort, setSort] = useState<ListingSort>('recent');
+  const [condition, setCondition] = useState<ListingCondition | null>(null);
+  const [minPriceCents, setMinPriceCents] = useState<number | null>(null);
+  const [maxPriceCents, setMaxPriceCents] = useState<number | null>(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+
   const filters = useMemo<ListingsFilters>(
     () => ({
       category,
-      // Sort/condition/prix arriveront via la modale d'avancés E7-11 (état stocké
-      // ici localement pour MVP — passera en Zustand si besoin de partage entre
-      // écrans).
-      sort: 'recent',
+      sort,
+      condition,
+      minPriceCents,
+      maxPriceCents,
     }),
-    [category]
+    [category, sort, condition, minPriceCents, maxPriceCents]
   );
+
+  // Pour le badge "filtres actifs" du bouton réglages : on considère qu'un
+  // filtre est "avancé" dès qu'il sort de la config par défaut.
+  const hasActiveAdvancedFilters =
+    sort !== 'recent' || condition != null || minPriceCents != null || maxPriceCents != null;
 
   const listingsQuery = useListings(filters);
   const toggleBookmark = useToggleListingBookmark();
@@ -91,10 +106,18 @@ export default function MarketplaceGridScreen() {
   }, []);
 
   const handleOpenAdvanced = useCallback(() => {
-    // E7-11 livrera la modale. Pour l'instant pas de no-op visible (l'utilisateur
-    // ne sait pas que c'est désactivé), donc on log silencieux.
-    // TODO E7-11 : ouvrir AdvancedFiltersSheet
+    setIsFiltersOpen(true);
   }, []);
+
+  const handleApplyAdvancedFilters = useCallback(
+    (next: Pick<ListingsFilters, 'sort' | 'condition' | 'minPriceCents' | 'maxPriceCents'>) => {
+      setSort(next.sort ?? 'recent');
+      setCondition(next.condition ?? null);
+      setMinPriceCents(next.minPriceCents ?? null);
+      setMaxPriceCents(next.maxPriceCents ?? null);
+    },
+    []
+  );
 
   const handleCardPress = useCallback((listingId: string) => {
     // E7-12 livrera la fiche produit
@@ -228,7 +251,10 @@ export default function MarketplaceGridScreen() {
         </YStack>
 
         {/* Filtres rapides */}
-        <QuickFiltersBar onOpenAdvanced={handleOpenAdvanced} />
+        <QuickFiltersBar
+          onOpenAdvanced={handleOpenAdvanced}
+          hasActiveAdvancedFilters={hasActiveAdvancedFilters}
+        />
 
         {/* Chips catégorie */}
         <CategoryChips selected={category} onSelect={setCategory} />
@@ -300,6 +326,14 @@ export default function MarketplaceGridScreen() {
           )}
         </View>
       </YStack>
+
+      <AdvancedFiltersSheet
+        open={isFiltersOpen}
+        onOpenChange={setIsFiltersOpen}
+        current={filters}
+        activeCategory={category}
+        onApply={handleApplyAdvancedFilters}
+      />
     </>
   );
 }
