@@ -27,6 +27,9 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
+      // flexGrow:0 + maxHeight pour éviter l'expansion verticale sur Android
+      // (bug courant des ScrollView horizontaux dans des conteneurs flex).
+      style={styles.scroll}
     >
       {CATEGORIES.map((cat) => {
         const isSelected = selected === cat.id;
@@ -68,5 +71,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingBottom: 8,
     alignItems: 'center',
+  },
+  scroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+    maxHeight: 48,
   },
 });

@@ -32,12 +32,19 @@ export function QuickFiltersBar({
   onOpenAdvanced,
 }: QuickFiltersBarProps) {
   return (
-    <XStack alignItems="center" gap={8} paddingHorizontal={12} paddingVertical={8}>
+    <XStack alignItems="center" gap={8} paddingHorizontal={12} paddingVertical={8} height={52}>
+      {/*
+        flex+flexShrink sur le ScrollView : sans ça, sur Android, le
+        ScrollView horizontal occupe une largeur "intrinsèque" non bornée
+        qui pousse le bouton réglages hors écran droite et casse le layout
+        en ligne du XStack. Le bouton finit visuellement détaché en dessous.
+      */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        style={styles.scroll}
       >
         {QUICK_FILTERS.map((filter) => (
           <Pressable
@@ -111,6 +118,14 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     backgroundColor: '#1A1A1A',
     marginRight: 8,
+  },
+  scroll: {
+    // flex:1 = (flexBasis:0%, flexGrow:1, flexShrink:1). Combiné au
+    // height={52} fixe du XStack parent, le ScrollView prend toute la
+    // largeur restante sans s'étirer verticalement. NE PAS ajouter
+    // flexGrow:0 ici, sinon le ScrollView collapse en 0px de large et
+    // les pilules disparaissent.
+    flex: 1,
   },
   scrollContent: {
     alignItems: 'center',
