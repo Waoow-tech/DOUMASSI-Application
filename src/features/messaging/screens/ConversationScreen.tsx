@@ -67,8 +67,16 @@ type FeedItem =
 
 export function ConversationScreen() {
   const insets = useSafeAreaInsets();
-  const { id: conversationId } = useLocalSearchParams<{ id: string }>();
+  // E7-13 — `prefill` est passé en query param quand on arrive depuis le CTA
+  // "Contacter le vendeur" d'une fiche marketplace. Il pré-remplit le
+  // composer (sans auto-envoyer) au tout premier mount.
+  const { id: conversationId, prefill } = useLocalSearchParams<{
+    id: string;
+    prefill?: string;
+  }>();
   const convId = typeof conversationId === 'string' ? conversationId : null;
+  const initialMessageContent =
+    typeof prefill === 'string' && prefill.length > 0 ? prefill : undefined;
 
   const headerQuery = useConversationHeader(convId);
   const messagesQuery = useConversationMessages(convId);
@@ -652,6 +660,7 @@ export function ConversationScreen() {
           isSendingVoice={isSendingVoice}
           replyingTo={replyingPreview}
           onCancelReply={handleCancelReply}
+          initialContent={initialMessageContent}
           disabled={sendMessage.isPending || isAttaching || isSendingVoice}
         />
         <View style={{ height: insets.bottom }} backgroundColor="$surface" />

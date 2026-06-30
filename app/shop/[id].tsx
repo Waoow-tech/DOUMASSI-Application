@@ -1,0 +1,480 @@
+// Écran Fiche produit — E7-12 + intégration CTA Contacter vendeur (E7-13)
+//
+// Layout (cf brief Marketplace L0 + maquette CEO) :
+//   - Header retour + bookmark toggle (top-right)
+//   - Carousel images (E7-12 — ListingImageCarousel)
+//   - Badge promo conditionnel au-dessus du titre
+//   - Titre + prix actuel + prix barré si discount + état + localisation +
+//     date relative + compteur de vues
+//   - Description complète
+//   - Carte vendeur cliquable → /profile/[id]
+//   - Section "Annonces similaires" (SimilarListingsRow)
+//   - CTA sticky bottom plein largeur "Contacter le vendeur" → useGetOrCreateDm
+//     puis router.push vers la conversation avec un message pré-rempli
+//
+// Garde-fou : si je suis le vendeur de l'annonce → on désactive le CTA et on
+// affiche "C'est votre annonce" pour éviter la création d'un DM avec soi-même
+// (que la RPC get_or_create_dm rejette de toute façon côté DB, mais autant
+// éviter l'aller-retour).
+
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { ArrowLeft, Bookmark, Eye, MapPin } from 'lucide-react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Button, Text, View, XStack, YStack } from 'tamagui';
+
+import { ListingImageCarousel } from '@/features/marketplace/components/ListingImageCarousel';
+import { SellerCard } from '@/features/marketplace/components/SellerCard';
+import { SimilarListingsRow } from '@/features/marketplace/components/SimilarListingsRow';
+import {
+  useListingDetail,
+  useSimilarListings,
+} from '@/features/marketplace/hooks/useListingDetail';
+import { useToggleListingBookmark } from '@/features/marketplace/hooks/useListings';
+import { useGetOrCreateDm } from '@/features/messaging/hooks/useGetOrCreateDm';
+import { logger } from '@/lib/logger';
+import { supabase } from '@/lib/supabase';
+
+const CONDITION_LABEL: Record<string, string> = {
+  neuf: 'Neuf',
+  tres_bon_etat: 'Très bon état',
+  bon_etat: 'Bon état',
+  occasion: 'Occasion',
+};
+
+const BADGE_LABEL: Record<string, string> = {
+  offre_speciale: 'Offre spéciale',
+  nouveaute: 'Nouveauté',
+  recommandation: 'Recommandation',
+};
+
+const BADGE_COLORS: Record<string, { bg: string; text: string }> = {
+  offre_speciale: { bg: '#E53935', text: '#FFFFFF' },
+  nouveaute: { bg: '#10D970', text: '#000000' },
+  recommandation: { bg: '#10D970', text: '#000000' },
+};
+
+function formatPrice(cents: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 2,
+    }).format(cents / 100);
+  } catch {
+    return `${(cents / 100).toFixed(2)} ${currency}`;
+  }
+}
+
+function computeOriginalPrice(currentCents: number, discountPercent: number): number {
+  if (discountPercent <= 0 || discountPercent >= 100) return currentCents;
+  return Math.round(currentCents / (1 - discountPercent / 100));
+}
+
+function formatRelativeFr(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const elapsedMs = Math.max(0, Date.now() - date.getTime());
+  const minutes = Math.floor(elapsedMs / 60_000);
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `il y a ${days} j`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `il y a ${weeks} sem`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `il y a ${months} mois`;
+  return `il y a ${Math.floor(days / 365)} an`;
+}
+
+export default function ListingDetailScreen() {
+  const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ id: string }>();
+  const listingId = typeof params.id === 'string' ? params.id : null;
+
+  const { data: listing, isLoading, isError } = useListingDetail(listingId);
+  const { listings: similar } = useSimilarListings(listingId);
+  const toggleBookmark = useToggleListingBookmark();
+  const getOrCreateDm = useGetOrCreateDm();
+
+  const [meId, setMeId] = useState<string | null>(null);
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      setMeId(data.session?.user.id ?? null);
+    })();
+  }, []);
+
+  const isMyListing = meId !== null && listing != null && listing.seller_id === meId;
+
+  // Recompute du prix original côté client (cohérent avec ListingCard)
+  const priceCurrent = useMemo(
+    () =>
+      listing?.price_cents != null ? formatPrice(listing.price_cents, listing.currency) : null,
+    [listing?.price_cents, listing?.currency]
+  );
+
+  const priceOriginal = useMemo(() => {
+    if (
+      !listing ||
+      listing.price_cents == null ||
+      !listing.discount_percent ||
+      listing.discount_percent <= 0
+    ) {
+      return null;
+    }
+    return formatPrice(
+      computeOriginalPrice(listing.price_cents, listing.discount_percent),
+      listing.currency
+    );
+  }, [listing]);
+
+  const handleBack = useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/shop');
+  }, []);
+
+  const handleToggleBookmark = useCallback(() => {
+    if (!listingId) return;
+    toggleBookmark.mutate({ listingId });
+  }, [listingId, toggleBookmark]);
+
+  const handleOpenSeller = useCallback(() => {
+    if (!listing) return;
+    router.push(`/profile/${listing.seller_id}`);
+  }, [listing]);
+
+  const handlePressSimilar = useCallback((otherId: string) => {
+    // Replace plutôt que push pour éviter d'empiler des fiches produit en
+    // boucle (sinon le back stack peut grossir indéfiniment quand on navigue
+    // d'une annonce similaire à une autre).
+    router.replace(`/shop/${otherId}`);
+  }, []);
+
+  // E7-13 — CTA Contacter vendeur
+  const handleContactSeller = useCallback(() => {
+    if (!listing) return;
+    if (isMyListing) return; // garde-fou
+    const prefill = `Bonjour, je suis intéressé(e) par votre annonce '${listing.title}'.`;
+    getOrCreateDm.mutate(listing.seller_id, {
+      onSuccess: (conversationId) => {
+        // L'écran de conversation lira `prefill` au mount et pré-remplira le
+        // composer SANS auto-envoyer. L'user édite puis envoie quand il veut.
+        router.push({
+          pathname: '/messages/[id]',
+          params: { id: conversationId, prefill },
+        });
+      },
+      onError: (err) => {
+        logger.warn('Contact seller failed', { message: err.message });
+        Alert.alert(
+          'Impossible de contacter ce vendeur',
+          err.message || 'Réessaie dans un instant.'
+        );
+      },
+    });
+  }, [getOrCreateDm, isMyListing, listing]);
+
+  // Header (toujours rendu pour permettre le retour même en erreur/loading)
+  const renderHeader = (
+    <XStack
+      position="absolute"
+      top={insets.top + 8}
+      left={0}
+      right={0}
+      paddingHorizontal={12}
+      justifyContent="space-between"
+      zIndex={10}
+      pointerEvents="box-none"
+    >
+      <Pressable
+        onPress={handleBack}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        accessibilityRole="button"
+        accessibilityLabel="Retour"
+        style={styles.headerButton}
+      >
+        <ArrowLeft size={22} color="#FFFFFF" />
+      </Pressable>
+      {listing ? (
+        <Pressable
+          onPress={handleToggleBookmark}
+          disabled={toggleBookmark.isPending}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={
+            listing.bookmarked_by_me ? 'Retirer des favoris' : 'Ajouter aux favoris'
+          }
+          accessibilityState={{ selected: listing.bookmarked_by_me }}
+          style={styles.headerButton}
+        >
+          <Bookmark
+            size={22}
+            color={listing.bookmarked_by_me ? '#10D970' : '#FFFFFF'}
+            fill={listing.bookmarked_by_me ? '#10D970' : 'transparent'}
+            strokeWidth={2.2}
+          />
+        </Pressable>
+      ) : null}
+    </XStack>
+  );
+
+  if (isLoading) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View flex={1} backgroundColor="$background">
+          {renderHeader}
+          <YStack flex={1} alignItems="center" justifyContent="center">
+            <ActivityIndicator color="#FFFFFF" />
+          </YStack>
+        </View>
+      </>
+    );
+  }
+
+  if (isError || !listing) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View flex={1} backgroundColor="$background" paddingTop={insets.top}>
+          {renderHeader}
+          <YStack
+            flex={1}
+            alignItems="center"
+            justifyContent="center"
+            paddingHorizontal={24}
+            gap={8}
+          >
+            <Text fontSize={16} fontWeight="700" color="$color">
+              Annonce introuvable
+            </Text>
+            <Text fontSize={13} color="$textSecondary" textAlign="center">
+              Cette annonce a peut-être été supprimée ou désactivée.
+            </Text>
+            <Button
+              marginTop={12}
+              backgroundColor="$accentNeon"
+              color="#000000"
+              fontWeight="700"
+              borderRadius="$10"
+              onPress={handleBack}
+            >
+              Retour
+            </Button>
+          </YStack>
+        </View>
+      </>
+    );
+  }
+
+  const conditionLabel = listing.condition ? CONDITION_LABEL[listing.condition] : null;
+  const badgeLabel = listing.badge ? BADGE_LABEL[listing.badge] : null;
+  const badgeColors = listing.badge ? BADGE_COLORS[listing.badge] : null;
+
+  return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View flex={1} backgroundColor="$background">
+        {renderHeader}
+
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Carousel */}
+          <ListingImageCarousel
+            images={listing.images}
+            accessibilityLabelBase={`Image de l'annonce ${listing.title}`}
+          />
+
+          <YStack paddingHorizontal={16} paddingTop={16} gap={12}>
+            {/* Badge promo */}
+            {badgeLabel && badgeColors ? (
+              <View alignSelf="flex-start">
+                <View
+                  backgroundColor={badgeColors.bg}
+                  paddingHorizontal={10}
+                  paddingVertical={4}
+                  borderRadius={9999}
+                >
+                  <Text fontSize={11} fontWeight="700" color={badgeColors.text}>
+                    {badgeLabel}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+
+            {/* Titre */}
+            <Text fontSize={22} fontWeight="800" color="$color">
+              {listing.title}
+            </Text>
+
+            {/* Prix actuel + prix barré */}
+            <XStack alignItems="baseline" gap={10} flexWrap="wrap">
+              {priceCurrent ? (
+                <Text fontSize={26} fontWeight="900" color="$accentNeon">
+                  {priceCurrent}
+                </Text>
+              ) : null}
+              {priceOriginal ? (
+                <Text fontSize={16} color="$textSecondary" textDecorationLine="line-through">
+                  {priceOriginal}
+                </Text>
+              ) : null}
+              {listing.discount_percent ? (
+                <View
+                  backgroundColor="#E53935"
+                  paddingHorizontal={8}
+                  paddingVertical={3}
+                  borderRadius={6}
+                >
+                  <Text fontSize={12} fontWeight="700" color="#FFFFFF">
+                    -{listing.discount_percent}%
+                  </Text>
+                </View>
+              ) : null}
+            </XStack>
+
+            {/* État + localisation + date + vues */}
+            <XStack flexWrap="wrap" gap={8} alignItems="center">
+              {conditionLabel ? (
+                <View
+                  backgroundColor="$surface"
+                  paddingHorizontal={10}
+                  paddingVertical={4}
+                  borderRadius={6}
+                >
+                  <Text fontSize={12} fontWeight="600" color="$color">
+                    {conditionLabel}
+                  </Text>
+                </View>
+              ) : null}
+              {listing.location ? (
+                <XStack alignItems="center" gap={4}>
+                  <MapPin size={14} color="#A0A0A0" />
+                  <Text fontSize={12} color="$textSecondary" numberOfLines={1}>
+                    {listing.location}
+                  </Text>
+                </XStack>
+              ) : null}
+              <Text fontSize={12} color="$textSecondary">
+                {formatRelativeFr(listing.created_at)}
+              </Text>
+              <XStack alignItems="center" gap={4}>
+                <Eye size={12} color="#A0A0A0" />
+                <Text fontSize={12} color="$textSecondary">
+                  {listing.view_count} vue{listing.view_count > 1 ? 's' : ''}
+                </Text>
+              </XStack>
+            </XStack>
+
+            {/* Description */}
+            {listing.description ? (
+              <YStack gap={6} paddingTop={4}>
+                <Text fontSize={13} color="$textSecondary" fontWeight="700">
+                  Description
+                </Text>
+                <Text fontSize={14} color="$color" lineHeight={20}>
+                  {listing.description}
+                </Text>
+              </YStack>
+            ) : null}
+
+            {/* Carte vendeur */}
+            <YStack gap={8} paddingTop={4}>
+              <Text fontSize={13} color="$textSecondary" fontWeight="700">
+                Vendeur
+              </Text>
+              <SellerCard
+                seller={{
+                  id: listing.seller_id,
+                  username: listing.seller_username,
+                  full_name: listing.seller_full_name,
+                  avatar_url: listing.seller_avatar_url,
+                  is_verified: listing.seller_is_verified,
+                }}
+                onPress={handleOpenSeller}
+              />
+            </YStack>
+          </YStack>
+
+          {/* Annonces similaires */}
+          {similar.length > 0 ? (
+            <YStack paddingTop={20}>
+              <SimilarListingsRow listings={similar} onPressItem={handlePressSimilar} />
+            </YStack>
+          ) : null}
+        </ScrollView>
+
+        {/* CTA sticky bottom — E7-13 */}
+        <YStack
+          position="absolute"
+          bottom={0}
+          left={0}
+          right={0}
+          paddingHorizontal={16}
+          paddingTop={12}
+          paddingBottom={insets.bottom + 12}
+          backgroundColor="$background"
+          borderTopWidth={StyleSheet.hairlineWidth}
+          borderTopColor="$borderColor"
+        >
+          {isMyListing ? (
+            <View
+              backgroundColor="$surface"
+              borderRadius={9999}
+              paddingVertical={14}
+              alignItems="center"
+            >
+              <Text fontSize={14} fontWeight="700" color="$textSecondary">
+                {`C'est votre annonce`}
+              </Text>
+            </View>
+          ) : (
+            <Pressable
+              onPress={handleContactSeller}
+              disabled={getOrCreateDm.isPending}
+              accessibilityRole="button"
+              accessibilityLabel={`Contacter ${listing.seller_username}`}
+              accessibilityHint="Ouvre une conversation avec le vendeur, message pré-rempli"
+              accessibilityState={{ disabled: getOrCreateDm.isPending }}
+              style={[
+                styles.cta,
+                { backgroundColor: getOrCreateDm.isPending ? '#1A1A1A' : '#10D970' },
+              ]}
+            >
+              {getOrCreateDm.isPending ? (
+                <ActivityIndicator color="#10D970" />
+              ) : (
+                <Text fontSize={15} fontWeight="800" color="#000000">
+                  Contacter le vendeur
+                </Text>
+              )}
+            </Pressable>
+          )}
+        </YStack>
+      </View>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  cta: {
+    borderRadius: 9999,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
