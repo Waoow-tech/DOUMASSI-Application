@@ -40,8 +40,24 @@ export function useIncomingCallListener(meId: string | null) {
   useEffect(() => {
     if (!meId) return undefined;
 
+    const channelName = 'incoming-calls';
+
+    // Defensive cleanup — Supabase Realtime v2 réutilise les channels par
+    // nom. Si un channel avec ce nom existe déjà (cleanup pas encore
+    // propagé, React StrictMode double-mount, meId qui change vite),
+    // .channel(name) retourne l'instance existante DÉJÀ subscribed. Le
+    // .on() qui suit throw alors : "cannot add postgres_changes callbacks
+    // after subscribe()". On force le remove synchrone des instances
+    // existantes AVANT de recréer.
+    supabase
+      .getChannels()
+      .filter((c) => c.topic === `realtime:${channelName}`)
+      .forEach((c) => {
+        void supabase.removeChannel(c);
+      });
+
     const channel = supabase
-      .channel('incoming-calls')
+      .channel(channelName)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calls' }, (payload) => {
         const row = payload.new as CallRow | undefined;
         if (!row) return;
