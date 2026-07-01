@@ -58,8 +58,24 @@ async function registerPushToken(userId: string): Promise<void> {
   }
 
   // Récupérer le token. Expo génère un token stable par installation.
-  const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
-  const token = tokenResponse.data;
+  // Sur Android, échoue si Firebase (google-services.json + FCM) n'est pas
+  // configuré côté natif — on log en info silencieux plutôt que error car
+  // c'est un pré-requis config, pas un bug runtime. La feature push notifs
+  // sera juste inactive sur ce device tant que Firebase n'est pas branché.
+  let token: string;
+  try {
+    const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
+    token = tokenResponse.data;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (Platform.OS === 'android' && (message.includes('FirebaseApp') || message.includes('FCM'))) {
+      logger.info('push_token_skipped_firebase_not_configured', { platform: 'android' });
+      return;
+    }
+    // Autre erreur (iOS, permissions, réseau) — reste en warn pour investigation.
+    logger.warn('push_token_fetch_failed', { message });
+    return;
+  }
 
   // Idempotent : on lit d'abord pour éviter un UPDATE inutile si rien n'a changé.
   const { data: profile } = await supabase
