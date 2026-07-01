@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "683730166597",
+    "project_id": "doumassi-app01",
+    "storage_bucket": "doumassi-app01.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:683730166597:android:7a2389ef86e66f8585d42c",
+        "android_client_info": {
+          "package_name": "com.doumassi.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8VMMJZPNzs3-znKEEzxKTxwzLYTgK-SY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
