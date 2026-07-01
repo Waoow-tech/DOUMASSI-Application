@@ -24,12 +24,20 @@ import { supabase } from '@/lib/supabase';
 const PROJECT_ID = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
 
 async function registerPushToken(userId: string): Promise<void> {
+  // Breadcrumbs pour tracer exactement où le flow s'interrompt (bug bash
+  // 2026-07-01 : 0 push_token en DB, cause inconnue). Chaque étape log
+  // un `info` avec un contexte minimal.
+  logger.info('push_token_flow_start', { userId, platform: Platform.OS });
+
   // Les push notifs ne fonctionnent pas en simulateur — skip silencieusement
   // (pas de log d'erreur, c'est attendu en dev sur émulateur).
-  if (!Device.isDevice) return;
+  if (!Device.isDevice) {
+    logger.info('push_token_skipped_simulator');
+    return;
+  }
 
   if (!PROJECT_ID) {
-    logger.warn('No EAS projectId in app.json — cannot register push token');
+    logger.warn('push_token_no_eas_project_id');
     return;
   }
 
@@ -51,9 +59,10 @@ async function registerPushToken(userId: string): Promise<void> {
     const response = await Notifications.requestPermissionsAsync();
     status = response.status;
   }
+  logger.info('push_token_permission_status', { status });
 
   if (status !== 'granted') {
-    logger.info('push_permission_denied', { userId });
+    logger.info('push_token_permission_denied', { userId });
     return;
   }
 
@@ -66,6 +75,13 @@ async function registerPushToken(userId: string): Promise<void> {
   try {
     const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
     token = tokenResponse.data;
+    // Log un préfixe du token pour vérifier qu'il ressemble à un ExpoPushToken
+    // valide (format : ExponentPushToken[XXXXXXXX...]). On tronque à 30 char
+    // pour ne pas polluer les logs.
+    logger.info('push_token_fetched', {
+      preview: token.slice(0, 30),
+      length: token.length,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (Platform.OS === 'android' && (message.includes('FirebaseApp') || message.includes('FCM'))) {
@@ -78,18 +94,30 @@ async function registerPushToken(userId: string): Promise<void> {
   }
 
   // Idempotent : on lit d'abord pour éviter un UPDATE inutile si rien n'a changé.
-  const { data: profile } = await supabase
+  const { data: profile, error: selectError } = await supabase
     .from('profiles')
     .select('push_token')
     .eq('id', userId)
     .single();
 
-  if (profile?.push_token === token) return;
+  if (selectError) {
+    logger.warn('push_token_select_failed', { message: selectError.message });
+    // On tente quand même l'update — un select bloqué par RLS n'implique pas
+    // forcément un update bloqué (policies peuvent différer).
+  }
 
+  if (profile?.push_token === token) {
+    logger.info('push_token_unchanged_skip');
+    return;
+  }
+
+  logger.info('push_token_db_update_attempt', { userId });
   const { error } = await supabase.from('profiles').update({ push_token: token }).eq('id', userId);
   if (error) {
-    logger.error('register_push_token_failed', error);
+    logger.error('push_token_db_update_failed', error);
+    return;
   }
+  logger.info('push_token_db_update_success', { userId });
 }
 
 /**
