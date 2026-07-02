@@ -555,3 +555,72 @@ export async function uploadStoryMedia(
     throw uploadError;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Cours upload (#266 — E9-06 — publication d'une ressource)
+// ---------------------------------------------------------------------------
+
+const RESOURCES_BUCKET = 'resources';
+
+export interface UploadResourceFileResult {
+  publicUrl: string;
+  path: string;
+}
+
+/**
+ * Upload un fichier de ressource (PDF ou image) dans le bucket `resources`.
+ *
+ * - Images (image/*) : compressées via le même pipeline que les posts
+ *   (quality 0.8, resize 1920px) puis uploadées en JPEG.
+ * - PDF (application/pdf) : uploadés tels quels, pas de compression.
+ *
+ * Path : `{user_id}/{uuid}.{ext}` (le 1er segment DOIT être l'auth.uid()
+ * pour satisfaire les policies du bucket).
+ */
+export async function uploadResourceFile(
+  uri: string,
+  file: { mimeType?: string | null; name?: string | null },
+  options?: { signal?: AbortSignal; onProgress?: (p: number) => void }
+): Promise<UploadResourceFileResult> {
+  const signal = options?.signal;
+  const onProgress = options?.onProgress;
+
+  const mime = (file.mimeType ?? '').toLowerCase();
+  const nameExt = (file.name ?? '').split('.').pop()?.toLowerCase() ?? '';
+  const isImage = mime.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp'].includes(nameExt);
+  const isPdf = mime === 'application/pdf' || nameExt === 'pdf';
+
+  try {
+    if (signal?.aborted) throw abortedError();
+    const session = await getFreshSession();
+
+    if (isImage) {
+      const compressedUri = await compressImage(uri, DEFAULT_QUALITY);
+      const path = `${session.user.id}/${uuidv4()}.jpg`;
+      try {
+        await uploadToStorage(compressedUri, path, RESOURCES_BUCKET, 'image/jpeg', {
+          onProgress,
+          signal,
+        });
+      } finally {
+        await cleanupTempFiles([compressedUri]);
+      }
+      const { data } = supabase.storage.from(RESOURCES_BUCKET).getPublicUrl(path);
+      return { publicUrl: data.publicUrl, path };
+    }
+
+    // PDF (ou tout ce qui n'est pas une image reconnue mais autorisé par le
+    // bucket) : upload direct sans compression.
+    const ext = isPdf ? 'pdf' : nameExt || 'pdf';
+    const contentType = isPdf ? 'application/pdf' : (file.mimeType ?? 'application/octet-stream');
+    const path = `${session.user.id}/${uuidv4()}.${ext}`;
+    await uploadToStorage(uri, path, RESOURCES_BUCKET, contentType, { onProgress, signal });
+    const { data } = supabase.storage.from(RESOURCES_BUCKET).getPublicUrl(path);
+    return { publicUrl: data.publicUrl, path };
+  } catch (error) {
+    const uploadError = error instanceof UploadError ? error : new UploadError('upload', error);
+    if (signal?.aborted) logger.debug('upload_resource_file_cancelled');
+    else logger.error('upload_resource_file_failed', uploadError);
+    throw uploadError;
+  }
+}
