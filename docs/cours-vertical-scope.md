@@ -247,17 +247,39 @@ Le "delta cours" = la taxonomie + le modèle de quiz + la modération.
 
 ---
 
-## 15. Décisions restantes / points ouverts
+## 15. Décisions — TRANCHÉES (2026-07-02)
 
-1. **Taxonomie de départ** : valider la liste exacte des niveaux et matières
-   (§4). On peut élargir après, mais il faut figer le seed initial.
-2. **Réutiliser l'infra sociale existante** pour follow/like/comment, ou
-   créer des tables dédiées `resources` ? (penche pour réutiliser au max)
-3. **Nom de la verticale dans l'UI** : "Cours" / "Apprendre" / "École" /
-   autre ? (la card du Business Hub s'appelle "COURS" pour l'instant)
-4. **Seuil de signalements** avant masquage auto : à définir (ex. 3 ?).
+Suite au review croisé (Claude web + vérif code) :
+
+1. **Taxonomie de départ** ✅ — figée en E9-01 (17 niveaux, 10 matières, cf §4).
+2. **Réutiliser l'infra sociale vs tables dédiées** ✅ :
+   - **Bookmarks** → table dédiée `resource_bookmarks` (mélanger avec les
+     bookmarks de posts complexifierait les requêtes de profil).
+   - **Commentaires** → table dédiée `resource_comments`. Raison : la table
+     `comments` existante n'est PAS polymorphe (elle a un `post_id` en dur +
+     est couplée au feed / mentions / notifications / comment_likes). La
+     rendre polymorphe serait invasif et risqué.
+   - **Notifications** → on étendra l'enum `entity_type` existant (déjà
+     polymorphe sur `notifications`) pour "commentaire sur ta ressource".
+3. **Nom UI** ✅ — **"Apprendre"** dans les écrans/navigation (couvre cours +
+   fiches + exos + annales + quiz), **tuile Business Hub garde "COURS"**
+   (fidélité maquette CEO). "Cours" seul sous-estimait le périmètre.
+4. **Seuil de signalements** ✅ — **configurable en DB** (paramètre par défaut
+   d'une RPC ou table `app_config`), défaut **3**. Jamais hardcodé côté
+   client → changer le seuil = migration 30s, pas un release. Intégré en E9-08.
+5. **Comportement quiz** ✅ — standard du marché (Quizlet / Duolingo / Anki) :
+   **tentatives illimitées** (révision libre) + **meilleur score affiché** sur
+   le profil. **Pas de limite quotidienne** (contre-productif pour réviser).
+   Tentatives stockées léger (score + date) → pas de souci de volume à
+   l'échelle bêta. Intégré en E9-10 / E9-13.
+
+### Réordonnancement L0
+
+E9-09 (card Business Hub cliquable) est **avancée** juste après E9-02/03, pour
+avoir un point d'entrée visible dans l'app dès le début du sprint (feedback
+CEO plus tôt), quitte à pointer vers une grille encore minimale.
 
 ---
 
-_Prochaine étape après validation de ce brief : créer les tickets E9-01 →
-E9-16 sur GitHub, puis attaquer E9-01 (taxonomie)._
+_Tickets E9-01 → E9-16 créés (#261 → #276). Prochaine étape : appliquer E9-01
+(taxonomie) sur DEV+STAGING, puis attaquer E9-02 (resources + RPCs)._
