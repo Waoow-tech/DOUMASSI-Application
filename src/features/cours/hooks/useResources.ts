@@ -53,6 +53,10 @@ type ResourcesQueryData = {
   pageParams: unknown[];
 };
 
+// Type minimal pour flipper le cache de la fiche détail sans importer
+// ResourceDetail (éviterait un import circulaire avec useResourceDetail).
+type BookmarkableDetail = { id: string; bookmarked_by_me: boolean };
+
 export function resourcesQueryKey(filters: ResourcesFilters) {
   return [
     'cours',
@@ -163,6 +167,12 @@ export function useToggleResourceBookmark() {
           };
         }
       );
+      // Flip aussi le cache de la fiche détail (feedback immédiat sur E9-05).
+      queryClient.setQueriesData<BookmarkableDetail | undefined>(
+        { queryKey: ['cours', 'detail'] },
+        (old) =>
+          old && old.id === resourceId ? { ...old, bookmarked_by_me: !old.bookmarked_by_me } : old
+      );
     },
     onError: (_err, vars) => {
       queryClient.setQueriesData<ResourcesQueryData>(
@@ -179,6 +189,14 @@ export function useToggleResourceBookmark() {
             })),
           };
         }
+      );
+      // Rollback du cache détail aussi.
+      queryClient.setQueriesData<BookmarkableDetail | undefined>(
+        { queryKey: ['cours', 'detail'] },
+        (old) =>
+          old && old.id === vars.resourceId
+            ? { ...old, bookmarked_by_me: !old.bookmarked_by_me }
+            : old
       );
     },
     onSettled: () => {
