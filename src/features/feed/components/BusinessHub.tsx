@@ -89,7 +89,9 @@ const CATEGORIES: CategoryDef[] = [
     Icon: BookOpen,
     bgColor: '#1F3D2F',
     accentColor: '#10B981',
-    href: null,
+    // E9-09 — verticale Cours ("Apprendre") active. La tuile garde le libellé
+    // "COURS" (fidélité maquette CEO), l'écran s'intitule "Apprendre".
+    href: '/cours',
   },
 ];
 
