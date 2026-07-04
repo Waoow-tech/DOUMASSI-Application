@@ -8,14 +8,16 @@
 
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ArrowLeft, Bookmark, ChevronRight, Eye } from 'lucide-react-native';
+import { ArrowLeft, Bookmark, ChevronRight, Eye, Flag } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Image, Text, View, XStack, YStack } from 'tamagui';
 
+import { ReportReasonSheet } from '@/features/cours/components/ReportReasonSheet';
 import { ResourceFileRow } from '@/features/cours/components/ResourceFileRow';
 import { useCourseLevels, useCourseSubjects } from '@/features/cours/hooks/useCourseTaxonomy';
+import { useReportResource, type ReportReason } from '@/features/cours/hooks/useReportResource';
 import { useResourceDetail } from '@/features/cours/hooks/useResourceDetail';
 import {
   RESOURCE_TYPE_LABEL,
@@ -46,8 +48,11 @@ export default function ResourceDetailScreen() {
   const { data: resource, isLoading, isError } = useResourceDetail(resourceId);
   const toggleBookmark = useToggleResourceBookmark();
   const getOrCreateDm = useGetOrCreateDm();
+  const reportResource = useReportResource();
   const levelsQuery = useCourseLevels();
   const subjectsQuery = useCourseSubjects();
+
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const [meId, setMeId] = useState<string | null>(null);
   useEffect(() => {
@@ -89,6 +94,25 @@ export default function ResourceDetailScreen() {
     if (!resource) return;
     router.push(`/profile/${resource.author_id}`);
   }, [resource]);
+
+  const handleSelectReportReason = useCallback(
+    (reason: ReportReason) => {
+      if (!resourceId) return;
+      setIsReportOpen(false);
+      reportResource.mutate(
+        { resourceId, reason },
+        {
+          onSuccess: () => {
+            Alert.alert('Merci', 'Ton signalement a bien été envoyé. Nous allons le vérifier.');
+          },
+          onError: (err) => {
+            Alert.alert('Signalement impossible', err.message || 'Réessaie plus tard.');
+          },
+        }
+      );
+    },
+    [reportResource, resourceId]
+  );
 
   const handleContactAuthor = useCallback(() => {
     if (!resource || isMine) return;
@@ -331,8 +355,32 @@ export default function ResourceDetailScreen() {
                 </XStack>
               </Pressable>
             </YStack>
+
+            {/* Signaler (pas sur sa propre ressource) */}
+            {!isMine ? (
+              <Pressable
+                onPress={() => setIsReportOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Signaler cette ressource"
+                style={styles.reportLink}
+              >
+                <XStack alignItems="center" justifyContent="center" gap={6}>
+                  <Flag size={14} color="#A0A0A0" />
+                  <Text fontSize={13} color="$textSecondary" fontWeight="600">
+                    Signaler cette ressource
+                  </Text>
+                </XStack>
+              </Pressable>
+            ) : null}
           </YStack>
         </ScrollView>
+
+        <ReportReasonSheet
+          open={isReportOpen}
+          onOpenChange={setIsReportOpen}
+          onSelect={handleSelectReportReason}
+          disabled={reportResource.isPending}
+        />
 
         {/* CTA sticky bottom — Contacter l'auteur */}
         <YStack
@@ -395,5 +443,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  reportLink: {
+    marginTop: 16,
+    paddingVertical: 8,
   },
 });
