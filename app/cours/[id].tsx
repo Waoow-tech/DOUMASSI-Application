@@ -8,7 +8,7 @@
 
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ArrowLeft, Bookmark, ChevronRight, Eye, Flag } from 'lucide-react-native';
+import { ArrowLeft, Bookmark, ChevronRight, Eye, Flag, GraduationCap } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { Button, Image, Text, View, XStack, YStack } from 'tamagui';
 import { ReportReasonSheet } from '@/features/cours/components/ReportReasonSheet';
 import { ResourceFileRow } from '@/features/cours/components/ResourceFileRow';
 import { useCourseLevels, useCourseSubjects } from '@/features/cours/hooks/useCourseTaxonomy';
+import { useQuizByResource } from '@/features/cours/hooks/useQuizByResource';
 import { useReportResource, type ReportReason } from '@/features/cours/hooks/useReportResource';
 import { useResourceDetail } from '@/features/cours/hooks/useResourceDetail';
 import {
@@ -49,6 +50,7 @@ export default function ResourceDetailScreen() {
   const toggleBookmark = useToggleResourceBookmark();
   const getOrCreateDm = useGetOrCreateDm();
   const reportResource = useReportResource();
+  const { data: quiz } = useQuizByResource(resourceId);
   const levelsQuery = useCourseLevels();
   const subjectsQuery = useCourseSubjects();
 
@@ -300,6 +302,62 @@ export default function ResourceDetailScreen() {
               </Text>
             )}
 
+            {/* Quiz — passer (existe) / ajouter (le mien, pas encore) */}
+            {quiz ? (
+              <Pressable
+                onPress={() => router.push(`/cours/quiz/${quiz.id}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`Passer le quiz : ${quiz.title}`}
+                style={styles.quizCard}
+              >
+                <XStack alignItems="center" gap={12}>
+                  <View
+                    width={40}
+                    height={40}
+                    borderRadius={10}
+                    backgroundColor="#12291D"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <GraduationCap size={20} color="#10D970" />
+                  </View>
+                  <YStack flex={1} minWidth={0}>
+                    <Text fontSize={14} fontWeight="700" color="$color" numberOfLines={1}>
+                      Passer le quiz
+                    </Text>
+                    <Text fontSize={12} color="$textSecondary">
+                      {quiz.question_count} question{quiz.question_count > 1 ? 's' : ''}
+                    </Text>
+                  </YStack>
+                  <ChevronRight size={18} color="#10D970" />
+                </XStack>
+              </Pressable>
+            ) : isMine ? (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: '/cours/quiz-create',
+                    params: {
+                      resourceId: resource.id,
+                      levelCode: resource.level_code,
+                      subjectCode: resource.subject_code,
+                      resourceTitle: resource.title,
+                    },
+                  })
+                }
+                accessibilityRole="button"
+                accessibilityLabel="Ajouter un quiz à cette ressource"
+                style={styles.quizAddCard}
+              >
+                <XStack alignItems="center" justifyContent="center" gap={8}>
+                  <GraduationCap size={18} color="#10D970" />
+                  <Text fontSize={14} fontWeight="700" color="$color">
+                    Ajouter un quiz à cette ressource
+                  </Text>
+                </XStack>
+              </Pressable>
+            ) : null}
+
             {/* Carte auteur */}
             <YStack gap={8} paddingTop={4}>
               <Text fontSize={13} color="$textSecondary" fontWeight="700">
@@ -447,5 +505,17 @@ const styles = StyleSheet.create({
   reportLink: {
     marginTop: 16,
     paddingVertical: 8,
+  },
+  quizAddCard: {
+    borderWidth: 1,
+    borderColor: '#2A3F33',
+    borderRadius: 12,
+    paddingVertical: 14,
+    backgroundColor: '#12291D',
+  },
+  quizCard: {
+    backgroundColor: '#12291D',
+    borderRadius: 12,
+    padding: 14,
   },
 });
