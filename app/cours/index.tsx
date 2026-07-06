@@ -8,7 +8,7 @@
 
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { router, Stack } from 'expo-router';
-import { ArrowLeft, Bookmark, Plus, Search, X } from 'lucide-react-native';
+import { ArrowLeft, Bookmark, Check, Plus, Rss, Search, X } from 'lucide-react-native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,11 @@ import { Input, Text, View, XStack, YStack } from 'tamagui';
 import { ResourceCard } from '@/features/cours/components/ResourceCard';
 import { TaxonomyChips } from '@/features/cours/components/TaxonomyChips';
 import { useCourseLevels, useCourseSubjects } from '@/features/cours/hooks/useCourseTaxonomy';
+import {
+  followKey,
+  useMyCoursFollows,
+  useToggleCoursFollow,
+} from '@/features/cours/hooks/useCoursFollows';
 import {
   RESOURCE_TYPE_LABEL,
   useResources,
@@ -43,6 +48,30 @@ export default function ApprendreScreen() {
 
   const levelsQuery = useCourseLevels();
   const subjectsQuery = useCourseSubjects();
+  const { data: myFollows } = useMyCoursFollows();
+  const toggleFollow = useToggleCoursFollow();
+
+  // Suivi de la matière/niveau actuellement sélectionné (le plus spécifique
+  // affiché = la matière si choisie, sinon le niveau).
+  const activeFollow = useMemo<{
+    kind: 'subject' | 'level';
+    code: string;
+    label: string;
+  } | null>(() => {
+    if (subjectCode) {
+      const label = subjectsQuery.data?.find((s) => s.code === subjectCode)?.label ?? subjectCode;
+      return { kind: 'subject', code: subjectCode, label };
+    }
+    if (levelCode) {
+      const label = levelsQuery.data?.find((l) => l.code === levelCode)?.label ?? levelCode;
+      return { kind: 'level', code: levelCode, label };
+    }
+    return null;
+  }, [subjectCode, levelCode, subjectsQuery.data, levelsQuery.data]);
+
+  const isFollowingActive = activeFollow
+    ? (myFollows?.has(followKey(activeFollow.kind, activeFollow.code)) ?? false)
+    : false;
 
   // Maps code → label pour résoudre l'affichage sur les cards.
   const levelLabelByCode = useMemo(() => {
@@ -154,6 +183,14 @@ export default function ApprendreScreen() {
             Apprendre
           </Text>
           <Pressable
+            onPress={() => router.push('/cours/feed')}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Mon fil"
+          >
+            <Rss size={21} color="#FFFFFF" strokeWidth={2.2} />
+          </Pressable>
+          <Pressable
             onPress={() => router.push('/cours/bookmarks')}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
@@ -233,6 +270,42 @@ export default function ApprendreScreen() {
             allLabel="Tous types"
           />
         </YStack>
+
+        {/* Suivre la matière/niveau sélectionné */}
+        {activeFollow ? (
+          <View paddingHorizontal={12} paddingBottom={6}>
+            <Pressable
+              onPress={() =>
+                toggleFollow.mutate({ kind: activeFollow.kind, code: activeFollow.code })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={
+                isFollowingActive
+                  ? `Ne plus suivre ${activeFollow.label}`
+                  : `Suivre ${activeFollow.label}`
+              }
+              accessibilityState={{ selected: isFollowingActive }}
+              style={[styles.followPill, isFollowingActive ? styles.followPillOn : null]}
+            >
+              <XStack alignItems="center" justifyContent="center" gap={6}>
+                {isFollowingActive ? (
+                  <Check size={14} color="#000000" strokeWidth={2.6} />
+                ) : (
+                  <Rss size={14} color="#10D970" strokeWidth={2.4} />
+                )}
+                <Text
+                  fontSize={13}
+                  fontWeight="700"
+                  color={isFollowingActive ? '#000000' : '$color'}
+                >
+                  {isFollowingActive
+                    ? `Suivi · ${activeFollow.label}`
+                    : `Suivre ${activeFollow.label}`}
+                </Text>
+              </XStack>
+            </Pressable>
+          </View>
+        ) : null}
 
         {/* Liste */}
         <View flex={1}>
@@ -316,5 +389,18 @@ const styles = StyleSheet.create({
   listContent: {
     paddingTop: 6,
     paddingBottom: 24,
+  },
+  followPill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    backgroundColor: '#12291D',
+    borderWidth: 1,
+    borderColor: '#2A3F33',
+  },
+  followPillOn: {
+    backgroundColor: '#10D970',
+    borderColor: '#10D970',
   },
 });
