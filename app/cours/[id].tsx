@@ -8,7 +8,15 @@
 
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ArrowLeft, Bookmark, ChevronRight, Eye, Flag, GraduationCap } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Bookmark,
+  ChevronRight,
+  Eye,
+  Flag,
+  GraduationCap,
+  MessageCircle,
+} from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +29,7 @@ import { useAuthorReputation } from '@/features/cours/hooks/useAuthorReputation'
 import { useCourseLevels, useCourseSubjects } from '@/features/cours/hooks/useCourseTaxonomy';
 import { useQuizByResource } from '@/features/cours/hooks/useQuizByResource';
 import { useReportResource, type ReportReason } from '@/features/cours/hooks/useReportResource';
+import { useResourceCommentCount } from '@/features/cours/hooks/useResourceComments';
 import { useResourceDetail } from '@/features/cours/hooks/useResourceDetail';
 import {
   RESOURCE_TYPE_LABEL,
@@ -54,6 +63,7 @@ export default function ResourceDetailScreen() {
   const reportResource = useReportResource();
   const { data: quiz } = useQuizByResource(resourceId);
   const { data: reputation } = useAuthorReputation(resource?.author_id ?? null);
+  const { data: commentCount } = useResourceCommentCount(resourceId);
   const levelsQuery = useCourseLevels();
   const subjectsQuery = useCourseSubjects();
 
@@ -421,6 +431,36 @@ export default function ResourceDetailScreen() {
               </Pressable>
             </YStack>
 
+            {/* Entraide — commentaires */}
+            <Pressable
+              onPress={() => router.push(`/cours/comments/${resource.id}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`Entraide, ${commentCount ?? 0} commentaire${(commentCount ?? 0) > 1 ? 's' : ''}`}
+              style={styles.entraideCard}
+            >
+              <XStack alignItems="center" gap={12}>
+                <View
+                  width={40}
+                  height={40}
+                  borderRadius={10}
+                  backgroundColor="$surfaceElevated"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <MessageCircle size={20} color="#10D970" />
+                </View>
+                <YStack flex={1} minWidth={0}>
+                  <Text fontSize={14} fontWeight="700" color="$color">
+                    Entraide
+                  </Text>
+                  <Text fontSize={12} color="$textSecondary">
+                    {commentCount ?? 0} commentaire{(commentCount ?? 0) > 1 ? 's' : ''}
+                  </Text>
+                </YStack>
+                <ChevronRight size={18} color="#A0A0A0" />
+              </XStack>
+            </Pressable>
+
             {/* Signaler (pas sur sa propre ressource) */}
             {!isMine ? (
               <Pressable
@@ -522,6 +562,11 @@ const styles = StyleSheet.create({
   },
   quizCard: {
     backgroundColor: '#12291D',
+    borderRadius: 12,
+    padding: 14,
+  },
+  entraideCard: {
+    backgroundColor: '#161616',
     borderRadius: 12,
     padding: 14,
   },
