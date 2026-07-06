@@ -15,7 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Image, Text, View, XStack, YStack } from 'tamagui';
 
 import { ReportReasonSheet } from '@/features/cours/components/ReportReasonSheet';
+import { ReputationBadge } from '@/features/cours/components/ReputationBadge';
 import { ResourceFileRow } from '@/features/cours/components/ResourceFileRow';
+import { useAuthorReputation } from '@/features/cours/hooks/useAuthorReputation';
 import { useCourseLevels, useCourseSubjects } from '@/features/cours/hooks/useCourseTaxonomy';
 import { useQuizByResource } from '@/features/cours/hooks/useQuizByResource';
 import { useReportResource, type ReportReason } from '@/features/cours/hooks/useReportResource';
@@ -51,6 +53,7 @@ export default function ResourceDetailScreen() {
   const getOrCreateDm = useGetOrCreateDm();
   const reportResource = useReportResource();
   const { data: quiz } = useQuizByResource(resourceId);
+  const { data: reputation } = useAuthorReputation(resource?.author_id ?? null);
   const levelsQuery = useCourseLevels();
   const subjectsQuery = useCourseSubjects();
 
@@ -396,14 +399,18 @@ export default function ResourceDetailScreen() {
                       </Text>
                     )}
                   </YStack>
-                  <YStack flex={1} minWidth={0} gap={2}>
+                  <YStack flex={1} minWidth={0} gap={4}>
                     <XStack alignItems="center" gap={4}>
                       <Text fontSize={15} fontWeight="700" color="$color" numberOfLines={1}>
                         @{resource.author_username}
                       </Text>
                       <VerifiedBadge isVerified={resource.author_is_verified} />
                     </XStack>
-                    {resource.author_full_name ? (
+                    {reputation && reputation.tier !== 'none' ? (
+                      <View alignSelf="flex-start">
+                        <ReputationBadge tier={reputation.tier} size="sm" />
+                      </View>
+                    ) : resource.author_full_name ? (
                       <Text fontSize={12} color="$textSecondary" numberOfLines={1}>
                         {resource.author_full_name}
                       </Text>
