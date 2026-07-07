@@ -1,7 +1,16 @@
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Rocket, Search, Settings, Sparkles, Store, User, Wallet } from 'lucide-react-native';
+import {
+  Rocket,
+  Search,
+  Settings,
+  Sparkles,
+  SquarePen,
+  Store,
+  User,
+  Wallet,
+} from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   NativeScrollEvent,
@@ -429,6 +438,17 @@ export function FeedScreen() {
           contentContainerStyle={styles.listContent}
         />
 
+        {/* FAB — Créer un post (E4-03 : l'écran existait sans point d'entrée) */}
+        <TouchableOpacity
+          onPress={() => router.push('/post/create')}
+          activeOpacity={0.85}
+          style={styles.composeFab}
+          accessibilityRole="button"
+          accessibilityLabel="Créer un post"
+        >
+          <SquarePen size={24} color="#000000" strokeWidth={2.4} />
+        </TouchableOpacity>
+
         {selectedPost ? (
           <PostMenuSheet
             postId={selectedPost.id}
@@ -479,6 +499,22 @@ export function FeedScreen() {
 }
 
 const styles = StyleSheet.create({
+  composeFab: {
+    position: 'absolute',
+    right: 18,
+    bottom: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#10D970',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
   headerSideButton: {
     width: 40,
     height: 40,
