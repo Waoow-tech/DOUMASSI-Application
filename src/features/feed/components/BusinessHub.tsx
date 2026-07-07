@@ -73,7 +73,8 @@ const CATEGORIES: CategoryDef[] = [
     Icon: Gamepad2,
     bgColor: '#1F2D3D',
     accentColor: '#3B82F6',
-    href: null,
+    // E10-03 — verticale Jeux active (mini-jeux HTML5 + scores).
+    href: '/games',
   },
   {
     id: 'musique',
