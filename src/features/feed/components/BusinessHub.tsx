@@ -15,6 +15,7 @@
 // viendront via assets/ ultérieurement, sans refactor du composant (la
 // prop `image` accepte déjà un require()).
 
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import {
   BookOpen,
@@ -29,6 +30,18 @@ import { Pressable, StyleSheet } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
 type CategoryId = 'marketplace' | 'films' | 'immobilier' | 'jeux' | 'musique' | 'cours';
+
+// Images de fond par catégorie (webp optimisées ~20-60 Ko). Mapping SÉPARÉ du
+// tableau CATEGORIES pour ne pas entrer en conflit avec les PRs qui modifient
+// les `href` (ex. activation de la tuile Jeux).
+const CATEGORY_IMAGES: Record<CategoryId, number> = {
+  marketplace: require('../../../../assets/business-hub/marketplace.webp') as number,
+  films: require('../../../../assets/business-hub/films.webp') as number,
+  immobilier: require('../../../../assets/business-hub/immobilier.webp') as number,
+  jeux: require('../../../../assets/business-hub/jeux.webp') as number,
+  musique: require('../../../../assets/business-hub/musique.webp') as number,
+  cours: require('../../../../assets/business-hub/cours.webp') as number,
+};
 
 interface CategoryDef {
   id: CategoryId;
@@ -103,6 +116,7 @@ interface CategoryCardProps {
 function CategoryCard({ category, variant }: CategoryCardProps) {
   const isActive = category.href != null;
   const { Icon } = category;
+  const image = CATEGORY_IMAGES[category.id];
 
   const handlePress = () => {
     if (!isActive || !category.href) return;
@@ -133,14 +147,29 @@ function CategoryCard({ category, variant }: CategoryCardProps) {
         position="relative"
         opacity={isActive ? 1 : 0.55}
       >
-        {/* Icône centrée (placeholder visuel — remplacée par image plus tard) */}
-        <YStack flex={1} alignItems="center" justifyContent="center">
-          <Icon
-            size={variant === 'wide' ? 64 : 56}
-            color={category.accentColor}
-            strokeWidth={1.6}
-          />
-        </YStack>
+        {/* Image de fond (ou icône en fallback si absente) */}
+        {image ? (
+          <Image source={image} style={styles.bgImage} contentFit="cover" transition={200} />
+        ) : (
+          <YStack flex={1} alignItems="center" justifyContent="center">
+            <Icon
+              size={variant === 'wide' ? 64 : 56}
+              color={category.accentColor}
+              strokeWidth={1.6}
+            />
+          </YStack>
+        )}
+
+        {/* Voile sombre pour la lisibilité des overlays */}
+        <View
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          height="55%"
+          backgroundColor="rgba(0,0,0,0.28)"
+          pointerEvents="none"
+        />
 
         {/* Titre overlay top-left */}
         <View
@@ -210,6 +239,10 @@ export function BusinessHub() {
 }
 
 const styles = StyleSheet.create({
+  bgImage: {
+    width: '100%',
+    height: '100%',
+  },
   cardPressable: {
     borderRadius: 14,
   },
