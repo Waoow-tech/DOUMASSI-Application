@@ -6,11 +6,12 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Button, ScrollView, Text, YStack } from 'tamagui';
 
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 
 const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
 export default function WelcomeScreen() {
+  const t = useTranslations();
   const copy = t.auth.welcome;
 
   return (

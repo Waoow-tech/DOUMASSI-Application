@@ -8,7 +8,7 @@ import { Controller } from 'react-hook-form';
 import { Button, Input, ScrollView, Spinner, Text, YStack } from 'tamagui';
 
 import { useForgotPassword } from '@/features/auth/hooks/useForgotPassword';
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 
 const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
@@ -27,6 +27,7 @@ function DoumassLogo() {
 
 export default function ForgotPasswordScreen() {
   const { form, isLoading, errorMessage, successMessage, onSubmit } = useForgotPassword();
+  const t = useTranslations();
   const copy = t.auth.forgotPassword;
 
   return (

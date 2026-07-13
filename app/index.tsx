@@ -14,9 +14,10 @@ import { Animated } from 'react-native';
 import { Text, YStack } from 'tamagui';
 
 import { useAuthGuard } from '@/features/auth/hooks/useAuthGuard';
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 
 export default function Splash() {
+  const t = useTranslations();
   const opacity = useRef(new Animated.Value(1)).current;
   const status = useAuthGuard();
   const [minElapsed, setMinElapsed] = useState(false);

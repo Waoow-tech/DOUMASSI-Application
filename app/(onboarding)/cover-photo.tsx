@@ -13,7 +13,7 @@ import { KeyboardAvoidingView, Platform } from 'react-native';
 import { Button, ScrollView, Sheet, Spinner, Text, XStack, YStack } from 'tamagui';
 
 import { useCoverPicker } from '@/features/auth/hooks/useCoverPicker';
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -31,6 +31,7 @@ export default function CoverPhotoScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showPhotoSheet, setShowPhotoSheet] = useState(false);
 
+  const t = useTranslations();
   const copy = t.auth.coverPhoto;
 
   // ---------------------------------------------------------------------

@@ -6,6 +6,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import {
   Bell,
+  Check,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -13,6 +14,7 @@ import {
   FileText,
   Info,
   KeyRound,
+  Languages,
   Lock,
   LogOut,
   Mail,
@@ -39,9 +41,10 @@ import {
   profileQueryKey,
   useCurrentProfile,
 } from '@/features/profile/hooks/useProfile';
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
+import { useLanguageStore } from '@/stores/languageStore';
 
 const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
@@ -302,7 +305,10 @@ export default function SettingsScreen() {
   const blockedUsersQuery = useBlockedUsers();
   const privacyToggle = usePrivacyToggle();
   const exportMyData = useExportMyData();
+  const t = useTranslations();
   const copy = t.auth.settings;
+  const language = useLanguageStore((state) => state.language);
+  const setLanguage = useLanguageStore((state) => state.setLanguage);
 
   const handleExportData = async () => {
     try {
@@ -448,6 +454,24 @@ export default function SettingsScreen() {
               label="Notifications email"
               checked={emailNotifications}
               onCheckedChange={setEmailNotifications}
+              isLast
+            />
+          </Section>
+
+          <Section title={t.settings.languageTitle}>
+            <SettingRow
+              icon={Languages}
+              label={t.settings.languageFr}
+              showChevron={false}
+              trailing={language === 'fr' ? <Check size={20} color={COLORS.accentNeon} /> : null}
+              onPress={() => setLanguage('fr')}
+            />
+            <SettingRow
+              icon={Languages}
+              label={t.settings.languageEn}
+              showChevron={false}
+              trailing={language === 'en' ? <Check size={20} color={COLORS.accentNeon} /> : null}
+              onPress={() => setLanguage('en')}
               isLast
             />
           </Section>

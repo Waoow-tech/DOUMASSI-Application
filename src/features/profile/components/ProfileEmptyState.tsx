@@ -4,9 +4,10 @@
 import { Camera } from 'lucide-react-native';
 import { Text, YStack } from 'tamagui';
 
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 
 export function ProfileEmptyState() {
+  const t = useTranslations();
   const copy = t.profile;
   return (
     <YStack alignItems="center" justifyContent="center" paddingVertical={80} gap="$3">

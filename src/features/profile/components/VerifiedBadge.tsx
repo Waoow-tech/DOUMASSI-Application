@@ -1,10 +1,11 @@
 import { Text, XStack } from 'tamagui';
 
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 
 export function VerifiedBadge({ isVerified }: { isVerified: boolean }) {
-  if (!isVerified) return null;
+  const t = useTranslations();
   const copy = t.profile;
+  if (!isVerified) return null;
   return (
     <XStack
       backgroundColor="#3B82F6"

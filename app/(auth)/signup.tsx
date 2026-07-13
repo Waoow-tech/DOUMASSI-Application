@@ -20,7 +20,7 @@ import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
 import { useSignup } from '@/features/auth/hooks/useSignup';
 import { useUsernameAvailability } from '@/features/auth/hooks/useUsernameAvailability';
 import { formatBirthdayInput } from '@/features/auth/lib/formatBirthday';
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 
 const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
@@ -84,6 +84,7 @@ function GoogleLogo({ size = 20 }: { size?: number }) {
 // ---------------------------------------------------------------------------
 
 export default function SignupScreen() {
+  const t = useTranslations();
   const { form, isLoading, signupError, onSubmit } = useSignup();
   const {
     signIn: signInWithGoogle,

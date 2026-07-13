@@ -11,7 +11,7 @@ import { Controller } from 'react-hook-form';
 import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui';
 
 import { useResetPassword } from '@/features/auth/hooks/useResetPassword';
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 
 const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
@@ -32,6 +32,7 @@ export default function ResetPasswordScreen() {
   const { form, isLoading, errorMessage, successMessage, hasValidSession, onSubmit } =
     useResetPassword();
   const [showPassword, setShowPassword] = useState(false);
+  const t = useTranslations();
   const copy = t.auth.resetPassword;
 
   return (

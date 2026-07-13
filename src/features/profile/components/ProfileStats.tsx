@@ -5,7 +5,7 @@
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 
 interface ProfileStatsProps {
   posts: number;
@@ -54,6 +54,7 @@ export function ProfileStats({
   onFollowersPress,
   onFollowingPress,
 }: ProfileStatsProps) {
+  const t = useTranslations();
   const copy = t.profile;
   return (
     <XStack marginTop="$4" paddingHorizontal="$5" justifyContent="center" alignItems="center">

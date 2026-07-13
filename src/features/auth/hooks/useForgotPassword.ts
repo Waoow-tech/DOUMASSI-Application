@@ -11,7 +11,7 @@ import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
 } from '@/features/auth/schemas/passwordResetSchema';
-import { t } from '@/i18n';
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -32,6 +32,7 @@ export function useForgotPassword() {
   });
 
   const onSubmit = async (values: ForgotPasswordFormValues) => {
+    const t = getT();
     setIsLoading(true);
     setErrorMessage(null);
     setSuccessMessage(null);

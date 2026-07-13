@@ -21,7 +21,7 @@ import { ProfileTabs, type ProfileTab } from '@/features/profile/components/Prof
 import { ShopEmptyState } from '@/features/profile/components/ShopEmptyState';
 import { useListings, type ListingItem } from '@/features/profile/hooks/useListings';
 import { useProfile, type PostGridItem } from '@/features/profile/hooks/useProfile';
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 
 const GRID_GAP = 2;
 const NUM_COLUMNS = 3;
@@ -30,6 +30,7 @@ export function ProfileScreen() {
   const { profile, userId, counters, posts, isLoading, refetch } = useProfile();
   const { data: listings } = useListings(userId);
   const { width: screenWidth } = useWindowDimensions();
+  const t = useTranslations();
   const copy = t.profile;
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('grid');

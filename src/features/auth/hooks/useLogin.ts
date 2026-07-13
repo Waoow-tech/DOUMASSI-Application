@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { mapAuthError } from '@/features/auth/lib/mapAuthError';
-import { t } from '@/i18n';
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -35,6 +35,7 @@ export function useLogin() {
   });
 
   const submitLogin = async (values: LoginFormValues) => {
+    const t = getT();
     setIsLoading(true);
     setLoginError(null);
 
