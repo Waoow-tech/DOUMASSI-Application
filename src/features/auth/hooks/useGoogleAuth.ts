@@ -16,7 +16,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 
 import { mapAuthError } from '@/features/auth/lib/mapAuthError';
-import { t } from '@/i18n';
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -48,6 +48,7 @@ export function useGoogleAuth() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const signIn = async () => {
+    const t = getT();
     setIsLoading(true);
     setErrorMessage(null);
 

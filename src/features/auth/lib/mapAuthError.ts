@@ -1,12 +1,12 @@
-// Mappe les erreurs Supabase Auth vers des messages FR utilisateur.
+// Mappe les erreurs Supabase Auth vers des messages utilisateur (FR/EN).
 // Supabase renvoie des messages anglais bruts ("email rate limit exceeded"…).
 // On les normalise pour afficher un texte cohérent et compréhensible.
+// getT() (non-réactif) : lit la langue courante au moment de l'appel.
 
-import { t } from '@/i18n';
-
-const e = t.auth.errors;
+import { getT } from '@/i18n';
 
 export function mapAuthError(message: string | undefined | null): string {
+  const e = getT().auth.errors;
   if (!message) return e.unknown;
 
   const lower = message.toLowerCase();

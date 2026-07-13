@@ -16,7 +16,7 @@ import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
 } from '@/features/auth/schemas/passwordResetSchema';
-import { t } from '@/i18n';
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -76,7 +76,7 @@ export function useResetPassword() {
 
       if (error) {
         logger.warn('setSession a échoué après deep link', { message: error.message });
-        if (!cancelled) setErrorMessage(t.auth.resetPassword.invalidLink);
+        if (!cancelled) setErrorMessage(getT().auth.resetPassword.invalidLink);
         return;
       }
 
@@ -104,6 +104,7 @@ export function useResetPassword() {
   }, []);
 
   const onSubmit = async (values: ResetPasswordFormValues) => {
+    const t = getT();
     setIsLoading(true);
     setErrorMessage(null);
     setSuccessMessage(null);

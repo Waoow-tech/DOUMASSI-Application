@@ -20,7 +20,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Spinner, Text, YStack } from 'tamagui';
 
-import { t } from '@/i18n';
+import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -40,6 +40,7 @@ function extractTokensFromUrl(url: string): {
 }
 
 export default function AuthCallbackScreen() {
+  const t = useTranslations();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function AuthCallbackScreen() {
     const timeoutId = setTimeout(() => {
       if (cancelled) return;
       logger.warn('OAuth callback fallback timeout — redirect welcome');
-      setErrorMessage(t.auth.google.callbackError);
+      setErrorMessage(getT().auth.google.callbackError);
       setTimeout(() => router.replace('/(auth)/welcome'), 1500);
     }, 5_000);
 

@@ -12,7 +12,7 @@ import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagu
 
 import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 
 const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
@@ -34,6 +34,7 @@ function DoumassLogo() {
 }
 
 export default function LoginScreen() {
+  const t = useTranslations();
   const { form, isLoading, loginError, onSubmit } = useLogin();
   const {
     signIn: signInWithGoogle,

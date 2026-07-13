@@ -20,13 +20,14 @@ import {
   completeAccountSchema,
   type CompleteAccountFormValues,
 } from '@/features/auth/schemas/completeAccountSchema';
-import { t } from '@/i18n';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
 const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
 export default function CompleteAccountScreen() {
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

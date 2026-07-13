@@ -1,6 +1,9 @@
-// Strings de l'app — locale provisoire MVP.
-// Le projet est intitulé `fr.ts` pour anticiper l'i18n Sprint 2,
-// mais les textes restent en anglais tant que la copy product n'est pas figée.
+// Dictionnaire FRANÇAIS — E11-01.
+// Forme de référence : `type Translations = typeof fr`. en.ts doit couvrir
+// exactement les mêmes clés (sinon erreur TypeScript).
+// ⚠️ PAS de `as const` : on veut des valeurs typées `string` (structurel), sinon
+// chaque valeur FR deviendrait un type littéral que l'anglais ne pourrait matcher.
+// Tutoiement volontaire (cohérent avec le ton de l'app).
 
 export const fr = {
   splash: {
@@ -8,92 +11,87 @@ export const fr = {
   },
   auth: {
     welcome: {
-      tagline: 'The French super-app.',
-      signIn: 'Sign in',
-      createAccount: 'Create an account',
+      tagline: 'La super-app française.',
+      signIn: 'Se connecter',
+      createAccount: 'Créer un compte',
     },
     signup: {
-      usernameChecking: 'Checking…',
-      usernameAvailable: 'Available',
-      usernameTaken: 'Already taken',
-      usernameCheckError: 'Could not verify, please retry.',
+      usernameChecking: 'Vérification…',
+      usernameAvailable: 'Disponible',
+      usernameTaken: 'Déjà pris',
+      usernameCheckError: 'Vérification impossible, réessaie.',
     },
     onboarding: {
-      placeholderTitle: 'Almost there!',
+      placeholderTitle: 'Presque fini !',
       placeholderSubtitle:
-        'Complete your profile to start using DOUMASSI.\nThe full onboarding flow is coming soon.',
-      continueToFeed: 'Skip for now',
+        'Complète ton profil pour commencer à utiliser DOUMASSI.\nLe parcours complet arrive bientôt.',
+      continueToFeed: 'Passer pour l’instant',
     },
     coverPhoto: {
-      title: 'Add a cover photo',
-      subtitle: 'Personalize your profile with a banner image.',
-      hint: 'Tap to add a cover photo.\nWe recommend a wide image (1500×500px).',
-      changeHint: 'Tap to change',
-      takePhoto: 'Take a photo',
-      chooseFromGallery: 'Choose from gallery',
-      finishSetup: 'Finish setup',
-      skipForNow: 'Skip for now',
-      errorGeneric: 'An unexpected error occurred',
+      title: 'Ajoute une photo de couverture',
+      subtitle: 'Personnalise ton profil avec une bannière.',
+      hint: 'Touche pour ajouter une photo de couverture.\nOn recommande une image large (1500×500px).',
+      changeHint: 'Touche pour changer',
+      takePhoto: 'Prendre une photo',
+      chooseFromGallery: 'Choisir depuis la galerie',
+      finishSetup: 'Terminer',
+      skipForNow: 'Passer pour l’instant',
+      errorGeneric: 'Une erreur inattendue est survenue',
     },
     settings: {
-      title: 'Settings',
-      logoutSection: 'Account',
-      logoutButton: 'Sign out',
-      logoutConfirmTitle: 'Sign out?',
-      logoutConfirmMessage: 'You will be signed out of your DOUMASSI account on this device.',
-      logoutConfirmCancel: 'Cancel',
-      logoutConfirmAction: 'Sign out',
+      title: 'Réglages',
+      logoutSection: 'Compte',
+      logoutButton: 'Se déconnecter',
+      logoutConfirmTitle: 'Se déconnecter ?',
+      logoutConfirmMessage: 'Tu seras déconnecté de ton compte DOUMASSI sur cet appareil.',
+      logoutConfirmCancel: 'Annuler',
+      logoutConfirmAction: 'Se déconnecter',
     },
     google: {
-      continueWithGoogle: 'Continue with Google',
-      callbackInProgress: 'Signing you in…',
-      callbackError: 'Google sign-in failed. Please try again.',
+      continueWithGoogle: 'Continuer avec Google',
+      callbackInProgress: 'Connexion en cours…',
+      callbackError: 'La connexion Google a échoué. Réessaie.',
     },
     forgotPassword: {
-      title: 'Forgot your\npassword?',
+      title: 'Mot de passe\noublié ?',
       subtitle:
-        'No worries! Enter your email address and we’ll send you instructions to reset your password.',
-      emailPlaceholder: 'Email address',
-      submit: 'Send Reset Instructions',
-      backToLogin: 'Back to Login',
+        'Pas de souci ! Entre ton adresse e-mail et on t’envoie les instructions pour réinitialiser ton mot de passe.',
+      emailPlaceholder: 'Adresse e-mail',
+      submit: 'Envoyer les instructions',
+      backToLogin: 'Retour à la connexion',
       successMessage:
-        'If an account exists for this address, a reset email has just been sent. Check your spam folder if you don’t see it.',
+        'Si un compte existe pour cette adresse, un e-mail de réinitialisation vient d’être envoyé. Vérifie tes spams si tu ne le vois pas.',
     },
     resetPassword: {
-      title: 'Set a new\npassword',
-      subtitle: 'Choose a new password to finalize the reset.',
-      passwordPlaceholder: 'New password',
-      confirmPlaceholder: 'Confirm password',
-      submit: 'Update password',
-      successMessage: 'Password updated. You can now log in.',
+      title: 'Nouveau\nmot de passe',
+      subtitle: 'Choisis un nouveau mot de passe pour finaliser la réinitialisation.',
+      passwordPlaceholder: 'Nouveau mot de passe',
+      confirmPlaceholder: 'Confirme le mot de passe',
+      submit: 'Mettre à jour le mot de passe',
+      successMessage: 'Mot de passe mis à jour. Tu peux maintenant te connecter.',
       invalidLink:
-        'This reset link is invalid or has expired. Request a new one from the login screen.',
+        'Ce lien de réinitialisation est invalide ou expiré. Demandes-en un nouveau depuis l’écran de connexion.',
     },
     errors: {
-      // Password / signup
-      weakPassword: 'Password is too weak (8 characters minimum).',
-      samePassword: 'New password must be different from the previous one.',
-      emailAlreadyUsed: 'An account with this email already exists. Try logging in instead.',
-      // Login
-      invalidCredentials: 'Wrong email/phone or password.',
-      emailNotConfirmed: 'Please confirm your email before logging in.',
-      invalidIdentifier: 'Enter a valid email or phone number.',
-      // Email / rate limit
-      rateLimit: 'Too many attempts. Please try again in a few minutes.',
-      invalidEmail: 'Invalid email address.',
-      userNotFound: 'No account matches this email address.',
-      // Expired link
-      expiredLink: 'Link expired. Please request a new reset email.',
-      // Network / fallback
-      network: 'Network issue. Check your connection and try again.',
-      unknown: 'An unexpected error occurred. Please try again.',
+      weakPassword: 'Mot de passe trop faible (8 caractères minimum).',
+      samePassword: 'Le nouveau mot de passe doit être différent de l’ancien.',
+      emailAlreadyUsed: 'Un compte existe déjà avec cet e-mail. Essaie plutôt de te connecter.',
+      invalidCredentials: 'E-mail/téléphone ou mot de passe incorrect.',
+      emailNotConfirmed: 'Confirme ton e-mail avant de te connecter.',
+      invalidIdentifier: 'Entre un e-mail ou un numéro de téléphone valide.',
+      rateLimit: 'Trop de tentatives. Réessaie dans quelques minutes.',
+      invalidEmail: 'Adresse e-mail invalide.',
+      userNotFound: 'Aucun compte ne correspond à cette adresse e-mail.',
+      expiredLink: 'Lien expiré. Demande un nouvel e-mail de réinitialisation.',
+      network: 'Problème réseau. Vérifie ta connexion et réessaie.',
+      unknown: 'Une erreur inattendue est survenue. Réessaie.',
     },
   },
   profile: {
     stats: {
       posts: 'Publications',
-      followers: 'Followers',
-      following: 'Suivis',
+      followers: 'Abonnés',
+      following: 'Abonnements',
     },
     editButton: 'Modifier',
     shareButton: 'Partager',
@@ -110,9 +108,15 @@ export const fr = {
       tagged: 'Identifié',
     },
     emptyState: {
-      title: "Aucune publication pour l'instant",
+      title: 'Aucune publication pour l’instant',
     },
   },
-} as const;
+  settings: {
+    languageTitle: 'Langue',
+    languageSubtitle: 'Choisis la langue de l’application',
+    languageFr: 'Français',
+    languageEn: 'English',
+  },
+};
 
 export type Translations = typeof fr;
