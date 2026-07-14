@@ -9,12 +9,15 @@ import { Plus, Store } from 'lucide-react-native';
 import { Pressable, StyleSheet } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 export interface ShopEmptyStateProps {
   /** Si défini, affiche un CTA "Publier ta première annonce" qui appelle cette fonction. */
   onCreatePress?: () => void;
 }
 
 export function ShopEmptyState({ onCreatePress }: ShopEmptyStateProps = {}) {
+  const t = useTranslations();
   const isMine = typeof onCreatePress === 'function';
   return (
     <YStack alignItems="center" justifyContent="center" paddingVertical={80} gap="$3">
@@ -30,13 +33,15 @@ export function ShopEmptyState({ onCreatePress }: ShopEmptyStateProps = {}) {
         <Store size={32} color="#A0A0A0" />
       </YStack>
       <Text fontSize={15} color="$textSecondary" textAlign="center" fontWeight="500">
-        {isMine ? 'Aucune annonce pour l’instant' : 'Aucun produit en vente'}
+        {isMine
+          ? t.profileScreens.shopEmptyState.noListingsMine
+          : t.profileScreens.shopEmptyState.noListingsOther}
       </Text>
       {isMine ? (
         <Pressable
           onPress={onCreatePress}
           accessibilityRole="button"
-          accessibilityLabel="Publier ta première annonce"
+          accessibilityLabel={t.profileScreens.shopEmptyState.publishFirst}
           style={styles.cta}
         >
           <XStack alignItems="center" gap={6}>
@@ -44,7 +49,7 @@ export function ShopEmptyState({ onCreatePress }: ShopEmptyStateProps = {}) {
               <Plus size={16} color="#000000" strokeWidth={2.6} />
             </View>
             <Text fontSize={14} fontWeight="800" color="#000000">
-              Publier ta première annonce
+              {t.profileScreens.shopEmptyState.publishFirst}
             </Text>
           </XStack>
         </Pressable>

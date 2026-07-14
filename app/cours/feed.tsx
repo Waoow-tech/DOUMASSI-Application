@@ -18,8 +18,10 @@ import {
   useToggleResourceBookmark,
   type ResourceListItem,
 } from '@/features/cours/hooks/useResources';
+import { useTranslations } from '@/i18n';
 
 export default function CoursFeedScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlashListRef<ResourceListItem>>(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
@@ -94,12 +96,12 @@ export default function CoursFeedScreen() {
               onPress={handleBack}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
-              accessibilityLabel="Retour"
+              accessibilityLabel={t.cours.common.back}
             >
               <ArrowLeft size={24} color="#FFFFFF" />
             </Pressable>
             <Text flex={1} color="$color" fontSize={18} fontWeight="700">
-              Mon fil
+              {t.cours.feed.title}
             </Text>
           </View>
         </View>
@@ -119,20 +121,19 @@ export default function CoursFeedScreen() {
             >
               <Rss size={48} color="#666" strokeWidth={1.5} />
               <Text fontSize={16} fontWeight="700" color="$color" textAlign="center">
-                Ton fil est vide
+                {t.cours.feed.emptyTitle}
               </Text>
               <Text fontSize={13} color="$textSecondary" textAlign="center">
-                Suis des matières depuis l&apos;écran Apprendre pour voir leurs nouvelles ressources
-                ici.
+                {t.cours.feed.emptySubtitle}
               </Text>
               <Pressable
                 onPress={() => router.replace('/cours')}
                 accessibilityRole="button"
-                accessibilityLabel="Découvrir des matières"
+                accessibilityLabel={t.cours.feed.discoverCta}
                 style={styles.cta}
               >
                 <Text fontSize={14} fontWeight="800" color="#000000">
-                  Découvrir des matières
+                  {t.cours.feed.discoverCta}
                 </Text>
               </Pressable>
             </YStack>

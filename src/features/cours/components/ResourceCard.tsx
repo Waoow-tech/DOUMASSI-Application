@@ -19,11 +19,9 @@ import { memo } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
-import {
-  RESOURCE_TYPE_LABEL,
-  type ResourceListItem,
-  type ResourceType,
-} from '../hooks/useResources';
+import { useTranslations } from '@/i18n';
+
+import { type ResourceListItem, type ResourceType } from '../hooks/useResources';
 
 const HIT_SLOP = { top: 10, right: 10, bottom: 10, left: 10 };
 
@@ -54,12 +52,19 @@ function ResourceCardComponent({
   onToggleBookmark,
   isBookmarkPending = false,
 }: ResourceCardProps) {
+  const t = useTranslations();
   const visual = TYPE_VISUAL[resource.type];
   const { Icon } = visual;
   // Si le 1er fichier est une image, on l'affiche en vignette, sinon icône type.
   const firstImage = resource.files.find((f) => /\.(jpe?g|png|webp)$/i.test(f)) ?? null;
 
-  const a11yLabel = `${RESOURCE_TYPE_LABEL[resource.type]} : ${resource.title}, ${subjectLabel} ${levelLabel}, par ${resource.author_username}`;
+  const a11yLabel = t.cours.card.a11yLabel(
+    t.cours.resourceType[resource.type],
+    resource.title,
+    subjectLabel,
+    levelLabel,
+    resource.author_username
+  );
 
   return (
     <Pressable
@@ -103,7 +108,7 @@ function ResourceCardComponent({
               borderRadius={4}
             >
               <Text fontSize={10} fontWeight="700" color={visual.color}>
-                {RESOURCE_TYPE_LABEL[resource.type]}
+                {t.cours.resourceType[resource.type]}
               </Text>
             </View>
             <Text fontSize={11} color="$textSecondary" numberOfLines={1}>
@@ -137,7 +142,7 @@ function ResourceCardComponent({
           hitSlop={HIT_SLOP}
           accessibilityRole="button"
           accessibilityLabel={
-            resource.bookmarked_by_me ? 'Retirer des favoris' : 'Ajouter aux favoris'
+            resource.bookmarked_by_me ? t.cours.bookmark.remove : t.cours.bookmark.add
           }
           accessibilityState={{ selected: resource.bookmarked_by_me }}
           style={styles.bookmarkButton}

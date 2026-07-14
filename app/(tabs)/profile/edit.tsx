@@ -27,6 +27,7 @@ import {
   editProfileSchema,
   type EditProfileFormValues,
 } from '@/features/profile/schemas/editProfileSchema';
+import { getT, useTranslations } from '@/i18n';
 
 const logoSource = require('../../../assets/Logo-Doumassi.webp') as number;
 
@@ -34,7 +35,7 @@ const USERNAME_COOLDOWN_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function formatDate(value: string | null) {
-  if (!value) return 'Not set';
+  if (!value) return getT().profileScreens.editProfile.notSet;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toISOString().slice(0, 10);
@@ -86,6 +87,7 @@ function FieldCard({
 }
 
 export default function EditProfileScreen() {
+  const t = useTranslations();
   const profileQuery = useCurrentProfile();
   const saveProfile = useEditProfile();
   const {
@@ -173,8 +175,8 @@ export default function EditProfileScreen() {
 
     if (usernameChanged && cooldown.active) {
       Alert.alert(
-        'Username cooldown',
-        `You can change your username again on ${cooldown.nextDate}`
+        t.profileScreens.editProfile.cooldownAlertTitle,
+        t.profileScreens.editProfile.cooldownAlertMessage(cooldown.nextDate ?? '')
       );
       return;
     }
@@ -194,8 +196,9 @@ export default function EditProfileScreen() {
         router.replace('/profile');
       }, 650);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Profile update failed.';
-      Alert.alert('Could not save profile', message);
+      const message =
+        err instanceof Error ? err.message : t.profileScreens.editProfile.updateFailed;
+      Alert.alert(t.profileScreens.editProfile.couldNotSave, message);
     }
   });
 
@@ -225,15 +228,15 @@ export default function EditProfileScreen() {
     return (
       <YStack flex={1} backgroundColor="$background" padding="$5" justifyContent="center" gap="$3">
         <Text color="$color" fontSize={20} fontWeight="700" textAlign="center">
-          Profile unavailable
+          {t.profileScreens.editProfile.unavailableTitle}
         </Text>
         <Text color="$placeholderColor" textAlign="center">
           {profileQuery.error instanceof Error
             ? profileQuery.error.message
-            : 'Please try again in a moment.'}
+            : t.profileScreens.editProfile.unavailableMessage}
         </Text>
         <Button onPress={() => router.back()} backgroundColor="$color" color="$background">
-          Go back
+          {t.profileScreens.common.goBack}
         </Button>
       </YStack>
     );
@@ -271,11 +274,11 @@ export default function EditProfileScreen() {
               source={logoSource}
               style={{ width: 34, height: 34, position: 'absolute', left: 42 }}
               contentFit="contain"
-              accessibilityLabel="Logo DOUMASSI"
+              accessibilityLabel={t.profileScreens.common.logoAccessibilityLabel}
             />
 
             <Text color="$color" fontSize={19} fontWeight="700" fontFamily="$heading">
-              Edit Profile
+              {t.profileScreens.editProfile.title}
             </Text>
           </XStack>
 
@@ -336,14 +339,14 @@ export default function EditProfileScreen() {
             </YStack>
 
             <Text color="$color" fontSize={14} fontWeight="600" marginTop="$1">
-              Change Photo
+              {t.profileScreens.editProfile.changePhoto}
             </Text>
           </YStack>
 
           <YStack gap="$3">
             <FieldCard>
               <Text color="$placeholderColor" fontSize={12} fontWeight="700">
-                Full name
+                {t.profileScreens.editProfile.fullNameLabel}
               </Text>
               <Controller
                 control={form.control}
@@ -353,7 +356,7 @@ export default function EditProfileScreen() {
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
-                    placeholder="Full name"
+                    placeholder={t.profileScreens.editProfile.fullNamePlaceholder}
                     placeholderTextColor="$placeholderColor"
                     backgroundColor="transparent"
                     borderWidth={0}
@@ -372,7 +375,7 @@ export default function EditProfileScreen() {
 
             <FieldCard>
               <Text color="$placeholderColor" fontSize={12} fontWeight="700">
-                Username
+                {t.profileScreens.editProfile.usernameLabel}
               </Text>
               <XStack alignItems="center" gap="$1">
                 <Text color="$placeholderColor" fontSize={16}>
@@ -391,7 +394,7 @@ export default function EditProfileScreen() {
                       }}
                       onBlur={onBlur}
                       autoCapitalize="none"
-                      placeholder="username"
+                      placeholder={t.profileScreens.editProfile.usernamePlaceholder}
                       placeholderTextColor="$placeholderColor"
                       backgroundColor="transparent"
                       borderWidth={0}
@@ -408,20 +411,22 @@ export default function EditProfileScreen() {
                 </Text>
               ) : isUsernameBlocked && usernameTouched ? (
                 <Text color="$danger" fontSize={11}>
-                  You can change your username again on {cooldown.nextDate} (
-                  {cooldown.daysRemaining} days remaining)
+                  {t.profileScreens.editProfile.usernameCooldownInline(
+                    cooldown.nextDate ?? '',
+                    cooldown.daysRemaining
+                  )}
                 </Text>
               ) : isUsernameChecking ? (
                 <Text color="$placeholderColor" fontSize={11}>
-                  Checking username...
+                  {t.profileScreens.editProfile.usernameChecking}
                 </Text>
               ) : isUsernameTaken ? (
                 <Text color="$danger" fontSize={11}>
-                  This username is already taken
+                  {t.profileScreens.editProfile.usernameTaken}
                 </Text>
               ) : usernameChanged && usernameStatus === 'available' ? (
                 <Text color="$accentNeon" fontSize={11}>
-                  Username available
+                  {t.profileScreens.editProfile.usernameAvailable}
                 </Text>
               ) : null}
             </FieldCard>
@@ -429,7 +434,7 @@ export default function EditProfileScreen() {
             <FieldCard>
               <XStack justifyContent="space-between" alignItems="center">
                 <Text color="$placeholderColor" fontSize={12} fontWeight="700">
-                  Bio
+                  {t.profileScreens.editProfile.bioLabel}
                 </Text>
                 <Text color="$placeholderColor" fontSize={11}>
                   {values.bio.length}/250
@@ -443,7 +448,7 @@ export default function EditProfileScreen() {
                     value={value}
                     onChangeText={(text) => onChange(text.slice(0, 250))}
                     onBlur={onBlur}
-                    placeholder="Bio"
+                    placeholder={t.profileScreens.editProfile.bioPlaceholder}
                     placeholderTextColor="$placeholderColor"
                     maxLength={250}
                     minHeight={92}
@@ -460,29 +465,29 @@ export default function EditProfileScreen() {
 
             <FieldCard disabled>
               <Text color="$placeholderColor" fontSize={12} fontWeight="700">
-                Birthday
+                {t.profileScreens.editProfile.birthdayLabel}
               </Text>
               <Text color="$color" fontSize={16}>
                 {formatDate(profile.birthday)}
               </Text>
               <Text color="$placeholderColor" fontSize={11} lineHeight={16}>
-                Birthday cannot be changed. Contact support if needed.
+                {t.profileScreens.editProfile.birthdayHint}
               </Text>
             </FieldCard>
 
             <FieldCard disabled>
               <Text color="$placeholderColor" fontSize={12} fontWeight="700">
-                Email
+                {t.profileScreens.editProfile.emailLabel}
               </Text>
               <Text color="$color" fontSize={16}>
-                {profile.email ?? 'Not set'}
+                {profile.email ?? t.profileScreens.editProfile.notSet}
               </Text>
             </FieldCard>
           </YStack>
 
           <YStack gap="$2" marginTop="$2">
             <Text color="$color" fontSize={16} fontWeight="700">
-              Cover photo
+              {t.profileScreens.editProfile.coverPhoto}
             </Text>
             <YStack
               width="100%"
@@ -531,7 +536,7 @@ export default function EditProfileScreen() {
               fontWeight="700"
               pressStyle={{ opacity: 0.85, scale: 0.98 }}
             >
-              Change cover
+              {t.profileScreens.editProfile.changeCover}
             </Button>
           </YStack>
 
@@ -546,10 +551,10 @@ export default function EditProfileScreen() {
           >
             <YStack gap="$1" flex={1} paddingRight="$3">
               <Text color="$color" fontSize={15} fontWeight="700">
-                Professional account
+                {t.profileScreens.editProfile.professionalAccount}
               </Text>
               <Text color="$placeholderColor" fontSize={12} lineHeight={16}>
-                Show your profile as a professional account.
+                {t.profileScreens.editProfile.professionalHint}
               </Text>
             </YStack>
             <Controller
@@ -596,7 +601,11 @@ export default function EditProfileScreen() {
           opacity={submitDisabled ? 0.45 : 1}
           pressStyle={{ opacity: 0.85, scale: 0.98 }}
         >
-          {saveProfile.isPending ? <Spinner color="$background" /> : 'Save'}
+          {saveProfile.isPending ? (
+            <Spinner color="$background" />
+          ) : (
+            t.profileScreens.editProfile.save
+          )}
         </Button>
       </YStack>
 
@@ -613,7 +622,7 @@ export default function EditProfileScreen() {
           paddingVertical="$2"
         >
           <Text color="$color" fontSize={13} fontWeight="700">
-            Profile saved
+            {t.profileScreens.editProfile.profileSaved}
           </Text>
         </YStack>
       ) : null}
@@ -637,7 +646,7 @@ export default function EditProfileScreen() {
             color="$color"
             onPress={() => handleSheetAction('camera')}
           >
-            Take a photo
+            {t.profileScreens.common.takePhoto}
           </Button>
           <Button
             icon={<ImageIcon size={20} color="white" />}
@@ -646,7 +655,7 @@ export default function EditProfileScreen() {
             color="$color"
             onPress={() => handleSheetAction('gallery')}
           >
-            Choose from gallery
+            {t.profileScreens.common.chooseFromGallery}
           </Button>
         </Sheet.Frame>
       </Sheet>

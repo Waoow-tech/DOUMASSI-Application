@@ -10,18 +10,20 @@ import { ActivityIndicator, StyleSheet } from 'react-native';
 import { Sheet, Text, XStack, YStack } from 'tamagui';
 
 import { type StoryViewer, useStoryViewers } from '@/features/stories/hooks/useStoriesFeed';
+import { getT, useTranslations } from '@/i18n';
 
 function formatViewedAgo(value: string): string {
+  const t = getT();
   const viewedAt = new Date(value).getTime();
   if (Number.isNaN(viewedAt)) return '';
   const elapsedMs = Math.max(0, Date.now() - viewedAt);
   const minutes = Math.floor(elapsedMs / 60_000);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `il y a ${minutes}min`;
+  if (minutes < 1) return t.feed.stories.viewers.time.justNow;
+  if (minutes < 60) return t.feed.stories.viewers.time.minutesAgo(minutes);
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours}h`;
+  if (hours < 24) return t.feed.stories.viewers.time.hoursAgo(hours);
   const days = Math.floor(hours / 24);
-  return `il y a ${days}j`;
+  return t.feed.stories.viewers.time.daysAgo(days);
 }
 
 function ViewerRow({ viewer }: { viewer: StoryViewer }) {
@@ -64,6 +66,7 @@ export type StoryViewersSheetProps = {
 };
 
 export function StoryViewersSheet({ storyId, open, onOpenChange }: StoryViewersSheetProps) {
+  const t = useTranslations();
   const viewersQuery = useStoryViewers(storyId, open);
   const viewers = viewersQuery.data ?? [];
 
@@ -88,7 +91,7 @@ export function StoryViewersSheet({ storyId, open, onOpenChange }: StoryViewersS
         <XStack alignItems="center" paddingHorizontal="$4" paddingVertical="$2" gap="$2">
           <Eye size={18} color="#FFFFFF" />
           <Text color="$color" fontSize={17} fontWeight="700">
-            {viewers.length} {viewers.length > 1 ? 'vues' : 'vue'}
+            {t.feed.stories.viewers.viewsLabel(viewers.length)}
           </Text>
         </XStack>
 
@@ -99,7 +102,7 @@ export function StoryViewersSheet({ storyId, open, onOpenChange }: StoryViewersS
         ) : viewers.length === 0 ? (
           <YStack alignItems="center" paddingVertical="$8" gap="$2">
             <Text color="$textSecondary" fontSize={14}>
-              Personne n&apos;a encore vu cette story
+              {t.feed.stories.viewers.empty}
             </Text>
           </YStack>
         ) : (

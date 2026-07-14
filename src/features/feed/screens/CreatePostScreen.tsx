@@ -31,6 +31,7 @@ import {
 } from '@/features/mentions/schemas/mentionsSchema';
 import { useCurrentProfile } from '@/features/profile/hooks/useProfile';
 import type { SearchUserResult } from '@/features/profile/hooks/useSearchUsers';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { uploadPostImage } from '@/lib/storage';
 
@@ -58,6 +59,7 @@ interface MediaItem {
 // ---------------------------------------------------------------------------
 
 export function CreatePostScreen() {
+  const t = useTranslations();
   const navigation = useNavigation();
   const profileQuery = useCurrentProfile();
   const createPost = useCreatePost();
@@ -102,10 +104,10 @@ export function CreatePostScreen() {
       }
       if (!hasContent) return;
       e.preventDefault();
-      Alert.alert('Abandonner le post ?', undefined, [
-        { text: 'Annuler', style: 'cancel' },
+      Alert.alert(t.feed.createPost.discardTitle, undefined, [
+        { text: t.feed.createPost.cancel, style: 'cancel' },
         {
-          text: 'Confirmer',
+          text: t.feed.createPost.confirm,
           style: 'destructive',
           onPress: () => {
             allowRemoveRef.current = true;
@@ -114,7 +116,7 @@ export function CreatePostScreen() {
         },
       ]);
     });
-  }, [navigation, hasContent, isPublishing]);
+  }, [navigation, hasContent, isPublishing, t]);
 
   // -------------------------------------------------------------------------
   // Handlers — close & pickers
@@ -128,10 +130,7 @@ export function CreatePostScreen() {
     if (!perm.granted) perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
       logger.warn('Media library permission denied');
-      Alert.alert(
-        'Permission refusée',
-        "Activez l'accès aux photos dans les Réglages pour ajouter des images."
-      );
+      Alert.alert(t.feed.createPost.photoPermissionTitle, t.feed.createPost.photoPermissionMessage);
       return;
     }
     try {
@@ -164,7 +163,10 @@ export function CreatePostScreen() {
     if (!perm.granted) perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
       logger.warn('Camera permission denied');
-      Alert.alert('Permission refusée', "Activez l'accès à la caméra dans les Réglages.");
+      Alert.alert(
+        t.feed.createPost.photoPermissionTitle,
+        t.feed.createPost.cameraPermissionMessage
+      );
       return;
     }
     try {
@@ -239,7 +241,7 @@ export function CreatePostScreen() {
 
     const failed = updated.filter((m) => m.status === 'failed');
     if (failed.length > 0) {
-      setPublishError(`Échec d'upload sur ${failed.length} image${failed.length > 1 ? 's' : ''}.`);
+      setPublishError(t.feed.createPost.uploadFailed(failed.length));
       setIsPublishing(false);
       return;
     }
@@ -294,7 +296,7 @@ export function CreatePostScreen() {
               <X size={24} color="#FFFFFF" />
             </YStack>
             <Text fontSize={17} fontWeight="700" color="$color">
-              Nouveau post
+              {t.feed.createPost.title}
             </Text>
             <Button
               onPress={() => void handlePublish()}
@@ -306,7 +308,7 @@ export function CreatePostScreen() {
               borderRadius="$10"
               paddingHorizontal="$4"
             >
-              {isPublishing ? <ActivityIndicator color="#000000" /> : 'Publier'}
+              {isPublishing ? <ActivityIndicator color="#000000" /> : t.feed.createPost.publish}
             </Button>
           </XStack>
 
@@ -331,7 +333,7 @@ export function CreatePostScreen() {
               onChangeText={setContent}
               onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
               maxLength={MAX_CONTENT}
-              placeholder="Quoi de neuf ?"
+              placeholder={t.feed.createPost.contentPlaceholder}
               placeholderTextColor="$placeholderColor"
               autoFocus
               autoCapitalize="sentences"
@@ -439,7 +441,7 @@ export function CreatePostScreen() {
                 backgroundColor={ERROR_RED}
                 color="#FFFFFF"
               >
-                Réessayer
+                {t.feed.createPost.retry}
               </Button>
             </XStack>
           ) : null}
@@ -463,7 +465,7 @@ export function CreatePostScreen() {
               borderColor="rgba(239,68,68,0.3)"
             >
               <Text flex={1} color={ERROR_RED} fontSize={13}>
-                Maximum {MAX_MENTIONS_PER_CONTENT} mentions par post.
+                {t.feed.createPost.tooManyMentions(MAX_MENTIONS_PER_CONTENT)}
               </Text>
             </XStack>
           ) : null}
@@ -498,7 +500,7 @@ export function CreatePostScreen() {
             </XStack>
             {media.length > 0 ? (
               <Text fontSize={13} color="$placeholderColor">
-                {media.length}/{MAX_IMAGES} images
+                {t.feed.createPost.imagesCount(media.length, MAX_IMAGES)}
               </Text>
             ) : null}
           </XStack>

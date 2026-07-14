@@ -4,6 +4,19 @@
 // ⚠️ PAS de `as const` : on veut des valeurs typées `string` (structurel), sinon
 // chaque valeur FR deviendrait un type littéral que l'anglais ne pourrait matcher.
 // Tutoiement volontaire (cohérent avec le ton de l'app).
+//
+// Les sections splash/auth/profile/settings sont inline (fondation E11-01).
+// Les zones traduites en E11-02→09 vivent chacune dans src/i18n/fr/<zone>.ts
+// et sont agrégées ci-dessous par namespace.
+
+import { commonFr } from './fr/common';
+import { coursFr } from './fr/cours';
+import { feedFr } from './fr/feed';
+import { gamesFr } from './fr/games';
+import { marketplaceFr } from './fr/marketplace';
+import { messagingFr } from './fr/messaging';
+import { notificationsFr } from './fr/notifications';
+import { profileScreensFr } from './fr/profileScreens';
 
 export const fr = {
   splash: {
@@ -117,6 +130,14 @@ export const fr = {
     languageFr: 'Français',
     languageEn: 'English',
   },
+  feed: feedFr,
+  profileScreens: profileScreensFr,
+  messaging: messagingFr,
+  notifications: notificationsFr,
+  marketplace: marketplaceFr,
+  cours: coursFr,
+  games: gamesFr,
+  common: commonFr,
 };
 
 export type Translations = typeof fr;

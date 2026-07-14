@@ -11,19 +11,21 @@ import { Text, View, XStack, YStack } from 'tamagui';
 
 import { GAMES, type GameDef } from '@/features/games/games/registry';
 import { useMyBestGameScore } from '@/features/games/hooks/useGameScore';
+import { useTranslations } from '@/i18n';
 
 const GUTTER = 12;
 const GAP = 12;
 const NUM_COLUMNS = 2;
 
 function GameCard({ game, width }: { game: GameDef; width: number }) {
+  const t = useTranslations();
   const { data: best } = useMyBestGameScore(game.id);
   const { Icon } = game;
   return (
     <Pressable
       onPress={() => router.push(`/games/${game.id}`)}
       accessibilityRole="button"
-      accessibilityLabel={`Jouer à ${game.title}`}
+      accessibilityLabel={t.games.catalog.playLabel(game.title)}
       style={{ width }}
     >
       <YStack backgroundColor="$surface" borderRadius={16} overflow="hidden">
@@ -43,7 +45,7 @@ function GameCard({ game, width }: { game: GameDef; width: number }) {
             {game.description}
           </Text>
           <Text fontSize={11} color="$accentNeon" fontWeight="700" marginTop={4}>
-            {best != null ? `Meilleur : ${best}` : 'Pas encore joué'}
+            {best != null ? t.games.catalog.bestScore(best) : t.games.catalog.neverPlayed}
           </Text>
         </YStack>
       </YStack>
@@ -52,6 +54,7 @@ function GameCard({ game, width }: { game: GameDef; width: number }) {
 }
 
 export default function GamesCatalogScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = (screenWidth - GUTTER * 2 - GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
@@ -77,12 +80,12 @@ export default function GamesCatalogScreen() {
             onPress={handleBack}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Retour"
+            accessibilityLabel={t.games.catalog.back}
           >
             <ArrowLeft size={24} color="#FFFFFF" />
           </Pressable>
           <Text flex={1} color="$color" fontSize={18} fontWeight="700">
-            Jeux
+            {t.games.catalog.title}
           </Text>
         </XStack>
 

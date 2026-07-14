@@ -19,22 +19,11 @@ import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 import type { ListingCard as ListingCardData } from '../hooks/useListings';
 
 const HIT_SLOP = { top: 12, right: 12, bottom: 12, left: 12 };
-
-const CONDITION_LABEL: Record<NonNullable<ListingCardData['condition']>, string> = {
-  neuf: 'Neuf',
-  tres_bon_etat: 'Très bon état',
-  bon_etat: 'Bon état',
-  occasion: 'Occasion',
-};
-
-const BADGE_LABEL: Record<NonNullable<ListingCardData['badge']>, string> = {
-  offre_speciale: 'Offre spéciale',
-  nouveaute: 'Nouveauté',
-  recommandation: 'Recommandation',
-};
 
 const BADGE_COLORS: Record<NonNullable<ListingCardData['badge']>, { bg: string; text: string }> = {
   offre_speciale: { bg: '#E53935', text: '#FFFFFF' }, // rouge contrast ~5.6:1 sur blanc
@@ -80,10 +69,11 @@ function ListingCardComponent({
   onToggleBookmark,
   isBookmarkPending = false,
 }: ListingCardProps) {
+  const t = useTranslations();
   const firstImage = listing.images[0] ?? null;
-  const conditionLabel = listing.condition ? CONDITION_LABEL[listing.condition] : null;
+  const conditionLabel = listing.condition ? t.marketplace.condition[listing.condition] : null;
   const badgeData = listing.badge
-    ? { label: BADGE_LABEL[listing.badge], colors: BADGE_COLORS[listing.badge] }
+    ? { label: t.marketplace.badge[listing.badge], colors: BADGE_COLORS[listing.badge] }
     : null;
 
   const hasDiscount =
@@ -111,12 +101,13 @@ function ListingCardComponent({
     const parts: string[] = [listing.title];
     if (priceCurrent) parts.push(priceCurrent);
     if (hasDiscount && listing.discount_percent) {
-      parts.push(`moins ${listing.discount_percent} pourcent`);
+      parts.push(t.marketplace.card.discountA11y(listing.discount_percent));
     }
     if (conditionLabel) parts.push(conditionLabel);
-    parts.push(`vendu par ${listing.seller_username}`);
+    parts.push(t.marketplace.card.soldByA11y(listing.seller_username));
     return parts.join(', ');
   }, [
+    t,
     listing.title,
     priceCurrent,
     hasDiscount,
@@ -170,7 +161,7 @@ function ListingCardComponent({
           hitSlop={HIT_SLOP}
           accessibilityRole="button"
           accessibilityLabel={
-            listing.bookmarked_by_me ? 'Retirer des favoris' : 'Ajouter aux favoris'
+            listing.bookmarked_by_me ? t.marketplace.bookmark.remove : t.marketplace.bookmark.add
           }
           accessibilityState={{ selected: listing.bookmarked_by_me }}
           style={styles.bookmarkButton}
@@ -231,11 +222,11 @@ function ListingCardComponent({
         <Pressable
           onPress={onPress}
           accessibilityRole="button"
-          accessibilityLabel={`Voir le produit ${listing.title}`}
+          accessibilityLabel={t.marketplace.card.viewProductA11y(listing.title)}
           style={styles.cta}
         >
           <Text fontSize={12} fontWeight="700" color="#000000">
-            Voir le produit
+            {t.marketplace.card.viewProduct}
           </Text>
         </Pressable>
       </YStack>

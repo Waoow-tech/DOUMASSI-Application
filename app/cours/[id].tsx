@@ -31,28 +31,29 @@ import { useQuizByResource } from '@/features/cours/hooks/useQuizByResource';
 import { useReportResource, type ReportReason } from '@/features/cours/hooks/useReportResource';
 import { useResourceCommentCount } from '@/features/cours/hooks/useResourceComments';
 import { useResourceDetail } from '@/features/cours/hooks/useResourceDetail';
-import {
-  RESOURCE_TYPE_LABEL,
-  useToggleResourceBookmark,
-} from '@/features/cours/hooks/useResources';
+import { useToggleResourceBookmark } from '@/features/cours/hooks/useResources';
 import { useGetOrCreateDm } from '@/features/messaging/hooks/useGetOrCreateDm';
 import { VerifiedBadge } from '@/features/profile/components/VerifiedBadge';
+import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
-function formatRelativeFr(iso: string): string {
+// Date relative de publication (langue courante lue à l'appel via getT).
+function formatRelative(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
+  const time = getT().cours.detail.time;
   const elapsed = Math.max(0, Date.now() - date.getTime());
   const days = Math.floor(elapsed / 86_400_000);
-  if (days < 1) return "aujourd'hui";
-  if (days < 7) return `il y a ${days} j`;
-  if (days < 31) return `il y a ${Math.floor(days / 7)} sem`;
-  if (days < 365) return `il y a ${Math.floor(days / 30)} mois`;
-  return `il y a ${Math.floor(days / 365)} an`;
+  if (days < 1) return time.today;
+  if (days < 7) return time.days(days);
+  if (days < 31) return time.weeks(Math.floor(days / 7));
+  if (days < 365) return time.months(Math.floor(days / 30));
+  return time.years(Math.floor(days / 365));
 }
 
 export default function ResourceDetailScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
   const resourceId = typeof params.id === 'string' ? params.id : null;
@@ -98,12 +99,15 @@ export default function ResourceDetailScreen() {
     toggleBookmark.mutate({ resourceId });
   }, [resourceId, toggleBookmark]);
 
-  const handleOpenFile = useCallback((url: string) => {
-    void WebBrowser.openBrowserAsync(url).catch((err) => {
-      logger.warn('open resource file failed', { message: String(err) });
-      Alert.alert('Impossible d’ouvrir le fichier', 'Réessaie dans un instant.');
-    });
-  }, []);
+  const handleOpenFile = useCallback(
+    (url: string) => {
+      void WebBrowser.openBrowserAsync(url).catch((err) => {
+        logger.warn('open resource file failed', { message: String(err) });
+        Alert.alert(t.cours.detail.openFileErrorTitle, t.cours.detail.openFileErrorMessage);
+      });
+    },
+    [t]
+  );
 
   const handleOpenAuthor = useCallback(() => {
     if (!resource) return;
@@ -118,30 +122,36 @@ export default function ResourceDetailScreen() {
         { resourceId, reason },
         {
           onSuccess: () => {
-            Alert.alert('Merci', 'Ton signalement a bien été envoyé. Nous allons le vérifier.');
+            Alert.alert(t.cours.detail.reportSuccessTitle, t.cours.detail.reportSuccessMessage);
           },
           onError: (err) => {
-            Alert.alert('Signalement impossible', err.message || 'Réessaie plus tard.');
+            Alert.alert(
+              t.cours.detail.reportErrorTitle,
+              err.message || t.cours.detail.reportErrorFallback
+            );
           },
         }
       );
     },
-    [reportResource, resourceId]
+    [reportResource, resourceId, t]
   );
 
   const handleContactAuthor = useCallback(() => {
     if (!resource || isMine) return;
-    const prefill = `Bonjour, j'ai une question sur ta ressource '${resource.title}'.`;
+    const prefill = t.cours.detail.contactPrefill(resource.title);
     getOrCreateDm.mutate(resource.author_id, {
       onSuccess: (conversationId) => {
         router.push({ pathname: '/messages/[id]', params: { id: conversationId, prefill } });
       },
       onError: (err) => {
         logger.warn('contact author failed', { message: err.message });
-        Alert.alert('Impossible de contacter l’auteur', err.message || 'Réessaie plus tard.');
+        Alert.alert(
+          t.cours.detail.contactErrorTitle,
+          err.message || t.cours.detail.contactErrorFallback
+        );
       },
     });
-  }, [getOrCreateDm, isMine, resource]);
+  }, [getOrCreateDm, isMine, resource, t]);
 
   const renderHeader = (
     <XStack
@@ -156,12 +166,12 @@ export default function ResourceDetailScreen() {
         onPress={handleBack}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         accessibilityRole="button"
-        accessibilityLabel="Retour"
+        accessibilityLabel={t.cours.common.back}
       >
         <ArrowLeft size={24} color="#FFFFFF" />
       </Pressable>
       <Text flex={1} color="$color" fontSize={17} fontWeight="700" numberOfLines={1}>
-        Ressource
+        {t.cours.detail.title}
       </Text>
       {resource ? (
         <Pressable
@@ -170,7 +180,7 @@ export default function ResourceDetailScreen() {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
           accessibilityLabel={
-            resource.bookmarked_by_me ? 'Retirer des favoris' : 'Ajouter aux favoris'
+            resource.bookmarked_by_me ? t.cours.bookmark.remove : t.cours.bookmark.add
           }
           accessibilityState={{ selected: resource.bookmarked_by_me }}
         >
@@ -213,10 +223,10 @@ export default function ResourceDetailScreen() {
             gap={8}
           >
             <Text fontSize={16} fontWeight="700" color="$color">
-              Ressource introuvable
+              {t.cours.detail.notFoundTitle}
             </Text>
             <Text fontSize={13} color="$textSecondary" textAlign="center">
-              Elle a peut-être été supprimée ou masquée.
+              {t.cours.detail.notFoundSubtitle}
             </Text>
             <Button
               marginTop={12}
@@ -226,7 +236,7 @@ export default function ResourceDetailScreen() {
               borderRadius="$10"
               onPress={handleBack}
             >
-              Retour
+              {t.cours.common.back}
             </Button>
           </YStack>
         </YStack>
@@ -256,7 +266,7 @@ export default function ResourceDetailScreen() {
                 borderRadius={9999}
               >
                 <Text fontSize={12} fontWeight="700" color="$accentNeon">
-                  {RESOURCE_TYPE_LABEL[resource.type]}
+                  {t.cours.resourceType[resource.type]}
                 </Text>
               </View>
               <Text fontSize={13} color="$textSecondary">
@@ -274,11 +284,11 @@ export default function ResourceDetailScreen() {
               <XStack alignItems="center" gap={4}>
                 <Eye size={13} color="#A0A0A0" />
                 <Text fontSize={12} color="$textSecondary">
-                  {resource.view_count} vue{resource.view_count > 1 ? 's' : ''}
+                  {t.cours.detail.views(resource.view_count)}
                 </Text>
               </XStack>
               <Text fontSize={12} color="$textSecondary">
-                {formatRelativeFr(resource.created_at)}
+                {formatRelative(resource.created_at)}
               </Text>
             </XStack>
 
@@ -286,7 +296,7 @@ export default function ResourceDetailScreen() {
             {resource.description ? (
               <YStack gap={6}>
                 <Text fontSize={13} color="$textSecondary" fontWeight="700">
-                  Description
+                  {t.cours.detail.descriptionLabel}
                 </Text>
                 <Text fontSize={14} color="$color" lineHeight={20}>
                   {resource.description}
@@ -298,7 +308,7 @@ export default function ResourceDetailScreen() {
             {resource.files.length > 0 ? (
               <YStack gap={8}>
                 <Text fontSize={13} color="$textSecondary" fontWeight="700">
-                  Fichiers ({resource.files.length})
+                  {t.cours.detail.filesLabel(resource.files.length)}
                 </Text>
                 {resource.files.map((url, i) => (
                   <ResourceFileRow
@@ -311,7 +321,7 @@ export default function ResourceDetailScreen() {
               </YStack>
             ) : (
               <Text fontSize={13} color="$textSecondary">
-                Aucun fichier joint à cette ressource.
+                {t.cours.detail.noFiles}
               </Text>
             )}
 
@@ -320,7 +330,7 @@ export default function ResourceDetailScreen() {
               <Pressable
                 onPress={() => router.push(`/cours/quiz/${quiz.id}`)}
                 accessibilityRole="button"
-                accessibilityLabel={`Passer le quiz : ${quiz.title}`}
+                accessibilityLabel={t.cours.detail.takeQuizA11y(quiz.title)}
                 style={styles.quizCard}
               >
                 <XStack alignItems="center" gap={12}>
@@ -336,10 +346,10 @@ export default function ResourceDetailScreen() {
                   </View>
                   <YStack flex={1} minWidth={0}>
                     <Text fontSize={14} fontWeight="700" color="$color" numberOfLines={1}>
-                      Passer le quiz
+                      {t.cours.detail.takeQuiz}
                     </Text>
                     <Text fontSize={12} color="$textSecondary">
-                      {quiz.question_count} question{quiz.question_count > 1 ? 's' : ''}
+                      {t.cours.detail.questionCount(quiz.question_count)}
                     </Text>
                   </YStack>
                   <ChevronRight size={18} color="#10D970" />
@@ -359,13 +369,13 @@ export default function ResourceDetailScreen() {
                   })
                 }
                 accessibilityRole="button"
-                accessibilityLabel="Ajouter un quiz à cette ressource"
+                accessibilityLabel={t.cours.detail.addQuiz}
                 style={styles.quizAddCard}
               >
                 <XStack alignItems="center" justifyContent="center" gap={8}>
                   <GraduationCap size={18} color="#10D970" />
                   <Text fontSize={14} fontWeight="700" color="$color">
-                    Ajouter un quiz à cette ressource
+                    {t.cours.detail.addQuiz}
                   </Text>
                 </XStack>
               </Pressable>
@@ -374,12 +384,12 @@ export default function ResourceDetailScreen() {
             {/* Carte auteur */}
             <YStack gap={8} paddingTop={4}>
               <Text fontSize={13} color="$textSecondary" fontWeight="700">
-                Auteur
+                {t.cours.detail.authorLabel}
               </Text>
               <Pressable
                 onPress={handleOpenAuthor}
                 accessibilityRole="button"
-                accessibilityLabel={`Voir le profil de ${resource.author_username}`}
+                accessibilityLabel={t.cours.detail.viewProfileA11y(resource.author_username)}
               >
                 <XStack
                   backgroundColor="$surface"
@@ -435,7 +445,7 @@ export default function ResourceDetailScreen() {
             <Pressable
               onPress={() => router.push(`/cours/comments/${resource.id}`)}
               accessibilityRole="button"
-              accessibilityLabel={`Entraide, ${commentCount ?? 0} commentaire${(commentCount ?? 0) > 1 ? 's' : ''}`}
+              accessibilityLabel={t.cours.detail.entraideA11y(commentCount ?? 0)}
               style={styles.entraideCard}
             >
               <XStack alignItems="center" gap={12}>
@@ -451,10 +461,10 @@ export default function ResourceDetailScreen() {
                 </View>
                 <YStack flex={1} minWidth={0}>
                   <Text fontSize={14} fontWeight="700" color="$color">
-                    Entraide
+                    {t.cours.detail.entraide}
                   </Text>
                   <Text fontSize={12} color="$textSecondary">
-                    {commentCount ?? 0} commentaire{(commentCount ?? 0) > 1 ? 's' : ''}
+                    {t.cours.detail.commentCount(commentCount ?? 0)}
                   </Text>
                 </YStack>
                 <ChevronRight size={18} color="#A0A0A0" />
@@ -466,13 +476,13 @@ export default function ResourceDetailScreen() {
               <Pressable
                 onPress={() => setIsReportOpen(true)}
                 accessibilityRole="button"
-                accessibilityLabel="Signaler cette ressource"
+                accessibilityLabel={t.cours.detail.report}
                 style={styles.reportLink}
               >
                 <XStack alignItems="center" justifyContent="center" gap={6}>
                   <Flag size={14} color="#A0A0A0" />
                   <Text fontSize={13} color="$textSecondary" fontWeight="600">
-                    Signaler cette ressource
+                    {t.cours.detail.report}
                   </Text>
                 </XStack>
               </Pressable>
@@ -508,7 +518,7 @@ export default function ResourceDetailScreen() {
               alignItems="center"
             >
               <Text fontSize={14} fontWeight="700" color="$textSecondary">
-                {`C'est votre ressource`}
+                {t.cours.detail.ownResource}
               </Text>
             </View>
           ) : (
@@ -516,7 +526,7 @@ export default function ResourceDetailScreen() {
               onPress={handleContactAuthor}
               disabled={getOrCreateDm.isPending}
               accessibilityRole="button"
-              accessibilityLabel={`Contacter ${resource.author_username}`}
+              accessibilityLabel={t.cours.detail.contactAuthorA11y(resource.author_username)}
               accessibilityState={{ disabled: getOrCreateDm.isPending }}
               style={[
                 styles.cta,
@@ -527,7 +537,7 @@ export default function ResourceDetailScreen() {
                 <ActivityIndicator color="#10D970" />
               ) : (
                 <Text fontSize={15} fontWeight="800" color="#000000">
-                  Contacter l&apos;auteur
+                  {t.cours.detail.contactAuthor}
                 </Text>
               )}
             </Pressable>

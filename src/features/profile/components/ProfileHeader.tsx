@@ -9,6 +9,8 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 import { VerifiedBadge } from './VerifiedBadge';
 
 const logoSource = require('../../../../assets/Logo-Doumassi.webp') as number;
@@ -36,9 +38,13 @@ interface ProfileHeaderProps {
 export function ProfileHeader({
   profile,
   onKebabPress,
-  kebabAccessibilityLabel = 'More options',
+  kebabAccessibilityLabel,
 }: ProfileHeaderProps) {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
+  // Libellé accessibilité du kebab : override par prop, sinon traduction.
+  const kebabLabel =
+    kebabAccessibilityLabel ?? t.profileScreens.profileHeader.kebabAccessibilityLabel;
 
   return (
     <YStack>
@@ -67,7 +73,7 @@ export function ProfileHeader({
           activeOpacity={0.6}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           style={styles.kebabButton}
-          accessibilityLabel={kebabAccessibilityLabel}
+          accessibilityLabel={kebabLabel}
         >
           <MoreVertical size={22} color="#FFFFFF" />
         </TouchableOpacity>

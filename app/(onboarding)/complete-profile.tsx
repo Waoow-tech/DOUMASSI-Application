@@ -20,6 +20,7 @@ import {
 } from 'tamagui';
 
 import { useAvatarPicker } from '@/features/auth/hooks/useAvatarPicker';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -36,6 +37,7 @@ type Gender = 'male' | 'female' | 'other';
 // ---------------------------------------------------------------------------
 
 export default function CompleteProfileScreen() {
+  const t = useTranslations();
   const router = useRouter();
   const { avatarUri, isProcessing, takePhoto, pickAvatar, uploadAvatar } = useAvatarPicker();
 
@@ -86,7 +88,8 @@ export default function CompleteProfileScreen() {
       router.push('/(onboarding)/cover-photo');
     } catch (err: unknown) {
       logger.error('Profile update failed', err);
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      const message =
+        err instanceof Error ? err.message : t.profileScreens.completeProfile.errorGeneric;
       setError(message);
     } finally {
       setIsLoading(false);
@@ -130,7 +133,7 @@ export default function CompleteProfileScreen() {
               source={logoSource}
               style={{ width: 48, height: 48 }}
               contentFit="contain"
-              accessibilityLabel="Logo DOUMASSI"
+              accessibilityLabel={t.profileScreens.common.logoAccessibilityLabel}
             />
           </YStack>
 
@@ -142,7 +145,7 @@ export default function CompleteProfileScreen() {
             textAlign="center"
             fontFamily="$heading"
           >
-            Complete your profile
+            {t.profileScreens.completeProfile.title}
           </Text>
 
           {/* ── Progress bar 1/2 ── */}
@@ -153,7 +156,7 @@ export default function CompleteProfileScreen() {
 
           {/* ── Subtitle ── */}
           <Text fontSize={14} color="$placeholderColor" textAlign="center" lineHeight={20}>
-            Help others recognize you on{'\n'}DOUMASSI.
+            {t.profileScreens.completeProfile.subtitle}
           </Text>
 
           {/* ── Avatar ── */}
@@ -214,14 +217,14 @@ export default function CompleteProfileScreen() {
             </YStack>
 
             <Text fontSize={13} color="$placeholderColor">
-              Add a profile picture
+              {t.profileScreens.completeProfile.addPhoto}
             </Text>
           </YStack>
 
           {/* ── Gender (optional) ── */}
           <YStack width="100%" gap="$2">
             <Text fontSize={14} color="$placeholderColor">
-              Gender (optional)
+              {t.profileScreens.completeProfile.genderOptional}
             </Text>
             <XStack gap="$3">
               {(['male', 'female', 'other'] as Gender[]).map((g) => {
@@ -244,7 +247,7 @@ export default function CompleteProfileScreen() {
                       fontWeight="600"
                       textTransform="capitalize"
                     >
-                      {g}
+                      {t.profileScreens.completeProfile.genderLabels[g]}
                     </Text>
                   </Button>
                 );
@@ -255,7 +258,7 @@ export default function CompleteProfileScreen() {
           {/* ── Bio (optional) ── */}
           <YStack width="100%" gap="$1">
             <TextArea
-              placeholder="Bio (optional)"
+              placeholder={t.profileScreens.completeProfile.bioPlaceholder}
               placeholderTextColor="$placeholderColor"
               value={bio}
               onChangeText={(text) => setBio(text.slice(0, 250))}
@@ -275,7 +278,7 @@ export default function CompleteProfileScreen() {
           <YStack width="100%" gap="$2">
             <XStack justifyContent="space-between" alignItems="center">
               <Text fontSize={14} color="$placeholderColor">
-                Professional account
+                {t.profileScreens.completeProfile.professionalAccount}
               </Text>
               <Switch
                 size="$3"
@@ -289,7 +292,7 @@ export default function CompleteProfileScreen() {
               </Switch>
             </XStack>
             <Text fontSize={12} color="$placeholderColor" lineHeight={16}>
-              Your account can be used to promote content and products related to your profession.
+              {t.profileScreens.completeProfile.professionalHint}
             </Text>
           </YStack>
 
@@ -313,7 +316,11 @@ export default function CompleteProfileScreen() {
             width="100%"
             pressStyle={{ opacity: 0.85, scale: 0.98 }}
           >
-            {isLoading ? <Spinner color="$background" /> : 'Continue'}
+            {isLoading ? (
+              <Spinner color="$background" />
+            ) : (
+              t.profileScreens.completeProfile.continue
+            )}
           </Button>
 
           {/* ── Skip ── */}
@@ -325,7 +332,7 @@ export default function CompleteProfileScreen() {
             fontSize={14}
             pressStyle={{ opacity: 0.7 }}
           >
-            Skip for now
+            {t.profileScreens.completeProfile.skip}
           </Button>
         </YStack>
       </ScrollView>
@@ -351,7 +358,7 @@ export default function CompleteProfileScreen() {
               takePhoto();
             }}
           >
-            Take a photo
+            {t.profileScreens.common.takePhoto}
           </Button>
           <Button
             icon={<ImageIcon size={20} color="white" />}
@@ -363,7 +370,7 @@ export default function CompleteProfileScreen() {
               pickAvatar();
             }}
           >
-            Choose from gallery
+            {t.profileScreens.common.chooseFromGallery}
           </Button>
         </Sheet.Frame>
       </Sheet>

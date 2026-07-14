@@ -25,6 +25,7 @@ import {
   MAX_MENTIONS_PER_CONTENT,
 } from '@/features/mentions/schemas/mentionsSchema';
 import type { SearchUserResult } from '@/features/profile/hooks/useSearchUsers';
+import { useTranslations } from '@/i18n';
 
 export interface MessageInputProps {
   onSend: (content: string) => void;
@@ -83,8 +84,10 @@ export function MessageInput({
   onCancelReply,
   initialContent,
   disabled = false,
-  placeholder = 'Écrire un message…',
+  placeholder,
 }: MessageInputProps) {
+  const t = useTranslations();
+  const resolvedPlaceholder = placeholder ?? t.messaging.input.placeholder;
   // initialContent appliqué une seule fois au tout premier mount du composant.
   // On utilise useState lazy initializer pour éviter qu'un changement futur
   // de la prop initialContent n'écrase ce que l'utilisateur est en train de
@@ -232,7 +235,7 @@ export function MessageInput({
           <CornerUpLeft size={16} color="#10D970" />
           <YStack flex={1} minWidth={0}>
             <Text fontSize={12} color="$accentNeon" fontWeight="700">
-              Réponse à {replyingTo.authorLabel}
+              {t.messaging.input.replyingTo(replyingTo.authorLabel)}
             </Text>
             <Text fontSize={13} color="$textSecondary" numberOfLines={1}>
               {replyingTo.preview}
@@ -243,7 +246,7 @@ export function MessageInput({
               onPress={onCancelReply}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
-              accessibilityLabel="Annuler la réponse"
+              accessibilityLabel={t.messaging.input.cancelReplyA11y}
             >
               <X size={18} color="#A0A0A0" />
             </Pressable>
@@ -259,7 +262,7 @@ export function MessageInput({
       {tooManyMentions ? (
         <XStack paddingHorizontal="$3" paddingTop="$1">
           <Text fontSize={12} color="$danger">
-            Maximum {MAX_MENTIONS_PER_CONTENT} mentions par message.
+            {t.messaging.input.tooManyMentions(MAX_MENTIONS_PER_CONTENT)}
           </Text>
         </XStack>
       ) : null}
@@ -273,7 +276,7 @@ export function MessageInput({
         >
           <YStack width={8} height={8} borderRadius={4} backgroundColor="#FF3B30" />
           <Text fontSize={13} color="$color" fontWeight="600">
-            Enregistrement… {recordedSeconds}s / {MAX_VOICE_SECONDS}s
+            {t.messaging.input.recording(recordedSeconds, MAX_VOICE_SECONDS)}
           </Text>
         </XStack>
       ) : null}
@@ -294,8 +297,8 @@ export function MessageInput({
             ]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
-            accessibilityLabel="Ajouter une image"
-            accessibilityHint="Tap pour ouvrir la galerie ou prendre une photo"
+            accessibilityLabel={t.messaging.input.addImageA11y}
+            accessibilityHint={t.messaging.input.addImageHint}
             accessibilityState={{ disabled: isAttaching || disabled }}
           >
             {isAttaching ? (
@@ -311,7 +314,7 @@ export function MessageInput({
           selection={selection}
           onChangeText={handleChangeText}
           onSelectionChange={handleSelectionChange}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           placeholderTextColor="$placeholderColor"
           backgroundColor="$background"
           borderColor="$borderColor"
@@ -342,11 +345,11 @@ export function MessageInput({
             ]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
-            accessibilityLabel={isRecording ? "Arrêter l'enregistrement" : 'Enregistrer un vocal'}
+            accessibilityLabel={
+              isRecording ? t.messaging.input.stopRecordingA11y : t.messaging.input.recordVoiceA11y
+            }
             accessibilityHint={
-              isRecording
-                ? "Tap pour arrêter et envoyer l'enregistrement"
-                : 'Tap pour commencer un enregistrement vocal'
+              isRecording ? t.messaging.input.stopRecordingHint : t.messaging.input.recordVoiceHint
             }
             accessibilityState={{ disabled: isSendingVoice || disabled }}
           >
@@ -368,7 +371,7 @@ export function MessageInput({
             ]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
-            accessibilityLabel="Envoyer le message"
+            accessibilityLabel={t.messaging.input.sendA11y}
             accessibilityState={{ disabled: !canSend || disabled }}
           >
             <Send size={20} color={canSend && !disabled ? '#000000' : '#6B6B6B'} />

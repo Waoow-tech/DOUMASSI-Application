@@ -33,21 +33,9 @@ import {
 } from '@/features/marketplace/hooks/useListingDetail';
 import { useToggleListingBookmark } from '@/features/marketplace/hooks/useListings';
 import { useGetOrCreateDm } from '@/features/messaging/hooks/useGetOrCreateDm';
+import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
-
-const CONDITION_LABEL: Record<string, string> = {
-  neuf: 'Neuf',
-  tres_bon_etat: 'Très bon état',
-  bon_etat: 'Bon état',
-  occasion: 'Occasion',
-};
-
-const BADGE_LABEL: Record<string, string> = {
-  offre_speciale: 'Offre spéciale',
-  nouveaute: 'Nouveauté',
-  recommandation: 'Recommandation',
-};
 
 const BADGE_COLORS: Record<string, { bg: string; text: string }> = {
   offre_speciale: { bg: '#E53935', text: '#FFFFFF' },
@@ -72,25 +60,31 @@ function computeOriginalPrice(currentCents: number, discountPercent: number): nu
   return Math.round(currentCents / (1 - discountPercent / 100));
 }
 
-function formatRelativeFr(iso: string): string {
+// Hors composant : accès non-réactif via getT(). Le composant appelant se
+// re-render au changement de langue (il consomme useTranslations), donc cette
+// fonction sera rappelée avec la langue à jour.
+function formatRelative(iso: string): string {
+  const t = getT();
+  const rt = t.marketplace.relativeTime;
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
   const elapsedMs = Math.max(0, Date.now() - date.getTime());
   const minutes = Math.floor(elapsedMs / 60_000);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `il y a ${minutes} min`;
+  if (minutes < 1) return rt.justNow;
+  if (minutes < 60) return rt.minutes(minutes);
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours} h`;
+  if (hours < 24) return rt.hours(hours);
   const days = Math.floor(hours / 24);
-  if (days < 7) return `il y a ${days} j`;
+  if (days < 7) return rt.days(days);
   const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `il y a ${weeks} sem`;
+  if (weeks < 5) return rt.weeks(weeks);
   const months = Math.floor(days / 30);
-  if (months < 12) return `il y a ${months} mois`;
-  return `il y a ${Math.floor(days / 365)} an`;
+  if (months < 12) return rt.months(months);
+  return rt.years(Math.floor(days / 365));
 }
 
 export default function ListingDetailScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
   const listingId = typeof params.id === 'string' ? params.id : null;
@@ -158,7 +152,7 @@ export default function ListingDetailScreen() {
   const handleContactSeller = useCallback(() => {
     if (!listing) return;
     if (isMyListing) return; // garde-fou
-    const prefill = `Bonjour, je suis intéressé(e) par votre annonce '${listing.title}'.`;
+    const prefill = t.marketplace.detail.contactPrefill(listing.title);
     getOrCreateDm.mutate(listing.seller_id, {
       onSuccess: (conversationId) => {
         // L'écran de conversation lira `prefill` au mount et pré-remplira le
@@ -171,12 +165,12 @@ export default function ListingDetailScreen() {
       onError: (err) => {
         logger.warn('Contact seller failed', { message: err.message });
         Alert.alert(
-          'Impossible de contacter ce vendeur',
-          err.message || 'Réessaie dans un instant.'
+          t.marketplace.detail.contactErrorTitle,
+          err.message || t.marketplace.detail.contactErrorFallback
         );
       },
     });
-  }, [getOrCreateDm, isMyListing, listing]);
+  }, [getOrCreateDm, isMyListing, listing, t]);
 
   // Header (toujours rendu pour permettre le retour même en erreur/loading)
   const renderHeader = (
@@ -194,7 +188,7 @@ export default function ListingDetailScreen() {
         onPress={handleBack}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         accessibilityRole="button"
-        accessibilityLabel="Retour"
+        accessibilityLabel={t.marketplace.common.back}
         style={styles.headerButton}
       >
         <ArrowLeft size={22} color="#FFFFFF" />
@@ -206,7 +200,7 @@ export default function ListingDetailScreen() {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
           accessibilityLabel={
-            listing.bookmarked_by_me ? 'Retirer des favoris' : 'Ajouter aux favoris'
+            listing.bookmarked_by_me ? t.marketplace.bookmark.remove : t.marketplace.bookmark.add
           }
           accessibilityState={{ selected: listing.bookmarked_by_me }}
           style={styles.headerButton}
@@ -250,10 +244,10 @@ export default function ListingDetailScreen() {
             gap={8}
           >
             <Text fontSize={16} fontWeight="700" color="$color">
-              Annonce introuvable
+              {t.marketplace.detail.notFoundTitle}
             </Text>
             <Text fontSize={13} color="$textSecondary" textAlign="center">
-              Cette annonce a peut-être été supprimée ou désactivée.
+              {t.marketplace.detail.notFoundSubtitle}
             </Text>
             <Button
               marginTop={12}
@@ -263,7 +257,7 @@ export default function ListingDetailScreen() {
               borderRadius="$10"
               onPress={handleBack}
             >
-              Retour
+              {t.marketplace.common.back}
             </Button>
           </YStack>
         </View>
@@ -271,8 +265,8 @@ export default function ListingDetailScreen() {
     );
   }
 
-  const conditionLabel = listing.condition ? CONDITION_LABEL[listing.condition] : null;
-  const badgeLabel = listing.badge ? BADGE_LABEL[listing.badge] : null;
+  const conditionLabel = listing.condition ? t.marketplace.condition[listing.condition] : null;
+  const badgeLabel = listing.badge ? t.marketplace.badge[listing.badge] : null;
   const badgeColors = listing.badge ? BADGE_COLORS[listing.badge] : null;
 
   return (
@@ -288,7 +282,7 @@ export default function ListingDetailScreen() {
           {/* Carousel */}
           <ListingImageCarousel
             images={listing.images}
-            accessibilityLabelBase={`Image de l'annonce ${listing.title}`}
+            accessibilityLabelBase={t.marketplace.detail.imageA11y(listing.title)}
           />
 
           <YStack paddingHorizontal={16} paddingTop={16} gap={12}>
@@ -362,12 +356,12 @@ export default function ListingDetailScreen() {
                 </XStack>
               ) : null}
               <Text fontSize={12} color="$textSecondary">
-                {formatRelativeFr(listing.created_at)}
+                {formatRelative(listing.created_at)}
               </Text>
               <XStack alignItems="center" gap={4}>
                 <Eye size={12} color="#A0A0A0" />
                 <Text fontSize={12} color="$textSecondary">
-                  {listing.view_count} vue{listing.view_count > 1 ? 's' : ''}
+                  {t.marketplace.detail.views(listing.view_count)}
                 </Text>
               </XStack>
             </XStack>
@@ -376,7 +370,7 @@ export default function ListingDetailScreen() {
             {listing.description ? (
               <YStack gap={6} paddingTop={4}>
                 <Text fontSize={13} color="$textSecondary" fontWeight="700">
-                  Description
+                  {t.marketplace.detail.descriptionLabel}
                 </Text>
                 <Text fontSize={14} color="$color" lineHeight={20}>
                   {listing.description}
@@ -387,7 +381,7 @@ export default function ListingDetailScreen() {
             {/* Carte vendeur */}
             <YStack gap={8} paddingTop={4}>
               <Text fontSize={13} color="$textSecondary" fontWeight="700">
-                Vendeur
+                {t.marketplace.detail.sellerLabel}
               </Text>
               <SellerCard
                 seller={{
@@ -431,7 +425,7 @@ export default function ListingDetailScreen() {
               alignItems="center"
             >
               <Text fontSize={14} fontWeight="700" color="$textSecondary">
-                {`C'est votre annonce`}
+                {t.marketplace.detail.ownListing}
               </Text>
             </View>
           ) : (
@@ -439,8 +433,8 @@ export default function ListingDetailScreen() {
               onPress={handleContactSeller}
               disabled={getOrCreateDm.isPending}
               accessibilityRole="button"
-              accessibilityLabel={`Contacter ${listing.seller_username}`}
-              accessibilityHint="Ouvre une conversation avec le vendeur, message pré-rempli"
+              accessibilityLabel={t.marketplace.detail.contactSellerA11y(listing.seller_username)}
+              accessibilityHint={t.marketplace.detail.contactSellerHint}
               accessibilityState={{ disabled: getOrCreateDm.isPending }}
               style={[
                 styles.cta,
@@ -451,7 +445,7 @@ export default function ListingDetailScreen() {
                 <ActivityIndicator color="#10D970" />
               ) : (
                 <Text fontSize={15} fontWeight="800" color="#000000">
-                  Contacter le vendeur
+                  {t.marketplace.detail.contactSellerCta}
                 </Text>
               )}
             </Pressable>

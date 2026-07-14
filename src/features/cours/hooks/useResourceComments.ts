@@ -6,6 +6,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -89,7 +90,7 @@ export function useAddComment() {
     mutationFn: async ({ resourceId, content }) => {
       const { data: session } = await supabase.auth.getSession();
       const userId = session.session?.user.id;
-      if (!userId) throw new Error('Non authentifié');
+      if (!userId) throw new Error(getT().cours.common.notAuthenticated);
       const { error } = await supabase
         .from('resource_comments')
         .insert({ resource_id: resourceId, author_id: userId, content: content.trim() });

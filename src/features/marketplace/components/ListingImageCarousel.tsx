@@ -18,6 +18,8 @@ import {
 } from 'react-native';
 import { XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export interface ListingImageCarouselProps {
@@ -33,6 +35,7 @@ export function ListingImageCarousel({
   height = 320,
   accessibilityLabelBase,
 }: ListingImageCarouselProps) {
+  const t = useTranslations();
   const [activeIndex, setActiveIndex] = useState(0);
 
   const handleMomentumScrollEnd = useCallback(
@@ -50,7 +53,7 @@ export function ListingImageCarousel({
         width={SCREEN_WIDTH}
         height={height}
         backgroundColor="$surface"
-        accessibilityLabel="Aucune image"
+        accessibilityLabel={t.marketplace.carousel.noImage}
       />
     );
   }
@@ -62,7 +65,7 @@ export function ListingImageCarousel({
         style={{ width: SCREEN_WIDTH, height }}
         contentFit="cover"
         transition={150}
-        accessibilityLabel={accessibilityLabelBase ?? 'Image de l’annonce'}
+        accessibilityLabel={accessibilityLabelBase ?? t.marketplace.carousel.defaultImage}
       />
     );
   }
@@ -82,7 +85,11 @@ export function ListingImageCarousel({
             style={{ width: SCREEN_WIDTH, height }}
             contentFit="cover"
             transition={150}
-            accessibilityLabel={`${accessibilityLabelBase ?? 'Image'} — ${index + 1} sur ${images.length}`}
+            accessibilityLabel={t.marketplace.carousel.imageCounter(
+              accessibilityLabelBase ?? t.marketplace.carousel.image,
+              index + 1,
+              images.length
+            )}
           />
         )}
       />

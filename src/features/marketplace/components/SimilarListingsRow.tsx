@@ -12,6 +12,8 @@ import { Image } from 'expo-image';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 import type { SimilarListing } from '../hooks/useListingDetail';
 
 const CARD_WIDTH = 140;
@@ -34,12 +36,14 @@ export interface SimilarListingsRowProps {
 }
 
 export function SimilarListingsRow({ listings, onPressItem }: SimilarListingsRowProps) {
+  const t = useTranslations();
+
   if (listings.length === 0) return null;
 
   return (
     <YStack gap={10} paddingHorizontal={16}>
       <Text fontSize={16} fontWeight="700" color="$color">
-        Annonces similaires
+        {t.marketplace.similar.title}
       </Text>
       <ScrollView
         horizontal

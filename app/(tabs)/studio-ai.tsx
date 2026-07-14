@@ -4,16 +4,20 @@ import { Sparkles } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import { Text, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 export default function StudioAIRoute() {
+  const t = useTranslations();
+
   return (
     <View style={styles.screen}>
       <YStack flex={1} alignItems="center" justifyContent="center" gap="$3" paddingHorizontal="$6">
         <Sparkles size={64} color="#A0A0A0" strokeWidth={1.5} />
         <Text color="$color" fontSize={18} fontWeight="700" textAlign="center">
-          Doumassi AI bientôt disponible
+          {t.common.studioAi.comingSoonTitle}
         </Text>
         <Text color="$textSecondary" fontSize={14} textAlign="center">
-          Assistant IA, génération d&apos;images et plus.
+          {t.common.studioAi.comingSoonSubtitle}
         </Text>
       </YStack>
     </View>

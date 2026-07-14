@@ -9,6 +9,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
 import { VerifiedBadge } from '@/features/profile/components/VerifiedBadge';
+import { useTranslations } from '@/i18n';
 
 export interface SellerCardProps {
   seller: {
@@ -22,14 +23,15 @@ export interface SellerCardProps {
 }
 
 export function SellerCard({ seller, onPress }: SellerCardProps) {
+  const t = useTranslations();
   const initial = (seller.username || '?').charAt(0).toUpperCase();
 
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Voir le profil de ${seller.username}`}
-      accessibilityHint="Tap pour ouvrir le profil du vendeur"
+      accessibilityLabel={t.marketplace.seller.viewProfileA11y(seller.username)}
+      accessibilityHint={t.marketplace.seller.viewProfileHint}
       style={styles.container}
     >
       <XStack

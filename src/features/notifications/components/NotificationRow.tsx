@@ -13,22 +13,24 @@ import type {
   NotificationItem,
   NotificationType,
 } from '@/features/notifications/hooks/useNotifications';
+import { useTranslations, type Translations } from '@/i18n';
 
 const AVATAR_SIZE = 40;
 
-function formatNotifTime(value: string): string {
+function formatNotifTime(value: string, t: Translations): string {
   const createdAt = new Date(value).getTime();
   if (Number.isNaN(createdAt)) return '';
+  const time = t.notifications.row.time;
   const elapsedMs = Math.max(0, Date.now() - createdAt);
   const minutes = Math.floor(elapsedMs / 60_000);
-  if (minutes < 1) return 'à l’instant';
-  if (minutes < 60) return `${minutes}min`;
+  if (minutes < 1) return time.now;
+  if (minutes < 60) return time.minutes(minutes);
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return time.hours(hours);
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}j`;
+  if (days < 7) return time.days(days);
   const weeks = Math.floor(days / 7);
-  if (days < 30) return `${weeks}sem`;
+  if (days < 30) return time.weeks(weeks);
   // Au-delà de 30 jours : date format JJ/MM/AAAA.
   const d = new Date(value);
   const dd = String(d.getDate()).padStart(2, '0');
@@ -36,33 +38,32 @@ function formatNotifTime(value: string): string {
   return `${dd}/${mm}/${d.getFullYear()}`;
 }
 
-function buildText(notif: NotificationItem): string {
-  const handle = notif.actor_username ? `@${notif.actor_username}` : 'Un utilisateur';
+function buildText(notif: NotificationItem, t: Translations): string {
+  const nt = t.notifications.row;
+  const handle = notif.actor_username ? `@${notif.actor_username}` : nt.unknownUser;
   switch (notif.type) {
     case 'follow':
-      return `${handle} a commencé à vous suivre`;
+      return nt.startedFollowingYou(handle);
     case 'like':
-      return `${handle} a aimé votre post`;
+      return nt.likedYourPost(handle);
     case 'comment': {
       const preview = (notif.payload?.preview as string | undefined)?.trim();
-      return preview
-        ? `${handle} a commenté votre post : « ${preview} »`
-        : `${handle} a commenté votre post`;
+      return preview ? nt.commentedWithPreview(handle, preview) : nt.commentedYourPost(handle);
     }
     case 'mention':
-      return `${handle} vous a mentionné dans son post`;
+      return nt.mentionedYou(handle);
     case 'system': {
-      const title = (notif.payload?.title as string | undefined) ?? 'Doumassi AI news';
-      return `Doumassi AI news : ${title}`;
+      const title = (notif.payload?.title as string | undefined) ?? nt.systemNewsTitleFallback;
+      return nt.systemNews(title);
     }
     case 'payment': {
-      const from = (notif.payload?.from as string | undefined) ?? 'un utilisateur';
+      const from = (notif.payload?.from as string | undefined) ?? nt.paymentUnknownSender;
       const amount = (notif.payload?.amount as string | undefined) ?? '';
-      return amount ? `Paiement accepté de ${from} : ${amount}` : `Paiement accepté de ${from}`;
+      return amount ? nt.paymentWithAmount(from, amount) : nt.paymentAccepted(from);
     }
     case 'follow_request':
       // Ne devrait pas atterrir ici (rendu via FollowRequestCard) — fallback.
-      return `${handle} veut vous suivre`;
+      return nt.wantsToFollowYou(handle);
     default:
       return '';
   }
@@ -121,8 +122,9 @@ export const NotificationRow = memo(function NotificationRow({
   notif,
   onPress,
 }: NotificationRowProps) {
-  const text = buildText(notif);
-  const time = formatNotifTime(notif.created_at);
+  const t = useTranslations();
+  const text = buildText(notif, t);
+  const time = formatNotifTime(notif.created_at, t);
 
   return (
     <Pressable

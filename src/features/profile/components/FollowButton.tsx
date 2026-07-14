@@ -8,6 +8,7 @@
 import { Button, Spinner } from 'tamagui';
 
 import type { FollowStatus } from '@/features/profile/hooks/useFollow';
+import { useTranslations } from '@/i18n';
 
 interface FollowButtonProps {
   status: FollowStatus;
@@ -24,6 +25,8 @@ export function FollowButton({
   onUnfollowRequest,
   onCancelRequest,
 }: FollowButtonProps) {
+  const t = useTranslations();
+
   if (status === 'self') return null;
 
   if (isPending) {
@@ -47,7 +50,7 @@ export function FollowButton({
         onPress={onFollow}
         pressStyle={{ opacity: 0.85, scale: 0.98 }}
       >
-        Follow
+        {t.profileScreens.followButton.follow}
       </Button>
     );
   }
@@ -67,7 +70,7 @@ export function FollowButton({
         onPress={onCancelRequest}
         pressStyle={{ opacity: 0.7, scale: 0.98 }}
       >
-        Requested ✕
+        {t.profileScreens.followButton.requested}
       </Button>
     );
   }
@@ -87,7 +90,7 @@ export function FollowButton({
       onPress={onUnfollowRequest}
       pressStyle={{ opacity: 0.7, scale: 0.98 }}
     >
-      Following
+      {t.profileScreens.followButton.following}
     </Button>
   );
 }

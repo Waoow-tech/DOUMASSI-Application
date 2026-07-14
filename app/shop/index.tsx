@@ -35,12 +35,14 @@ import {
   type ListingSort,
   type ListingsFilters,
 } from '@/features/marketplace/hooks/useListings';
+import { useTranslations } from '@/i18n';
 
 const GRID_GAP = 8;
 const NUM_COLUMNS = 2;
 const GUTTER = 12;
 
 export default function MarketplaceGridScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const listRef = useRef<FlashListRef<ListingCardData>>(null);
@@ -182,19 +184,19 @@ export default function MarketplaceGridScreen() {
             onPress={handleBack}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Retour"
+            accessibilityLabel={t.marketplace.common.back}
           >
             <ArrowLeft size={24} color="#FFFFFF" />
           </Pressable>
           <Text flex={1} color="$color" fontSize={18} fontWeight="700">
-            Boutique
+            {t.marketplace.grid.title}
           </Text>
           <Pressable
             onPress={handleOpenBookmarks}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Mes favoris"
-            accessibilityHint="Tap pour voir les annonces que tu as sauvegardées"
+            accessibilityLabel={t.marketplace.grid.bookmarksA11yLabel}
+            accessibilityHint={t.marketplace.grid.bookmarksA11yHint}
           >
             <Bookmark size={22} color="#FFFFFF" strokeWidth={2.2} />
           </Pressable>
@@ -202,8 +204,8 @@ export default function MarketplaceGridScreen() {
             onPress={handleOpenCreate}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Publier une annonce"
-            accessibilityHint="Tap pour créer une nouvelle annonce"
+            accessibilityLabel={t.marketplace.grid.createA11yLabel}
+            accessibilityHint={t.marketplace.grid.createA11yHint}
             style={styles.createButton}
           >
             <Plus size={20} color="#000000" strokeWidth={2.6} />
@@ -227,7 +229,7 @@ export default function MarketplaceGridScreen() {
               borderWidth={0}
               backgroundColor="transparent"
               color="$color"
-              placeholder="Rechercher"
+              placeholder={t.marketplace.grid.searchPlaceholder}
               placeholderTextColor="$placeholderColor"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -235,14 +237,14 @@ export default function MarketplaceGridScreen() {
               autoCorrect={false}
               fontSize={15}
               paddingHorizontal={0}
-              accessibilityLabel="Rechercher une annonce"
+              accessibilityLabel={t.marketplace.grid.searchA11yLabel}
             />
             {searchQuery.length > 0 ? (
               <Pressable
                 onPress={() => setSearchQuery('')}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
-                accessibilityLabel="Effacer la recherche"
+                accessibilityLabel={t.marketplace.grid.clearSearchA11yLabel}
               >
                 <X size={16} color="#A0A0A0" />
               </Pressable>
@@ -274,10 +276,10 @@ export default function MarketplaceGridScreen() {
               gap={8}
             >
               <Text fontSize={16} fontWeight="700" color="$color">
-                Impossible de charger la boutique
+                {t.marketplace.grid.errorTitle}
               </Text>
               <Text fontSize={13} color="$textSecondary" textAlign="center">
-                Tire vers le bas pour réessayer.
+                {t.marketplace.common.pullToRetry}
               </Text>
             </YStack>
           ) : allListings.length === 0 ? (
@@ -289,12 +291,12 @@ export default function MarketplaceGridScreen() {
               gap={8}
             >
               <Text fontSize={16} fontWeight="700" color="$color">
-                Aucune annonce trouvée
+                {t.marketplace.grid.emptyTitle}
               </Text>
               <Text fontSize={13} color="$textSecondary" textAlign="center">
                 {searchQuery.length > 0
-                  ? `Rien ne correspond à "${searchQuery}".`
-                  : 'Reviens plus tard ou ajuste tes filtres.'}
+                  ? t.marketplace.grid.emptySearch(searchQuery)
+                  : t.marketplace.grid.emptyNoFilters}
               </Text>
             </YStack>
           ) : (

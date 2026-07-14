@@ -5,6 +5,8 @@
 
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 interface BlockConfirmModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -20,6 +22,8 @@ export function BlockConfirmModal({
   onConfirm,
   isPending = false,
 }: BlockConfirmModalProps) {
+  const t = useTranslations();
+
   return (
     <Sheet modal open={open} onOpenChange={onOpenChange} snapPoints={[35]} dismissOnSnapToBottom>
       <Sheet.Overlay
@@ -42,7 +46,7 @@ export function BlockConfirmModal({
         </XStack>
 
         <Text fontSize={18} fontWeight="700" color="$color" textAlign="center" marginBottom="$2">
-          Block @{username}?
+          {t.profileScreens.blockModal.title(username)}
         </Text>
         <Text
           fontSize={14}
@@ -51,8 +55,7 @@ export function BlockConfirmModal({
           marginBottom="$4"
           lineHeight={20}
         >
-          They won&apos;t be able to find your profile, posts or contact you. They won&apos;t be
-          notified.
+          {t.profileScreens.blockModal.message}
         </Text>
 
         <XStack gap="$3">
@@ -69,7 +72,7 @@ export function BlockConfirmModal({
             onPress={() => onOpenChange(false)}
             pressStyle={{ opacity: 0.7 }}
           >
-            Cancel
+            {t.profileScreens.common.cancel}
           </Button>
           <Button
             flex={1}
@@ -86,7 +89,7 @@ export function BlockConfirmModal({
             }}
             pressStyle={{ opacity: 0.85, scale: 0.98 }}
           >
-            Block
+            {t.profileScreens.blockModal.confirm}
           </Button>
         </XStack>
       </Sheet.Frame>

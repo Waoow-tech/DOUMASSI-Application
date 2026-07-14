@@ -29,6 +29,7 @@ import {
   useTogglePostBookmark,
   useTogglePostLike,
 } from '@/features/feed/hooks/useFeed';
+import { getT, useTranslations } from '@/i18n';
 import { formatViewCount } from '@/utils/formatCount';
 
 const HIT_SLOP = { top: 14, right: 14, bottom: 14, left: 14 };
@@ -42,28 +43,29 @@ const SCRIM_BANDS = Array.from({ length: 10 }, (_, index) => {
 });
 
 function formatRelativeTime(value: string) {
+  const t = getT();
   const createdAt = new Date(value).getTime();
-  if (Number.isNaN(createdAt)) return 'Il y a quelques instants';
+  if (Number.isNaN(createdAt)) return t.feed.time.justNow;
 
   const elapsedMs = Math.max(0, Date.now() - createdAt);
   const minutes = Math.floor(elapsedMs / 60_000);
 
-  if (minutes < 1) return 'Il y a quelques instants';
-  if (minutes < 60) return `Il y a ${minutes}min`;
+  if (minutes < 1) return t.feed.time.justNow;
+  if (minutes < 60) return t.feed.time.minutes(minutes);
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Il y a ${hours}h`;
+  if (hours < 24) return t.feed.time.hours(hours);
 
   const days = Math.floor(hours / 24);
-  if (days < 7) return `Il y a ${days}j`;
+  if (days < 7) return t.feed.time.days(days);
 
   const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `Il y a ${weeks}sem`;
+  if (weeks < 5) return t.feed.time.weeks(weeks);
 
   const months = Math.floor(days / 30);
-  if (months < 12) return `Il y a ${months}mois`;
+  if (months < 12) return t.feed.time.months(months);
 
-  return `Il y a ${Math.floor(days / 365)}an`;
+  return t.feed.time.years(Math.floor(days / 365));
 }
 
 function ActionButton({
@@ -141,6 +143,7 @@ function Avatar({
   avatarUrl: string | null;
   onPress: () => void;
 }) {
+  const t = useTranslations();
   const initial = username.trim().charAt(0).toUpperCase() || '?';
 
   return (
@@ -148,7 +151,7 @@ function Avatar({
       onPress={onPress}
       hitSlop={HIT_SLOP}
       accessibilityRole="button"
-      accessibilityLabel={`Voir le profil de @${username}`}
+      accessibilityLabel={t.feed.postCard.viewProfileA11y(username)}
       style={styles.avatarButton}
     >
       {avatarUrl ? (
@@ -173,6 +176,7 @@ function BottomScrim() {
 }
 
 function Footer({ post, onOpenProfile }: { post: PostCardPost; onOpenProfile: () => void }) {
+  const t = useTranslations();
   const [captionTruncated, setCaptionTruncated] = useState(false);
   const [captionMeasured, setCaptionMeasured] = useState(false);
   const relativeTime = useMemo(() => formatRelativeTime(post.created_at), [post.created_at]);
@@ -199,7 +203,7 @@ function Footer({ post, onOpenProfile }: { post: PostCardPost; onOpenProfile: ()
           onPress={onOpenProfile}
           hitSlop={HIT_SLOP}
           accessibilityRole="button"
-          accessibilityLabel={`Voir le profil de @${post.author_username}`}
+          accessibilityLabel={t.feed.postCard.viewProfileA11y(post.author_username)}
           style={styles.authorButton}
         >
           <Text color="#FFFFFF" fontSize={15} fontWeight="700" numberOfLines={1}>
@@ -219,7 +223,9 @@ function Footer({ post, onOpenProfile }: { post: PostCardPost; onOpenProfile: ()
             numberOfLines={3}
             onTextLayout={handleCaptionLayout}
           />
-          {captionTruncated ? <RNText style={styles.moreText}>...plus</RNText> : null}
+          {captionTruncated ? (
+            <RNText style={styles.moreText}>{t.feed.postCard.seeMore}</RNText>
+          ) : null}
         </YStack>
       ) : null}
     </YStack>
@@ -272,11 +278,13 @@ function LoadingState() {
 }
 
 function ErrorState() {
+  const t = useTranslations();
+
   return (
     <YStack flex={1} backgroundColor="#000000" alignItems="center" justifyContent="center" gap={16}>
       <StatusBar hidden />
       <Text color="#FFFFFF" fontSize={18} fontWeight="700">
-        Post indisponible
+        {t.feed.postDetail.errorTitle}
       </Text>
       <Button
         height={44}
@@ -287,13 +295,14 @@ function ErrorState() {
         onPress={() => router.back()}
         pressStyle={{ opacity: 0.86, scale: 0.98 }}
       >
-        Retour
+        {t.feed.postDetail.back}
       </Button>
     </YStack>
   );
 }
 
 export default function PostDetailRoute() {
+  const t = useTranslations();
   const params = useLocalSearchParams<{ id?: string; focus?: string }>();
   const postId = typeof params.id === 'string' ? params.id : undefined;
   const shouldFocusComments = params.focus === 'comments';
@@ -399,7 +408,7 @@ export default function PostDetailRoute() {
           delayLongPress={240}
           style={StyleSheet.absoluteFill}
           accessibilityRole="button"
-          accessibilityLabel="Afficher ou masquer les contrôles du post"
+          accessibilityLabel={t.feed.postDetail.toggleOverlaysA11y}
         >
           <PostBackground post={post} />
         </Pressable>
@@ -413,7 +422,7 @@ export default function PostDetailRoute() {
               onPress={() => router.back()}
               hitSlop={HIT_SLOP}
               accessibilityRole="button"
-              accessibilityLabel="Fermer le post"
+              accessibilityLabel={t.feed.postDetail.closeA11y}
               style={[styles.closeButton, { top: insets.top + 12 }]}
             >
               <X size={24} color="#FFFFFF" strokeWidth={2.5} />
@@ -421,7 +430,7 @@ export default function PostDetailRoute() {
 
             <YStack position="absolute" right={ACTION_RIGHT} bottom={ACTION_BOTTOM} gap={24}>
               <ActionButton
-                label={`Aimer le post de @${post.author_username}`}
+                label={t.feed.postCard.likeA11y(post.author_username)}
                 count={post.like_count}
                 onPress={handleLike}
               >
@@ -435,7 +444,7 @@ export default function PostDetailRoute() {
               </ActionButton>
 
               <ActionButton
-                label={`Commenter le post de @${post.author_username}`}
+                label={t.feed.postCard.commentA11y(post.author_username)}
                 count={post.comment_count}
                 onPress={handleComments}
               >
@@ -443,7 +452,7 @@ export default function PostDetailRoute() {
               </ActionButton>
 
               <ActionButton
-                label={`Partager le post de @${post.author_username}`}
+                label={t.feed.postCard.shareA11y(post.author_username)}
                 count={post.share_count}
                 onPress={() => setShareSheetOpen(true)}
               >
@@ -451,7 +460,7 @@ export default function PostDetailRoute() {
               </ActionButton>
 
               <ActionButton
-                label={`Sauvegarder le post de @${post.author_username}`}
+                label={t.feed.postCard.bookmarkA11y(post.author_username)}
                 count={post.bookmark_count}
                 onPress={handleBookmark}
               >

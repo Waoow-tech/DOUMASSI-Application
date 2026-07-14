@@ -12,6 +12,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -101,10 +102,11 @@ export function useEditMessage(conversationId: string) {
 
   return useMutation<void, Error, EditMessagePayload>({
     mutationFn: async ({ messageId, newContent }) => {
+      const t = getT();
       const trimmed = newContent.trim();
-      if (trimmed.length === 0) throw new Error('Contenu vide');
+      if (trimmed.length === 0) throw new Error(t.messaging.errors.editContentEmpty);
       if (trimmed.length > MAX_CONTENT_LENGTH) {
-        throw new Error(`Message trop long (max ${MAX_CONTENT_LENGTH} caractères)`);
+        throw new Error(t.messaging.errors.messageTooLong(MAX_CONTENT_LENGTH));
       }
 
       const { error } = await supabase

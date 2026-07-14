@@ -7,13 +7,9 @@
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text } from 'tamagui';
 
-import type { ListingCategory } from '../hooks/useListings';
+import { useTranslations } from '@/i18n';
 
-const CATEGORIES: { id: ListingCategory | null; label: string }[] = [
-  { id: null, label: 'Tout' },
-  { id: 'product', label: 'Produits' },
-  { id: 'service', label: 'Services' },
-];
+import type { ListingCategory } from '../hooks/useListings';
 
 export interface CategoryChipsProps {
   selected: ListingCategory | null;
@@ -21,6 +17,15 @@ export interface CategoryChipsProps {
 }
 
 export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
+  const t = useTranslations();
+
+  // Libellés d'UI issus du dico ; les ids restent les valeurs d'enum métier DB.
+  const categories: { id: ListingCategory | null; label: string }[] = [
+    { id: null, label: t.marketplace.categoryChips.all },
+    { id: 'product', label: t.marketplace.categoryChips.products },
+    { id: 'service', label: t.marketplace.categoryChips.services },
+  ];
+
   return (
     <ScrollView
       horizontal
@@ -31,7 +36,7 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
       // (bug courant des ScrollView horizontaux dans des conteneurs flex).
       style={styles.scroll}
     >
-      {CATEGORIES.map((cat) => {
+      {categories.map((cat) => {
         const isSelected = selected === cat.id;
         return (
           <Pressable

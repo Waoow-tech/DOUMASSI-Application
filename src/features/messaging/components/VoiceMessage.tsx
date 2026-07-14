@@ -15,6 +15,8 @@ import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 export interface VoiceMessageProps {
   /** URL publique du fichier .m4a uploadé. */
   audioUrl: string;
@@ -39,6 +41,7 @@ function VoiceMessageComponent({
   textColor,
   iconColor,
 }: VoiceMessageProps) {
+  const t = useTranslations();
   const player = useAudioPlayer(audioUrl);
   const status = useAudioPlayerStatus(player);
 
@@ -66,7 +69,7 @@ function VoiceMessageComponent({
         style={[styles.playButton, { borderColor: iconColor }]}
         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         accessibilityRole="button"
-        accessibilityLabel={isPlaying ? 'Mettre en pause' : 'Lire le message vocal'}
+        accessibilityLabel={isPlaying ? t.messaging.voice.pauseA11y : t.messaging.voice.playA11y}
       >
         {isPlaying ? (
           <Pause size={18} color={iconColor} fill={iconColor} />

@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
 import type { FeedStory } from '@/features/feed/hooks/useFeedStories';
+import { useTranslations } from '@/i18n';
 
 type FeedStoriesProps = {
   stories: FeedStory[];
@@ -11,6 +12,8 @@ type FeedStoriesProps = {
 };
 
 export function FeedStories({ stories, onStoryPress }: FeedStoriesProps) {
+  const t = useTranslations();
+
   if (stories.length === 0) return null;
 
   return (
@@ -29,12 +32,14 @@ export function FeedStories({ stories, onStoryPress }: FeedStoriesProps) {
           pressStyle={{ scale: 0.97, opacity: 0.85 }}
           accessibilityRole="button"
           accessibilityLabel={
-            story.isMe ? 'Ajouter à votre story' : `Ouvrir la story de @${story.username}`
+            story.isMe
+              ? t.feed.stories.bar.addStoryA11y
+              : t.feed.stories.bar.openStoryA11y(story.username)
           }
           accessibilityHint={
             story.isMe
-              ? 'Tap pour créer une nouvelle story'
-              : `Tap pour visionner la story de @${story.username}`
+              ? t.feed.stories.bar.createStoryHint
+              : t.feed.stories.bar.viewStoryHint(story.username)
           }
         >
           <YStack
@@ -89,7 +94,7 @@ export function FeedStories({ stories, onStoryPress }: FeedStoriesProps) {
           </YStack>
 
           <Text color="$textSecondary" fontSize={11} numberOfLines={1} maxWidth={72}>
-            {story.isMe ? 'Votre story' : story.username}
+            {story.isMe ? t.feed.stories.bar.yourStory : story.username}
           </Text>
         </YStack>
       ))}

@@ -29,8 +29,9 @@ import {
 } from '@/features/cours/components/ResourceFilePicker';
 import { useCourseLevels, useCourseSubjects } from '@/features/cours/hooks/useCourseTaxonomy';
 import { useCreateResource } from '@/features/cours/hooks/useCreateResource';
-import { RESOURCE_TYPE_LABEL, type ResourceType } from '@/features/cours/hooks/useResources';
+import { RESOURCE_TYPES } from '@/features/cours/hooks/useResources';
 import { SegmentedChoice } from '@/features/marketplace/components/SegmentedChoice';
+import { useTranslations, type Translations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { uploadResourceFile } from '@/lib/storage';
 
@@ -40,30 +41,22 @@ const MAX_FILES = 5;
 
 const TypeEnum = z.enum(['cours', 'fiche_revision', 'exercices', 'annale']);
 
-const ResourceSchema = z.object({
-  type: TypeEnum,
-  levelCode: z.string().min(1, 'Choisis un niveau.'),
-  subjectCode: z.string().min(1, 'Choisis une matière.'),
-  title: z
-    .string()
-    .trim()
-    .min(3, 'Le titre doit faire au moins 3 caractères.')
-    .max(MAX_TITLE, `Maximum ${MAX_TITLE} caractères.`),
-  description: z
-    .string()
-    .trim()
-    .max(MAX_DESCRIPTION, `Maximum ${MAX_DESCRIPTION} caractères.`)
-    .optional(),
-});
+// Schéma construit avec `t` pour que les messages de validation soient traduits.
+function buildResourceSchema(t: Translations) {
+  const e = t.cours.create.errors;
+  return z.object({
+    type: TypeEnum,
+    levelCode: z.string().min(1, e.levelRequired),
+    subjectCode: z.string().min(1, e.subjectRequired),
+    title: z.string().trim().min(3, e.titleMin).max(MAX_TITLE, e.maxChars(MAX_TITLE)),
+    description: z.string().trim().max(MAX_DESCRIPTION, e.maxChars(MAX_DESCRIPTION)).optional(),
+  });
+}
 
-type FormValues = z.infer<typeof ResourceSchema>;
-
-const TYPE_OPTIONS = (Object.keys(RESOURCE_TYPE_LABEL) as ResourceType[]).map((t) => ({
-  value: t,
-  label: RESOURCE_TYPE_LABEL[t],
-}));
+type FormValues = z.infer<ReturnType<typeof buildResourceSchema>>;
 
 export default function CreateResourceScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const createResource = useCreateResource();
   const levelsQuery = useCourseLevels();
@@ -75,12 +68,14 @@ export default function CreateResourceScreen() {
     null
   );
 
+  const resourceSchema = useMemo(() => buildResourceSchema(t), [t]);
+
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(ResourceSchema),
+    resolver: zodResolver(resourceSchema),
     defaultValues: {
       type: 'cours',
       levelCode: '',
@@ -99,6 +94,10 @@ export default function CreateResourceScreen() {
     () => (subjectsQuery.data ?? []).map((s) => ({ value: s.code, label: s.label })),
     [subjectsQuery.data]
   );
+  const typeOptions = useMemo(
+    () => RESOURCE_TYPES.map((rt) => ({ value: rt, label: t.cours.resourceType[rt] })),
+    [t]
+  );
 
   const handleBack = useCallback(() => {
     if (router.canGoBack()) router.back();
@@ -106,16 +105,16 @@ export default function CreateResourceScreen() {
   }, []);
 
   const handleClose = useCallback(() => {
-    Alert.alert('Abandonner cette ressource ?', 'Tu perdras ce que tu as saisi.', [
-      { text: 'Continuer la saisie', style: 'cancel' },
-      { text: 'Abandonner', style: 'destructive', onPress: handleBack },
+    Alert.alert(t.cours.create.discardTitle, t.cours.create.discardMessage, [
+      { text: t.cours.create.discardKeepEditing, style: 'cancel' },
+      { text: t.cours.create.discardConfirm, style: 'destructive', onPress: handleBack },
     ]);
-  }, [handleBack]);
+  }, [handleBack, t]);
 
   const onSubmit = useCallback(
     async (values: FormValues) => {
       if (files.length === 0) {
-        setFilesError('Ajoute au moins 1 fichier (PDF ou image).');
+        setFilesError(t.cours.create.errors.filesRequired);
         return;
       }
       setFilesError(null);
@@ -147,12 +146,12 @@ export default function CreateResourceScreen() {
         router.replace(`/cours/${newId}`);
       } catch (err) {
         setUploadProgress(null);
-        const message = err instanceof Error ? err.message : 'Une erreur est survenue, réessaie.';
+        const message = err instanceof Error ? err.message : t.cours.create.submitErrorFallback;
         logger.warn('create_resource submit failed', { message });
-        Alert.alert('Publication impossible', message);
+        Alert.alert(t.cours.create.submitErrorTitle, message);
       }
     },
-    [createResource, files]
+    [createResource, files, t]
   );
 
   const isBusy = isSubmitting || createResource.isPending || uploadProgress !== null;
@@ -179,12 +178,12 @@ export default function CreateResourceScreen() {
               disabled={isBusy}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
-              accessibilityLabel="Annuler"
+              accessibilityLabel={t.cours.common.cancel}
             >
               <ArrowLeft size={24} color="#FFFFFF" />
             </Pressable>
             <Text flex={1} color="$color" fontSize={18} fontWeight="700">
-              Nouvelle ressource
+              {t.cours.create.title}
             </Text>
           </XStack>
 
@@ -194,13 +193,13 @@ export default function CreateResourceScreen() {
             showsVerticalScrollIndicator={false}
           >
             {/* Type */}
-            <Section title="Type" required>
+            <Section title={t.cours.create.sections.type} required>
               <Controller
                 control={control}
                 name="type"
                 render={({ field: { value, onChange } }) => (
                   <SegmentedChoice
-                    options={TYPE_OPTIONS}
+                    options={typeOptions}
                     value={value}
                     onChange={onChange}
                     disabled={isBusy}
@@ -210,7 +209,7 @@ export default function CreateResourceScreen() {
             </Section>
 
             {/* Niveau */}
-            <Section title="Niveau" required>
+            <Section title={t.cours.create.sections.level} required>
               <Controller
                 control={control}
                 name="levelCode"
@@ -227,7 +226,7 @@ export default function CreateResourceScreen() {
             </Section>
 
             {/* Matière */}
-            <Section title="Matière" required>
+            <Section title={t.cours.create.sections.subject} required>
               <Controller
                 control={control}
                 name="subjectCode"
@@ -244,7 +243,7 @@ export default function CreateResourceScreen() {
             </Section>
 
             {/* Titre */}
-            <Section title="Titre" required>
+            <Section title={t.cours.create.sections.title} required>
               <Controller
                 control={control}
                 name="title"
@@ -253,7 +252,7 @@ export default function CreateResourceScreen() {
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
-                    placeholder="Ex : Cours complet sur les fonctions dérivées"
+                    placeholder={t.cours.create.titlePlaceholder}
                     placeholderTextColor="$placeholderColor"
                     maxLength={MAX_TITLE}
                     editable={!isBusy}
@@ -263,7 +262,7 @@ export default function CreateResourceScreen() {
                     borderRadius="$md"
                     height={48}
                     paddingHorizontal={14}
-                    accessibilityLabel="Titre de la ressource"
+                    accessibilityLabel={t.cours.create.titleA11y}
                   />
                 )}
               />
@@ -271,7 +270,7 @@ export default function CreateResourceScreen() {
             </Section>
 
             {/* Description */}
-            <Section title="Description" subtitle="Optionnel">
+            <Section title={t.cours.create.sections.description} subtitle={t.cours.create.optional}>
               <Controller
                 control={control}
                 name="description"
@@ -280,7 +279,7 @@ export default function CreateResourceScreen() {
                     value={value ?? ''}
                     onChangeText={onChange}
                     onBlur={onBlur}
-                    placeholder="Résume le contenu, le chapitre couvert, ce que l'élève va apprendre…"
+                    placeholder={t.cours.create.descriptionPlaceholder}
                     placeholderTextColor="$placeholderColor"
                     maxLength={MAX_DESCRIPTION}
                     editable={!isBusy}
@@ -292,14 +291,14 @@ export default function CreateResourceScreen() {
                     paddingHorizontal={14}
                     paddingTop={12}
                     textAlignVertical="top"
-                    accessibilityLabel="Description de la ressource"
+                    accessibilityLabel={t.cours.create.descriptionA11y}
                   />
                 )}
               />
             </Section>
 
             {/* Fichiers */}
-            <Section title="Fichiers" required>
+            <Section title={t.cours.create.sections.files} required>
               <ResourceFilePicker
                 files={files}
                 onChange={(next) => {
@@ -314,7 +313,7 @@ export default function CreateResourceScreen() {
 
             {uploadProgress ? (
               <Text fontSize={12} color="$textSecondary" textAlign="center" marginTop={8}>
-                Upload des fichiers {uploadProgress.done}/{uploadProgress.total}…
+                {t.cours.create.uploadProgress(uploadProgress.done, uploadProgress.total)}
               </Text>
             ) : null}
           </ScrollView>
@@ -332,7 +331,7 @@ export default function CreateResourceScreen() {
               onPress={handleSubmit(onSubmit)}
               disabled={isBusy}
               accessibilityRole="button"
-              accessibilityLabel="Publier la ressource"
+              accessibilityLabel={t.cours.create.submitA11y}
               accessibilityState={{ disabled: isBusy }}
               style={[styles.cta, { backgroundColor: isBusy ? '#1A1A1A' : '#10D970' }]}
             >
@@ -340,7 +339,7 @@ export default function CreateResourceScreen() {
                 <ActivityIndicator color="#10D970" />
               ) : (
                 <Text fontSize={15} fontWeight="800" color="#000000">
-                  Publier
+                  {t.cours.create.submitCta}
                 </Text>
               )}
             </Pressable>

@@ -18,8 +18,10 @@ import {
   useMyBestGameScore,
   useSubmitGameScore,
 } from '@/features/games/hooks/useGameScore';
+import { useTranslations } from '@/i18n';
 
 export default function GamePlayScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
   const gameId = typeof params.id === 'string' ? params.id : null;
@@ -50,11 +52,15 @@ export default function GamePlayScreen() {
         <YStack flex={1} backgroundColor="$background" paddingTop={insets.top}>
           <YStack flex={1} alignItems="center" justifyContent="center" gap={8}>
             <Text fontSize={16} fontWeight="700" color="$color">
-              Jeu introuvable
+              {t.games.play.notFoundTitle}
             </Text>
-            <Pressable onPress={handleBack} accessibilityRole="button" accessibilityLabel="Retour">
+            <Pressable
+              onPress={handleBack}
+              accessibilityRole="button"
+              accessibilityLabel={t.games.play.back}
+            >
               <Text color="$accentNeon" fontWeight="700">
-                Retour
+                {t.games.play.notFoundBack}
               </Text>
             </Pressable>
           </YStack>
@@ -81,7 +87,7 @@ export default function GamePlayScreen() {
             onPress={handleBack}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Retour"
+            accessibilityLabel={t.games.play.back}
           >
             <ArrowLeft size={24} color="#FFFFFF" />
           </Pressable>
@@ -91,7 +97,7 @@ export default function GamePlayScreen() {
             </Text>
             {best != null ? (
               <Text color="$textSecondary" fontSize={11}>
-                Meilleur : {best}
+                {t.games.play.bestScore(best)}
               </Text>
             ) : null}
           </YStack>
@@ -99,7 +105,7 @@ export default function GamePlayScreen() {
             onPress={() => setIsBoardOpen(true)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Classement"
+            accessibilityLabel={t.games.play.leaderboardLabel}
           >
             <Trophy size={22} color="#10D970" />
           </Pressable>
@@ -135,7 +141,7 @@ export default function GamePlayScreen() {
           <XStack alignItems="center" gap={8} marginBottom={12}>
             <Trophy size={20} color="#10D970" />
             <Text fontSize={18} fontWeight="800" color="$color">
-              Classement — {game.title}
+              {t.games.play.leaderboardTitle(game.title)}
             </Text>
           </XStack>
 
@@ -145,7 +151,7 @@ export default function GamePlayScreen() {
             </YStack>
           ) : (leaderboard.data?.length ?? 0) === 0 ? (
             <Text fontSize={13} color="$textSecondary" paddingVertical={20} textAlign="center">
-              Aucun score pour l&apos;instant. Sois le premier !
+              {t.games.play.emptyLeaderboard}
             </Text>
           ) : (
             <YStack gap={4}>
@@ -196,7 +202,7 @@ export default function GamePlayScreen() {
                     numberOfLines={1}
                   >
                     @{entry.username}
-                    {entry.is_me ? ' (toi)' : ''}
+                    {entry.is_me ? t.games.play.meSuffix : ''}
                   </Text>
                   <Text fontSize={14} fontWeight="800" color="$accentNeon">
                     {entry.best_score}

@@ -15,9 +15,11 @@
 // Pas de slider double : on utilise 2 inputs numériques (pattern marketplace
 // standard, évite d'ajouter une lib + accessibilité plus simple).
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Input, Sheet, Text, View, XStack, YStack } from 'tamagui';
+
+import { useTranslations } from '@/i18n';
 
 import type {
   ListingCategory,
@@ -27,20 +29,6 @@ import type {
 } from '../hooks/useListings';
 
 import { SegmentedChoice } from './SegmentedChoice';
-
-const SORT_OPTIONS: { value: ListingSort; label: string }[] = [
-  { value: 'recent', label: 'Récent' },
-  { value: 'price_asc', label: 'Prix ↑' },
-  { value: 'price_desc', label: 'Prix ↓' },
-  { value: 'popular', label: 'Populaire' },
-];
-
-const CONDITION_OPTIONS: { value: ListingCondition; label: string }[] = [
-  { value: 'neuf', label: 'Neuf' },
-  { value: 'tres_bon_etat', label: 'Très bon état' },
-  { value: 'bon_etat', label: 'Bon état' },
-  { value: 'occasion', label: 'Occasion' },
-];
 
 export interface AdvancedFiltersSheetProps {
   open: boolean;
@@ -79,6 +67,29 @@ export function AdvancedFiltersSheet({
   activeCategory,
   onApply,
 }: AdvancedFiltersSheetProps) {
+  const t = useTranslations();
+
+  // Options reconstruites au changement de langue (les libellés viennent du dico).
+  const sortOptions = useMemo(
+    () => [
+      { value: 'recent' as const, label: t.marketplace.filters.sort.recent },
+      { value: 'price_asc' as const, label: t.marketplace.filters.sort.priceAsc },
+      { value: 'price_desc' as const, label: t.marketplace.filters.sort.priceDesc },
+      { value: 'popular' as const, label: t.marketplace.filters.sort.popular },
+    ],
+    [t]
+  );
+
+  const conditionOptions = useMemo(
+    () => [
+      { value: 'neuf' as const, label: t.marketplace.condition.neuf },
+      { value: 'tres_bon_etat' as const, label: t.marketplace.condition.tres_bon_etat },
+      { value: 'bon_etat' as const, label: t.marketplace.condition.bon_etat },
+      { value: 'occasion' as const, label: t.marketplace.condition.occasion },
+    ],
+    [t]
+  );
+
   const [sort, setSort] = useState<ListingSort>(current.sort ?? 'recent');
   const [condition, setCondition] = useState<ListingCondition | null>(current.condition ?? null);
   const [minPrice, setMinPrice] = useState<string>(centsToEuroString(current.minPriceCents));
@@ -112,7 +123,7 @@ export function AdvancedFiltersSheet({
 
     // Validation : si les 2 sont définis, min doit être <= max.
     if (minCents != null && maxCents != null && minCents > maxCents) {
-      setPriceError('Le prix min doit être inférieur au prix max.');
+      setPriceError(t.marketplace.filters.priceError);
       return;
     }
     setPriceError(null);
@@ -151,7 +162,7 @@ export function AdvancedFiltersSheet({
         <YStack gap={20} flex={1}>
           <XStack alignItems="center" justifyContent="space-between">
             <Text fontSize={18} fontWeight="800" color="$color">
-              Filtres
+              {t.marketplace.filters.title}
             </Text>
             <Text
               fontSize={13}
@@ -159,25 +170,25 @@ export function AdvancedFiltersSheet({
               color="$accentNeon"
               onPress={handleReset}
               accessibilityRole="button"
-              accessibilityLabel="Réinitialiser les filtres"
+              accessibilityLabel={t.marketplace.filters.resetA11y}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              Réinitialiser
+              {t.marketplace.filters.reset}
             </Text>
           </XStack>
 
           {/* Trier par */}
           <YStack gap={10}>
             <Text fontSize={14} fontWeight="700" color="$color">
-              Trier par
+              {t.marketplace.filters.sortBy}
             </Text>
-            <SegmentedChoice<ListingSort> options={SORT_OPTIONS} value={sort} onChange={setSort} />
+            <SegmentedChoice<ListingSort> options={sortOptions} value={sort} onChange={setSort} />
           </YStack>
 
           {/* Fourchette de prix */}
           <YStack gap={10}>
             <Text fontSize={14} fontWeight="700" color="$color">
-              Prix
+              {t.marketplace.filters.price}
             </Text>
             <XStack alignItems="center" gap={10}>
               <XStack
@@ -195,7 +206,7 @@ export function AdvancedFiltersSheet({
                     setMinPrice(v);
                     setPriceError(null);
                   }}
-                  placeholder="Min"
+                  placeholder={t.marketplace.filters.min}
                   placeholderTextColor="$placeholderColor"
                   keyboardType="decimal-pad"
                   color="$color"
@@ -204,14 +215,14 @@ export function AdvancedFiltersSheet({
                   paddingHorizontal={0}
                   height={44}
                   fontSize={15}
-                  accessibilityLabel="Prix minimum en euros"
+                  accessibilityLabel={t.marketplace.filters.minA11y}
                 />
                 <Text fontSize={14} color="$textSecondary" fontWeight="600">
                   €
                 </Text>
               </XStack>
               <Text fontSize={14} color="$textSecondary">
-                à
+                {t.marketplace.filters.to}
               </Text>
               <XStack
                 flex={1}
@@ -228,7 +239,7 @@ export function AdvancedFiltersSheet({
                     setMaxPrice(v);
                     setPriceError(null);
                   }}
-                  placeholder="Max"
+                  placeholder={t.marketplace.filters.max}
                   placeholderTextColor="$placeholderColor"
                   keyboardType="decimal-pad"
                   color="$color"
@@ -237,7 +248,7 @@ export function AdvancedFiltersSheet({
                   paddingHorizontal={0}
                   height={44}
                   fontSize={15}
-                  accessibilityLabel="Prix maximum en euros"
+                  accessibilityLabel={t.marketplace.filters.maxA11y}
                 />
                 <Text fontSize={14} color="$textSecondary" fontWeight="600">
                   €
@@ -255,10 +266,10 @@ export function AdvancedFiltersSheet({
           {showConditionSection ? (
             <YStack gap={10}>
               <Text fontSize={14} fontWeight="700" color="$color">
-                État
+                {t.marketplace.filters.condition}
               </Text>
               <SegmentedChoice<ListingCondition>
-                options={CONDITION_OPTIONS}
+                options={conditionOptions}
                 value={condition}
                 onChange={setCondition}
                 allowDeselect
@@ -280,11 +291,11 @@ export function AdvancedFiltersSheet({
             textAlign="center"
             borderRadius={9999}
             accessibilityRole="button"
-            accessibilityLabel="Appliquer les filtres"
+            accessibilityLabel={t.marketplace.filters.applyA11y}
             onPress={handleApply}
             style={styles.cta}
           >
-            Appliquer
+            {t.marketplace.filters.apply}
           </Text>
         </YStack>
       </Sheet.Frame>

@@ -17,6 +17,7 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Spinner, Text, View, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 
 import { SearchBar } from '../components/SearchBar';
@@ -53,6 +54,7 @@ function ActionButton({
   activeTab,
   onUnfollowRequest,
 }: ActionButtonProps) {
+  const t = useTranslations();
   const { status, isPending, follow, unfollow } = useFollow(user.id);
 
   // Ne rien afficher pour soi-même
@@ -81,7 +83,7 @@ function ActionButton({
             <Spinner size="small" color="#FFFFFF" />
           ) : (
             <Button.Text color="$color" fontSize={13} fontWeight="600">
-              Following
+              {t.profileScreens.followRelation.following}
             </Button.Text>
           )}
         </Button>
@@ -103,7 +105,7 @@ function ActionButton({
           <Spinner size="small" color="#000000" />
         ) : (
           <Button.Text color="#000000" fontSize={13} fontWeight="700">
-            Follow back
+            {t.profileScreens.followRelation.followBack}
           </Button.Text>
         )}
       </Button>
@@ -128,7 +130,7 @@ function ActionButton({
           <Spinner size="small" color="#FFFFFF" />
         ) : (
           <Button.Text color="$color" fontSize={13} fontWeight="600">
-            Following
+            {t.profileScreens.followRelation.following}
           </Button.Text>
         )}
       </Button>
@@ -153,7 +155,7 @@ function ActionButton({
           <Spinner size="small" color="#FFFFFF" />
         ) : (
           <Button.Text color="$color" fontSize={13} fontWeight="600">
-            Following
+            {t.profileScreens.followRelation.following}
           </Button.Text>
         )}
       </Button>
@@ -177,7 +179,7 @@ function ActionButton({
           <Spinner size="small" color="#FFFFFF" />
         ) : (
           <Button.Text color="$color" fontSize={13} fontWeight="600">
-            Requested
+            {t.profileScreens.followRelation.requested}
           </Button.Text>
         )}
       </Button>
@@ -199,7 +201,7 @@ function ActionButton({
         <Spinner size="small" color="#000000" />
       ) : (
         <Button.Text color="#000000" fontSize={13} fontWeight="700">
-          Follow
+          {t.profileScreens.followRelation.follow}
         </Button.Text>
       )}
     </Button>
@@ -212,6 +214,7 @@ export function FollowRelationScreen({
   userId,
   initialTab = 'followers',
 }: FollowRelationScreenProps) {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
@@ -418,7 +421,7 @@ export function FollowRelationScreen({
               fontWeight={activeTab === 'followers' ? '700' : '400'}
               color={activeTab === 'followers' ? '$color' : '$textSecondary'}
             >
-              Followers
+              {t.profileScreens.followRelation.followersTab}
             </Text>
             {activeTab === 'followers' && (
               <View height={2} width="100%" backgroundColor="#FFFFFF" />
@@ -433,7 +436,7 @@ export function FollowRelationScreen({
               fontWeight={activeTab === 'following' ? '700' : '400'}
               color={activeTab === 'following' ? '$color' : '$textSecondary'}
             >
-              Following
+              {t.profileScreens.followRelation.followingTab}
             </Text>
             {activeTab === 'following' && (
               <View height={2} width="100%" backgroundColor="#FFFFFF" />
@@ -447,7 +450,11 @@ export function FollowRelationScreen({
         <SearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder={activeTab === 'followers' ? 'Search followers...' : 'Search following...'}
+          placeholder={
+            activeTab === 'followers'
+              ? t.profileScreens.followRelation.searchFollowers
+              : t.profileScreens.followRelation.searchFollowing
+          }
         />
       </YStack>
     </YStack>
@@ -468,11 +475,11 @@ export function FollowRelationScreen({
     let subtitle: string | null = null;
 
     if (activeTab === 'followers') {
-      title = 'No followers yet';
-      if (isMyList) subtitle = 'Share your profile to get started';
+      title = t.profileScreens.followRelation.noFollowers;
+      if (isMyList) subtitle = t.profileScreens.followRelation.noFollowersSubtitle;
     } else {
-      title = 'Not following anyone yet';
-      if (isMyList) subtitle = 'Discover people to follow';
+      title = t.profileScreens.followRelation.noFollowing;
+      if (isMyList) subtitle = t.profileScreens.followRelation.noFollowingSubtitle;
     }
 
     return (

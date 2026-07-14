@@ -30,12 +30,14 @@ import { Text, View, XStack, YStack } from 'tamagui';
 
 import { requestCallPermissions } from '@/features/calls/hooks/useCallPermissions';
 import { useConversationHeader } from '@/features/messaging/hooks/useConversationHeader';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
 const RING_TIMEOUT_MS = 30_000;
 
 export default function IncomingCallScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     id: string;
@@ -146,7 +148,7 @@ export default function IncomingCallScreen() {
     else router.replace('/(tabs)/messages');
   }, [decided, updateCallStatus]);
 
-  const displayName = header?.display_name ?? 'Appel entrant';
+  const displayName = header?.display_name ?? t.messaging.calls.incoming.fallbackName;
   const initial = displayName.charAt(0).toUpperCase() || '?';
 
   return (
@@ -163,7 +165,9 @@ export default function IncomingCallScreen() {
         gap={6}
       >
         <Text color="#A0A0A0" fontSize={14}>
-          {callType === 'video' ? 'Appel vidéo entrant' : 'Appel audio entrant'}
+          {callType === 'video'
+            ? t.messaging.calls.incoming.incomingVideo
+            : t.messaging.calls.incoming.incomingAudio}
         </Text>
         <Text color="#FFFFFF" fontSize={26} fontWeight="800">
           {displayName}
@@ -209,8 +213,8 @@ export default function IncomingCallScreen() {
           disabled={decided}
           style={styles.declineButton}
           accessibilityRole="button"
-          accessibilityLabel="Refuser l'appel"
-          accessibilityHint="Tap pour refuser cet appel entrant"
+          accessibilityLabel={t.messaging.calls.incoming.declineA11y}
+          accessibilityHint={t.messaging.calls.incoming.declineHint}
         >
           <PhoneOff size={32} color="#FFFFFF" />
         </Pressable>
@@ -221,8 +225,8 @@ export default function IncomingCallScreen() {
           disabled={decided}
           style={styles.acceptButton}
           accessibilityRole="button"
-          accessibilityLabel="Accepter l'appel"
-          accessibilityHint={`Tap pour répondre à l'appel ${callType === 'video' ? 'vidéo' : 'audio'}`}
+          accessibilityLabel={t.messaging.calls.incoming.acceptA11y}
+          accessibilityHint={t.messaging.calls.incoming.acceptHint(callType)}
         >
           <Phone size={32} color="#FFFFFF" />
         </Pressable>

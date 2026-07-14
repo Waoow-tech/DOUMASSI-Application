@@ -13,6 +13,8 @@ import { ChevronDown, MapPin, SlidersHorizontal } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text, View, XStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 export interface QuickFiltersBarProps {
   /** Vrai si des filtres avancés sont actifs → on highlight le bouton réglages. */
   hasActiveAdvancedFilters?: boolean;
@@ -20,17 +22,20 @@ export interface QuickFiltersBarProps {
   onOpenAdvanced: () => void;
 }
 
-const QUICK_FILTERS: { id: 'sort' | 'price' | 'condition' | 'distance'; label: string }[] = [
-  { id: 'sort', label: 'Trier' },
-  { id: 'price', label: 'Prix' },
-  { id: 'condition', label: 'État' },
-  { id: 'distance', label: 'Distance' },
-];
-
 export function QuickFiltersBar({
   hasActiveAdvancedFilters = false,
   onOpenAdvanced,
 }: QuickFiltersBarProps) {
+  const t = useTranslations();
+
+  // Libellés issus du dico (reconstruits à chaque render — liste statique courte).
+  const quickFilters: { id: 'sort' | 'price' | 'condition' | 'distance'; label: string }[] = [
+    { id: 'sort', label: t.marketplace.quickFilters.sort },
+    { id: 'price', label: t.marketplace.quickFilters.price },
+    { id: 'condition', label: t.marketplace.quickFilters.condition },
+    { id: 'distance', label: t.marketplace.quickFilters.distance },
+  ];
+
   return (
     <XStack alignItems="center" gap={8} paddingHorizontal={12} paddingVertical={8} height={52}>
       {/*
@@ -46,13 +51,13 @@ export function QuickFiltersBar({
         keyboardShouldPersistTaps="handled"
         style={styles.scroll}
       >
-        {QUICK_FILTERS.map((filter) => (
+        {quickFilters.map((filter) => (
           <Pressable
             key={filter.id}
             onPress={onOpenAdvanced}
             accessibilityRole="button"
-            accessibilityLabel={`Filtre ${filter.label}`}
-            accessibilityHint="Tap pour ouvrir les filtres avancés"
+            accessibilityLabel={t.marketplace.quickFilters.filterA11y(filter.label)}
+            accessibilityHint={t.marketplace.quickFilters.filterHint}
             style={styles.pill}
           >
             {filter.id === 'distance' ? <MapPin size={14} color="#FFFFFF" strokeWidth={2} /> : null}
@@ -68,8 +73,8 @@ export function QuickFiltersBar({
       <Pressable
         onPress={onOpenAdvanced}
         accessibilityRole="button"
-        accessibilityLabel="Filtres avancés"
-        accessibilityHint="Tap pour ouvrir tous les filtres"
+        accessibilityLabel={t.marketplace.quickFilters.advancedA11y}
+        accessibilityHint={t.marketplace.quickFilters.advancedHint}
         accessibilityState={{ selected: hasActiveAdvancedFilters }}
         style={[
           styles.advancedButton,

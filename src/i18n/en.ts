@@ -1,7 +1,19 @@
 // ENGLISH dictionary — E11-01.
 // Must cover exactly the same keys as fr.ts (typed as `Translations`, so a
 // missing key is a TypeScript error).
+//
+// Sections splash/auth/profile/settings inline (fondation E11-01).
+// Zones E11-02→09 agrégées depuis src/i18n/en/<zone>.ts (chaque fichier est typé
+// contre son homologue FR → parité de clés garantie à la compilation).
 
+import { commonEn } from './en/common';
+import { coursEn } from './en/cours';
+import { feedEn } from './en/feed';
+import { gamesEn } from './en/games';
+import { marketplaceEn } from './en/marketplace';
+import { messagingEn } from './en/messaging';
+import { notificationsEn } from './en/notifications';
+import { profileScreensEn } from './en/profileScreens';
 import type { Translations } from './fr';
 
 export const en: Translations = {
@@ -116,4 +128,12 @@ export const en: Translations = {
     languageFr: 'Français',
     languageEn: 'English',
   },
+  feed: feedEn,
+  profileScreens: profileScreensEn,
+  messaging: messagingEn,
+  notifications: notificationsEn,
+  marketplace: marketplaceEn,
+  cours: coursEn,
+  games: gamesEn,
+  common: commonEn,
 };

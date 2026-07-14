@@ -41,7 +41,7 @@ import {
   profileQueryKey,
   useCurrentProfile,
 } from '@/features/profile/hooks/useProfile';
-import { useTranslations } from '@/i18n';
+import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 import { useLanguageStore } from '@/stores/languageStore';
@@ -63,7 +63,8 @@ const COLORS = {
 type SettingsIcon = React.ComponentType<{ size?: number; color?: string }>;
 
 function soonAlert() {
-  Alert.alert('Bientôt disponible', 'Cette fonctionnalité arrive prochainement.');
+  const t = getT();
+  Alert.alert(t.profileScreens.settings.soonTitle, t.profileScreens.settings.soonMessage);
 }
 
 function getInitials(name: string, email: string | null) {
@@ -80,6 +81,7 @@ function getInitials(name: string, email: string | null) {
 
 function usePrivacyToggle() {
   const queryClient = useQueryClient();
+  const t = useTranslations();
 
   return useMutation({
     mutationFn: async ({ profileId, isPrivate }: { profileId: string; isPrivate: boolean }) => {
@@ -108,8 +110,8 @@ function usePrivacyToggle() {
       }
 
       Alert.alert(
-        'Mise à jour impossible',
-        'Le changement de confidentialité a échoué. Réessaie dans un instant.'
+        t.profileScreens.settings.privacyErrorTitle,
+        t.profileScreens.settings.privacyErrorMessage
       );
     },
     onSettled: () => {
@@ -235,7 +237,11 @@ function ToggleRow({
 }
 
 function ProfileCard({ profile }: { profile: ProfileData }) {
-  const displayName = profile.full_name?.trim() || profile.username || 'User';
+  const t = useTranslations();
+  const displayName =
+    profile.full_name?.trim() ||
+    profile.username ||
+    t.profileScreens.settings.profileCardUserFallback;
   const initials = getInitials(displayName, profile.email);
 
   return (
@@ -290,7 +296,7 @@ function ProfileCard({ profile }: { profile: ProfileData }) {
           {displayName}
         </Text>
         <Text color="$textSecondary" fontSize={13} numberOfLines={1}>
-          {profile.email ?? 'No email'}
+          {profile.email ?? t.profileScreens.settings.profileCardNoEmail}
         </Text>
       </YStack>
 
@@ -321,16 +327,14 @@ export default function SettingsScreen() {
       // Si l'export est tronqué (volume > 10 MB, rarissime en bêta), on alerte.
       if (result.truncated) {
         Alert.alert(
-          'Export partiel',
-          'Votre export contient un très grand volume de données. Les messages les plus anciens ont été tronqués. Contactez le support pour un export complet.'
+          t.profileScreens.settings.exportPartialTitle,
+          t.profileScreens.settings.exportPartialMessage
         );
       }
     } catch (err) {
       Alert.alert(
-        'Export impossible',
-        err instanceof Error
-          ? err.message
-          : "L'export a échoué. Réessayez dans un instant ou contactez le support."
+        t.profileScreens.settings.exportFailedTitle,
+        err instanceof Error ? err.message : t.profileScreens.settings.exportFailedMessage
       );
     }
   };
@@ -346,13 +350,13 @@ export default function SettingsScreen() {
 
   const doumassiFeatures = useMemo(
     () => [
-      { icon: Wallet, label: 'Portefeuille' },
-      { icon: Sparkles, label: 'Intelligence Art.' },
-      { icon: Store, label: 'Marketplace' },
-      { icon: MessageSquare, label: 'Messagerie' },
-      { icon: Phone, label: 'Appels' },
+      { icon: Wallet, label: t.profileScreens.settings.featureWallet },
+      { icon: Sparkles, label: t.profileScreens.settings.featureAi },
+      { icon: Store, label: t.profileScreens.settings.featureMarketplace },
+      { icon: MessageSquare, label: t.profileScreens.settings.featureMessaging },
+      { icon: Phone, label: t.profileScreens.settings.featureCalls },
     ],
-    []
+    [t]
   );
 
   const confirmLogout = () => {
@@ -386,7 +390,7 @@ export default function SettingsScreen() {
   if (!profile) {
     return (
       <YStack flex={1} backgroundColor="$background" alignItems="center" justifyContent="center">
-        <Text color="$textSecondary">Profil indisponible.</Text>
+        <Text color="$textSecondary">{t.profileScreens.settings.profileUnavailable}</Text>
       </YStack>
     );
   }
@@ -412,7 +416,7 @@ export default function SettingsScreen() {
               cursor="pointer"
               padding="$1"
               accessibilityRole="button"
-              accessibilityLabel="Retour"
+              accessibilityLabel={t.profileScreens.settings.backAccessibilityLabel}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <ChevronLeft size={24} color="#FFFFFF" />
@@ -421,37 +425,37 @@ export default function SettingsScreen() {
           </XStack>
 
           <Text color="$color" fontSize={26} fontWeight="700" fontFamily="$heading">
-            Settings
+            {t.profileScreens.settings.title}
           </Text>
 
           <ProfileCard profile={profile} />
 
-          <Section title="Confidentialité">
+          <Section title={t.profileScreens.settings.sectionPrivacy}>
             <ToggleRow
               icon={Lock}
-              label="Profil privé"
+              label={t.profileScreens.settings.privateProfile}
               checked={Boolean(profile.is_private)}
               disabled={privacyToggle.isPending}
               onCheckedChange={handlePrivacyChange}
             />
             <SettingRow
               icon={EyeOff}
-              label="Posts masqués"
+              label={t.profileScreens.settings.hiddenPosts}
               onPress={() => router.push('/settings/hidden-posts')}
               isLast
             />
           </Section>
 
-          <Section title="Notifications">
+          <Section title={t.profileScreens.settings.sectionNotifications}>
             <ToggleRow
               icon={Bell}
-              label="Notifications push"
+              label={t.profileScreens.settings.pushNotifications}
               checked={pushNotifications}
               onCheckedChange={setPushNotifications}
             />
             <ToggleRow
               icon={Mail}
-              label="Notifications email"
+              label={t.profileScreens.settings.emailNotifications}
               checked={emailNotifications}
               onCheckedChange={setEmailNotifications}
               isLast
@@ -476,20 +480,20 @@ export default function SettingsScreen() {
             />
           </Section>
 
-          <Section title="Compte">
+          <Section title={t.profileScreens.settings.sectionAccount}>
             <SettingRow
               icon={User}
-              label="Modifier mon profil"
+              label={t.profileScreens.settings.editProfile}
               onPress={() => router.push('/profile/edit')}
             />
             <SettingRow
               icon={KeyRound}
-              label="Changer le mot de passe"
+              label={t.profileScreens.settings.changePassword}
               onPress={() => router.push('/(feed)/settings/change-password')}
             />
             <SettingRow
               icon={Download}
-              label="Exporter mes données"
+              label={t.profileScreens.settings.exportData}
               trailing={exportMyData.isPending ? <Spinner color="$accentNeon" /> : null}
               onPress={() => {
                 if (!exportMyData.isPending) void handleExportData();
@@ -497,53 +501,62 @@ export default function SettingsScreen() {
             />
             <SettingRow
               icon={Trash2}
-              label="Supprimer mon compte"
+              label={t.profileScreens.settings.deleteAccount}
               destructive
               onPress={() => router.push('/(feed)/settings/delete-account')}
               isLast
             />
           </Section>
 
-          <Section title="Fonctionnalités DOUMASSI">
+          <Section title={t.profileScreens.settings.sectionFeatures}>
             {doumassiFeatures.map((item, index) => (
               <SettingRow
                 key={item.label}
                 icon={item.icon}
                 label={item.label}
-                trailing={<Badge>Bientôt</Badge>}
+                trailing={<Badge>{t.profileScreens.settings.badgeSoon}</Badge>}
                 onPress={soonAlert}
                 isLast={index === doumassiFeatures.length - 1}
               />
             ))}
           </Section>
 
-          <Section title="Modération">
+          <Section title={t.profileScreens.settings.sectionModeration}>
             <SettingRow
               icon={Shield}
-              label="Utilisateurs bloqués"
+              label={t.profileScreens.settings.blockedUsers}
               trailing={blockedUsersCount > 0 ? <Badge isCount>{blockedUsersCount}</Badge> : null}
               onPress={() => router.push('/settings/blocked')}
               isLast
             />
           </Section>
 
-          <Section title="Légal">
+          <Section title={t.profileScreens.settings.sectionLegal}>
             <SettingRow
               icon={FileText}
-              label="Conditions d'utilisation"
+              label={t.profileScreens.settings.terms}
               onPress={() => router.push('/terms')}
             />
             <SettingRow
               icon={ShieldCheck}
-              label="Politique de confidentialité"
+              label={t.profileScreens.settings.privacyPolicy}
               onPress={() => router.push('/privacy')}
               isLast
             />
           </Section>
 
-          <Section title="Aide">
-            <SettingRow icon={MessageCircle} label="Nous contacter" onPress={openSupportEmail} />
-            <SettingRow icon={Info} label="À propos" onPress={() => setAboutOpen(true)} isLast />
+          <Section title={t.profileScreens.settings.sectionHelp}>
+            <SettingRow
+              icon={MessageCircle}
+              label={t.profileScreens.settings.contactUs}
+              onPress={openSupportEmail}
+            />
+            <SettingRow
+              icon={Info}
+              label={t.profileScreens.settings.about}
+              onPress={() => setAboutOpen(true)}
+              isLast
+            />
           </Section>
 
           <Button
@@ -598,10 +611,10 @@ export default function SettingsScreen() {
               DOUMASSI
             </Text>
             <Text color="$textSecondary" fontSize={14} textAlign="center">
-              Version 1.0.0 — MVP June 2026
+              {t.profileScreens.settings.aboutVersion}
             </Text>
             <Text color="$placeholderColor" fontSize={12} textAlign="center" marginTop="$2">
-              © 2026 DOUMASSI. Tous droits réservés.
+              {t.profileScreens.settings.aboutRights}
             </Text>
           </YStack>
         </Sheet.Frame>

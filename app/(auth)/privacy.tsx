@@ -18,6 +18,7 @@ import {
   privacyEnSections,
   privacyFrSections,
 } from '@/features/legal/content/privacy';
+import { useTranslations } from '@/i18n';
 
 const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
@@ -41,6 +42,8 @@ function SectionList({ sections }: { sections: LegalSection[] }) {
 }
 
 export default function PrivacyScreen() {
+  const t = useTranslations();
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
       <YStack flex={1} backgroundColor="$background">
@@ -59,12 +62,12 @@ export default function PrivacyScreen() {
             size="$3"
             chromeless
             pressStyle={{ opacity: 0.65 }}
-            accessibilityLabel="Go back"
+            accessibilityLabel={t.common.a11y.goBack}
           >
             <ChevronLeft size={26} color="#FFFFFF" />
           </Button>
           <Text color="$color" fontSize={18} fontWeight="700" fontFamily="$heading">
-            Privacy Policy
+            {t.common.privacy.title}
           </Text>
           <YStack width={40} height={40} />
         </XStack>
@@ -85,10 +88,10 @@ export default function PrivacyScreen() {
                 source={logoSource}
                 style={{ width: 56, height: 56 }}
                 contentFit="contain"
-                accessibilityLabel="Logo DOUMASSI"
+                accessibilityLabel={t.common.a11y.logo}
               />
               <Text color="$textSecondary" fontSize={12}>
-                Version {PRIVACY_CURRENT_VERSION}
+                {t.common.legal.version(PRIVACY_CURRENT_VERSION)}
               </Text>
             </YStack>
 

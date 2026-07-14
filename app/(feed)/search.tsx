@@ -7,6 +7,7 @@ import { Button, Input, Spinner, Text, XStack, YStack } from 'tamagui';
 
 import { UserRow } from '@/features/profile/components/UserRow';
 import { type SearchUserResult, useSearchUsers } from '@/features/profile/hooks/useSearchUsers';
+import { useTranslations } from '@/i18n';
 
 function SearchState({ icon, title }: { icon: 'search' | 'error'; title: string }) {
   const Icon = icon === 'search' ? Search : AlertCircle;
@@ -22,6 +23,7 @@ function SearchState({ icon, title }: { icon: 'search' | 'error'; title: string 
 }
 
 export default function SearchScreen() {
+  const t = useTranslations();
   const [query, setQuery] = useState('');
   const { users, debouncedQuery, canSearch, isLoading, isError } = useSearchUsers(query);
 
@@ -57,7 +59,7 @@ export default function SearchScreen() {
               borderWidth={0}
               backgroundColor="transparent"
               color="$color"
-              placeholder="Search users..."
+              placeholder={t.feed.search.placeholder}
               placeholderTextColor="$placeholderColor"
               autoCapitalize="none"
               autoCorrect={false}
@@ -75,7 +77,7 @@ export default function SearchScreen() {
                 chromeless
                 onPress={() => setQuery('')}
                 pressStyle={{ opacity: 0.65 }}
-                accessibilityLabel="Clear search"
+                accessibilityLabel={t.feed.search.clearSearch}
               >
                 <X size={18} color="#A0A0A0" />
               </Button>
@@ -84,15 +86,15 @@ export default function SearchScreen() {
         </YStack>
 
         {showEmptyState ? (
-          <SearchState icon="search" title="Search by username or name" />
+          <SearchState icon="search" title={t.feed.search.emptyState} />
         ) : isLoading ? (
           <YStack flex={1} alignItems="center" justifyContent="center">
             <Spinner size="large" color="$color" />
           </YStack>
         ) : isError ? (
-          <SearchState icon="error" title="Search failed. Please try again." />
+          <SearchState icon="error" title={t.feed.search.searchError} />
         ) : showNoResults ? (
-          <SearchState icon="search" title={`No users found for '@${debouncedQuery}'`} />
+          <SearchState icon="search" title={t.feed.search.noResults(debouncedQuery)} />
         ) : (
           <FlashList<SearchUserResult>
             data={users}

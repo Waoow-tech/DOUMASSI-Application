@@ -18,8 +18,10 @@ import {
   useToggleResourceBookmark,
   type ResourceListItem,
 } from '@/features/cours/hooks/useResources';
+import { useTranslations } from '@/i18n';
 
 export default function CoursBookmarksScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlashListRef<ResourceListItem>>(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
@@ -113,12 +115,12 @@ export default function CoursBookmarksScreen() {
             onPress={handleBack}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Retour"
+            accessibilityLabel={t.cours.common.back}
           >
             <ArrowLeft size={24} color="#FFFFFF" />
           </Pressable>
           <Text flex={1} color="$color" fontSize={18} fontWeight="700">
-            Mes ressources
+            {t.cours.bookmarks.title}
           </Text>
         </XStack>
 
@@ -136,10 +138,10 @@ export default function CoursBookmarksScreen() {
               gap={8}
             >
               <Text fontSize={16} fontWeight="700" color="$color">
-                Impossible de charger tes ressources
+                {t.cours.bookmarks.errorTitle}
               </Text>
               <Text fontSize={13} color="$textSecondary" textAlign="center">
-                Tire vers le bas pour réessayer.
+                {t.cours.common.pullToRetry}
               </Text>
             </YStack>
           ) : allResources.length === 0 ? (
@@ -152,19 +154,19 @@ export default function CoursBookmarksScreen() {
             >
               <BookmarkX size={48} color="#666" strokeWidth={1.5} />
               <Text fontSize={16} fontWeight="700" color="$color" textAlign="center">
-                Aucune ressource sauvegardée
+                {t.cours.bookmarks.emptyTitle}
               </Text>
               <Text fontSize={13} color="$textSecondary" textAlign="center">
-                Touche l&apos;icône signet sur une ressource pour la retrouver ici.
+                {t.cours.bookmarks.emptySubtitle}
               </Text>
               <Pressable
                 onPress={() => router.replace('/cours')}
                 accessibilityRole="button"
-                accessibilityLabel="Explorer les ressources"
+                accessibilityLabel={t.cours.bookmarks.exploreCta}
                 style={styles.cta}
               >
                 <Text fontSize={14} fontWeight="800" color="#000000">
-                  Explorer les ressources
+                  {t.cours.bookmarks.exploreCta}
                 </Text>
               </Pressable>
             </YStack>

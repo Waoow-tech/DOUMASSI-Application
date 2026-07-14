@@ -10,7 +10,9 @@ import { useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Sheet, Text, TextArea, XStack, YStack } from 'tamagui';
 
-import { parseQuizImport, QUIZ_IMPORT_PROMPT, type ParsedQuizQuestion } from '../lib/quizImport';
+import { useTranslations } from '@/i18n';
+
+import { parseQuizImport, type ParsedQuizQuestion } from '../lib/quizImport';
 
 export interface QuizImportSheetProps {
   open: boolean;
@@ -19,12 +21,13 @@ export interface QuizImportSheetProps {
 }
 
 export function QuizImportSheet({ open, onOpenChange, onImport }: QuizImportSheetProps) {
+  const t = useTranslations();
   const [pasted, setPasted] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const handleCopyPrompt = async () => {
-    await Clipboard.setStringAsync(QUIZ_IMPORT_PROMPT);
+    await Clipboard.setStringAsync(t.cours.quizImport.prompt);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -60,18 +63,18 @@ export function QuizImportSheet({ open, onOpenChange, onImport }: QuizImportShee
       >
         <YStack gap={14} flex={1}>
           <Text fontSize={18} fontWeight="800" color="$color">
-            Importer depuis ton IA
+            {t.cours.quizImport.title}
           </Text>
 
           {/* Étape 1 */}
           <YStack gap={8}>
             <Text fontSize={13} color="$textSecondary">
-              1. Copie ce prompt, colle-le dans ton IA (ChatGPT, etc.) avec ton cours.
+              {t.cours.quizImport.step1}
             </Text>
             <Pressable
               onPress={() => void handleCopyPrompt()}
               accessibilityRole="button"
-              accessibilityLabel="Copier le prompt"
+              accessibilityLabel={t.cours.quizImport.copyPromptA11y}
               style={styles.copyBtn}
             >
               <XStack alignItems="center" justifyContent="center" gap={8}>
@@ -81,7 +84,7 @@ export function QuizImportSheet({ open, onOpenChange, onImport }: QuizImportShee
                   <Copy size={16} color="#000000" strokeWidth={2.2} />
                 )}
                 <Text fontSize={14} fontWeight="800" color="#000000">
-                  {copied ? 'Prompt copié !' : 'Copier le prompt'}
+                  {copied ? t.cours.quizImport.copied : t.cours.quizImport.copyPrompt}
                 </Text>
               </XStack>
             </Pressable>
@@ -90,12 +93,12 @@ export function QuizImportSheet({ open, onOpenChange, onImport }: QuizImportShee
           {/* Étape 2 */}
           <YStack gap={8} flex={1}>
             <Text fontSize={13} color="$textSecondary">
-              2. Colle ici la réponse JSON de ton IA.
+              {t.cours.quizImport.step2}
             </Text>
             <TextArea
               value={pasted}
-              onChangeText={(t) => {
-                setPasted(t);
+              onChangeText={(text) => {
+                setPasted(text);
                 if (error) setError(null);
               }}
               placeholder='[ { "prompt": "…", "type": "single", "options": [ … ] } ]'
@@ -111,7 +114,7 @@ export function QuizImportSheet({ open, onOpenChange, onImport }: QuizImportShee
               textAlignVertical="top"
               autoCapitalize="none"
               autoCorrect={false}
-              accessibilityLabel="Coller le JSON du quiz"
+              accessibilityLabel={t.cours.quizImport.jsonA11y}
             />
             {error ? (
               <Text fontSize={12} color="#FF6B6B">
@@ -124,11 +127,11 @@ export function QuizImportSheet({ open, onOpenChange, onImport }: QuizImportShee
           <Pressable
             onPress={handleImport}
             accessibilityRole="button"
-            accessibilityLabel="Importer les questions"
+            accessibilityLabel={t.cours.quizImport.importA11y}
             style={styles.importBtn}
           >
             <Text fontSize={15} fontWeight="800" color="#000000">
-              Importer les questions
+              {t.cours.quizImport.importCta}
             </Text>
           </Pressable>
         </YStack>

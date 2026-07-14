@@ -24,6 +24,7 @@ import {
   useDeleteComment,
   useToggleCommentLike,
 } from '@/features/comments/hooks/useComments';
+import { getT, useTranslations } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 
 type CommentsSheetProps = {
@@ -42,10 +43,11 @@ function getErrorMessage(error: unknown) {
     if (typeof message === 'string' && message.trim()) return message;
   }
 
-  return 'Impossible de publier ce commentaire pour le moment.';
+  return getT().feed.comments.publishErrorFallback;
 }
 
 export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps) {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const commentsQuery = useComments(postId);
   const createComment = useCreateComment(postId);
@@ -116,7 +118,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
     } catch (error) {
       const message = getErrorMessage(error);
 
-      Alert.alert('Commentaire non envoyé', `${message} Réessayez dans un instant.`);
+      Alert.alert(t.feed.comments.sendErrorTitle, t.feed.comments.sendErrorMessage(message));
     }
   };
 
@@ -160,7 +162,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
             <XStack alignItems="center">
               <XStack alignItems="baseline" gap={8} flex={1}>
                 <Text color="$color" fontSize={18} fontWeight="800">
-                  Commentaires
+                  {t.feed.comments.title}
                 </Text>
                 <Text color="$textSecondary" fontSize={13} fontWeight="700">
                   {countLabel}
@@ -171,7 +173,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
                 onPress={() => onOpenChange(false)}
                 hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
                 accessibilityRole="button"
-                accessibilityLabel="Fermer les commentaires"
+                accessibilityLabel={t.feed.comments.closeA11y}
                 style={styles.closeButton}
               >
                 <X size={20} color="#FFFFFF" />
@@ -200,7 +202,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
                 ListEmptyComponent={
                   <YStack flex={1} alignItems="center" justifyContent="center" paddingTop={88}>
                     <Text color="$textSecondary" fontSize={15} fontWeight="600">
-                      Soyez le premier à commenter !
+                      {t.feed.comments.empty}
                     </Text>
                   </YStack>
                 }
@@ -228,13 +230,13 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
                 paddingVertical={8}
               >
                 <Text color="$textSecondary" fontSize={13} flex={1} numberOfLines={1}>
-                  Réponse à @{replyTo.author_username}
+                  {t.feed.comments.replyingTo(replyTo.author_username)}
                 </Text>
                 <Pressable
                   onPress={() => setReplyTo(null)}
                   hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
                   accessibilityRole="button"
-                  accessibilityLabel="Annuler la réponse"
+                  accessibilityLabel={t.feed.comments.cancelReplyA11y}
                 >
                   <X size={16} color="#A1A1AA" />
                 </Pressable>
@@ -245,7 +247,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
               <TextInput
                 value={content}
                 onChangeText={setContent}
-                placeholder="Ajouter un commentaire..."
+                placeholder={t.feed.comments.inputPlaceholder}
                 placeholderTextColor="#8E8E93"
                 multiline
                 maxLength={500}

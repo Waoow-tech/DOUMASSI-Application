@@ -4,10 +4,11 @@ import { Pressable, StyleSheet } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
 import type { ConversationListRow } from '@/features/messaging/hooks/useMyConversations';
+import { useTranslations, type Translations } from '@/i18n';
 
 const AVATAR_SIZE = 52;
 
-function formatTimeAgo(value: string) {
+function formatTimeAgo(value: string, t: Translations) {
   const date = new Date(value);
   const timestamp = date.getTime();
 
@@ -18,10 +19,11 @@ function formatTimeAgo(value: string) {
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffSeconds < 60) return 'maintenant';
-  if (diffMinutes < 60) return `${diffMinutes} min`;
-  if (diffHours < 24) return `${diffHours} h`;
-  if (diffDays < 7) return `${diffDays} j`;
+  const time = t.messaging.conversationRow.time;
+  if (diffSeconds < 60) return time.now;
+  if (diffMinutes < 60) return time.minutesAgo(diffMinutes);
+  if (diffHours < 24) return time.hoursAgo(diffHours);
+  if (diffDays < 7) return time.daysAgo(diffDays);
 
   return date.toLocaleDateString('fr-FR', {
     day: '2-digit',
@@ -40,7 +42,9 @@ export function ConversationRow({
   conversation: ConversationListRow;
   onPress: () => void;
 }) {
-  const preview = conversation.last_message_preview?.trim() || 'Aucun message';
+  const t = useTranslations();
+  const preview =
+    conversation.last_message_preview?.trim() || t.messaging.conversationRow.noMessage;
   const initial = conversation.display_name.charAt(0).toUpperCase() || '?';
   const hasUnread = conversation.unread_count > 0;
 
@@ -48,7 +52,7 @@ export function ConversationRow({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Conversation avec ${conversation.display_name}`}
+      accessibilityLabel={t.messaging.conversationRow.conversationWith(conversation.display_name)}
     >
       <XStack paddingHorizontal="$4" paddingVertical="$3" alignItems="center" gap="$3">
         <YStack
@@ -82,7 +86,7 @@ export function ConversationRow({
             </Text>
             {conversation.muted ? <BellOff size={15} color="#A0A0A0" /> : null}
             <Text color="$textSecondary" fontSize={12} minWidth={42} textAlign="right">
-              {formatTimeAgo(conversation.last_message_at)}
+              {formatTimeAgo(conversation.last_message_at, t)}
             </Text>
           </XStack>
 

@@ -23,20 +23,17 @@ import {
   useToggleCoursFollow,
 } from '@/features/cours/hooks/useCoursFollows';
 import {
-  RESOURCE_TYPE_LABEL,
+  RESOURCE_TYPES,
   useResources,
   useToggleResourceBookmark,
   type ResourceListItem,
   type ResourceType,
   type ResourcesFilters,
 } from '@/features/cours/hooks/useResources';
-
-const TYPE_OPTIONS = (Object.keys(RESOURCE_TYPE_LABEL) as ResourceType[]).map((t) => ({
-  value: t,
-  label: RESOURCE_TYPE_LABEL[t],
-}));
+import { useTranslations } from '@/i18n';
 
 export default function ApprendreScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlashListRef<ResourceListItem>>(null);
 
@@ -93,6 +90,10 @@ export default function ApprendreScreen() {
   const subjectOptions = useMemo(
     () => (subjectsQuery.data ?? []).map((s) => ({ value: s.code, label: s.label })),
     [subjectsQuery.data]
+  );
+  const typeOptions = useMemo(
+    () => RESOURCE_TYPES.map((rt) => ({ value: rt, label: t.cours.resourceType[rt] })),
+    [t]
   );
 
   const filters = useMemo<ResourcesFilters>(
@@ -175,18 +176,18 @@ export default function ApprendreScreen() {
             onPress={handleBack}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Retour"
+            accessibilityLabel={t.cours.common.back}
           >
             <ArrowLeft size={24} color="#FFFFFF" />
           </Pressable>
           <Text flex={1} color="$color" fontSize={18} fontWeight="700">
-            Apprendre
+            {t.cours.library.title}
           </Text>
           <Pressable
             onPress={() => router.push('/cours/feed')}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Mon fil"
+            accessibilityLabel={t.cours.library.myFeedA11y}
           >
             <Rss size={21} color="#FFFFFF" strokeWidth={2.2} />
           </Pressable>
@@ -194,7 +195,7 @@ export default function ApprendreScreen() {
             onPress={() => router.push('/cours/bookmarks')}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Mes ressources sauvegardées"
+            accessibilityLabel={t.cours.library.bookmarksA11y}
           >
             <Bookmark size={22} color="#FFFFFF" strokeWidth={2.2} />
           </Pressable>
@@ -202,7 +203,7 @@ export default function ApprendreScreen() {
             onPress={() => router.push('/cours/create')}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Publier une ressource"
+            accessibilityLabel={t.cours.library.createA11y}
             style={styles.createButton}
           >
             <Plus size={20} color="#000000" strokeWidth={2.6} />
@@ -226,7 +227,7 @@ export default function ApprendreScreen() {
               borderWidth={0}
               backgroundColor="transparent"
               color="$color"
-              placeholder="Rechercher un cours, une fiche…"
+              placeholder={t.cours.library.searchPlaceholder}
               placeholderTextColor="$placeholderColor"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -234,14 +235,14 @@ export default function ApprendreScreen() {
               autoCorrect={false}
               fontSize={15}
               paddingHorizontal={0}
-              accessibilityLabel="Rechercher une ressource"
+              accessibilityLabel={t.cours.library.searchA11y}
             />
             {searchQuery.length > 0 ? (
               <Pressable
                 onPress={() => setSearchQuery('')}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
-                accessibilityLabel="Effacer la recherche"
+                accessibilityLabel={t.cours.library.clearSearchA11y}
               >
                 <X size={16} color="#A0A0A0" />
               </Pressable>
@@ -255,19 +256,19 @@ export default function ApprendreScreen() {
             options={subjectOptions}
             selected={subjectCode}
             onSelect={setSubjectCode}
-            allLabel="Toutes matières"
+            allLabel={t.cours.library.allSubjects}
           />
           <TaxonomyChips
             options={levelOptions}
             selected={levelCode}
             onSelect={setLevelCode}
-            allLabel="Tous niveaux"
+            allLabel={t.cours.library.allLevels}
           />
           <TaxonomyChips
-            options={TYPE_OPTIONS}
+            options={typeOptions}
             selected={type}
             onSelect={(v) => setType(v as ResourceType | null)}
-            allLabel="Tous types"
+            allLabel={t.cours.library.allTypes}
           />
         </YStack>
 
@@ -281,8 +282,8 @@ export default function ApprendreScreen() {
               accessibilityRole="button"
               accessibilityLabel={
                 isFollowingActive
-                  ? `Ne plus suivre ${activeFollow.label}`
-                  : `Suivre ${activeFollow.label}`
+                  ? t.cours.library.unfollow(activeFollow.label)
+                  : t.cours.library.follow(activeFollow.label)
               }
               accessibilityState={{ selected: isFollowingActive }}
               style={[styles.followPill, isFollowingActive ? styles.followPillOn : null]}
@@ -299,8 +300,8 @@ export default function ApprendreScreen() {
                   color={isFollowingActive ? '#000000' : '$color'}
                 >
                   {isFollowingActive
-                    ? `Suivi · ${activeFollow.label}`
-                    : `Suivre ${activeFollow.label}`}
+                    ? t.cours.library.following(activeFollow.label)
+                    : t.cours.library.follow(activeFollow.label)}
                 </Text>
               </XStack>
             </Pressable>
@@ -322,10 +323,10 @@ export default function ApprendreScreen() {
               gap={8}
             >
               <Text fontSize={16} fontWeight="700" color="$color">
-                Impossible de charger les ressources
+                {t.cours.library.errorTitle}
               </Text>
               <Text fontSize={13} color="$textSecondary" textAlign="center">
-                Tire vers le bas pour réessayer.
+                {t.cours.common.pullToRetry}
               </Text>
             </YStack>
           ) : allResources.length === 0 ? (
@@ -337,12 +338,12 @@ export default function ApprendreScreen() {
               gap={8}
             >
               <Text fontSize={16} fontWeight="700" color="$color">
-                Aucune ressource trouvée
+                {t.cours.library.emptyTitle}
               </Text>
               <Text fontSize={13} color="$textSecondary" textAlign="center">
                 {searchQuery.length > 0
-                  ? `Rien ne correspond à "${searchQuery}".`
-                  : 'Sois le premier à partager un cours ici.'}
+                  ? t.cours.library.emptySearch(searchQuery)
+                  : t.cours.library.emptyDefault}
               </Text>
             </YStack>
           ) : (

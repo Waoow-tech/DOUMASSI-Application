@@ -14,6 +14,8 @@ import { useCallback } from 'react';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 export interface ListingImagePickerProps {
   /** URIs locales (avant upload) ou URLs distantes (édition future). */
   images: string[];
@@ -31,6 +33,7 @@ export function ListingImagePicker({
   maxImages = DEFAULT_MAX,
   disabled = false,
 }: ListingImagePickerProps) {
+  const t = useTranslations();
   const canAdd = images.length < maxImages && !disabled;
 
   const pickFromGallery = useCallback(async () => {
@@ -49,8 +52,8 @@ export function ListingImagePicker({
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
       Alert.alert(
-        'Caméra non autorisée',
-        'Active la caméra dans les réglages pour prendre une photo.'
+        t.marketplace.imagePicker.cameraDeniedTitle,
+        t.marketplace.imagePicker.cameraDeniedMessage
       );
       return;
     }
@@ -61,20 +64,20 @@ export function ListingImagePicker({
     if (result.canceled) return;
     const uri = result.assets[0]?.uri;
     if (uri) onChange([...images, uri]);
-  }, [images, onChange]);
+  }, [images, onChange, t]);
 
   const handleAdd = useCallback(() => {
     if (!canAdd) return;
     Alert.alert(
-      'Ajouter une photo',
-      `Tu peux ajouter encore ${maxImages - images.length} photo${maxImages - images.length > 1 ? 's' : ''}.`,
+      t.marketplace.imagePicker.addPhoto,
+      t.marketplace.imagePicker.addMessage(maxImages - images.length),
       [
-        { text: 'Galerie', onPress: () => void pickFromGallery() },
-        { text: 'Caméra', onPress: () => void pickFromCamera() },
-        { text: 'Annuler', style: 'cancel' },
+        { text: t.marketplace.imagePicker.gallery, onPress: () => void pickFromGallery() },
+        { text: t.marketplace.imagePicker.camera, onPress: () => void pickFromCamera() },
+        { text: t.marketplace.common.cancel, style: 'cancel' },
       ]
     );
-  }, [canAdd, images.length, maxImages, pickFromCamera, pickFromGallery]);
+  }, [canAdd, images.length, maxImages, pickFromCamera, pickFromGallery, t]);
 
   const handleRemove = useCallback(
     (index: number) => {
@@ -93,7 +96,7 @@ export function ListingImagePicker({
               onPress={() => handleRemove(i)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
-              accessibilityLabel={`Supprimer la photo ${i + 1}`}
+              accessibilityLabel={t.marketplace.imagePicker.removeA11y(i + 1)}
               style={styles.removeBadge}
             >
               <X size={12} color="#FFFFFF" strokeWidth={3} />
@@ -101,7 +104,7 @@ export function ListingImagePicker({
             {i === 0 ? (
               <View style={styles.coverBadge}>
                 <Text fontSize={9} fontWeight="700" color="#000000">
-                  COUVERTURE
+                  {t.marketplace.imagePicker.cover}
                 </Text>
               </View>
             ) : null}
@@ -114,8 +117,8 @@ export function ListingImagePicker({
             accessibilityRole="button"
             accessibilityLabel={
               images.length === 0
-                ? 'Ajouter une photo'
-                : `Ajouter une photo (${images.length}/${maxImages})`
+                ? t.marketplace.imagePicker.addPhoto
+                : t.marketplace.imagePicker.addPhotoCount(images.length, maxImages)
             }
             style={styles.addTile}
           >
@@ -131,7 +134,7 @@ export function ListingImagePicker({
         ) : null}
       </XStack>
       <Text fontSize={11} color="$textSecondary">
-        La 1ère photo sera utilisée comme couverture. Glisse pour réorganiser bientôt.
+        {t.marketplace.imagePicker.coverHint}
       </Text>
     </YStack>
   );

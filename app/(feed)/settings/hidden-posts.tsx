@@ -9,8 +9,10 @@ import { Button, Spinner, Text, View, XStack, YStack } from 'tamagui';
 
 import { usePostDetail } from '@/features/feed/hooks/useFeed';
 import { useHiddenPosts, useUnhidePost } from '@/features/feed/hooks/useHiddenPosts';
+import { useTranslations } from '@/i18n';
 
 function HiddenPostRow({ postId, onRestored }: { postId: string; onRestored: () => void }) {
+  const t = useTranslations();
   const postQuery = usePostDetail(postId);
   const unhidePostMutation = useUnhidePost();
   const post = postQuery.data;
@@ -56,8 +58,8 @@ function HiddenPostRow({ postId, onRestored }: { postId: string; onRestored: () 
           {post
             ? `@${post.author_username}`
             : postQuery.isLoading
-              ? 'Chargement...'
-              : 'Post indisponible'}
+              ? t.profileScreens.hiddenPosts.loading
+              : t.profileScreens.hiddenPosts.postUnavailable}
         </Text>
         <Text color="$textSecondary" fontSize={13} numberOfLines={1}>
           {post?.content?.trim() || postId}
@@ -79,7 +81,7 @@ function HiddenPostRow({ postId, onRestored }: { postId: string; onRestored: () 
           <Spinner size="small" color="$accentNeon" />
         ) : (
           <Button.Text color="$accentNeon" fontSize={13} fontWeight="700">
-            Réafficher
+            {t.profileScreens.hiddenPosts.restore}
           </Button.Text>
         )}
       </Button>
@@ -88,6 +90,7 @@ function HiddenPostRow({ postId, onRestored }: { postId: string; onRestored: () 
 }
 
 export default function HiddenPostsScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const hiddenPostsQuery = useHiddenPosts();
   const [toastVisible, setToastVisible] = useState(false);
@@ -115,11 +118,11 @@ export default function HiddenPostsScreen() {
       <YStack paddingVertical={100} alignItems="center" gap="$3" paddingHorizontal="$6">
         <EyeOff size={48} color="#A0A0A0" />
         <Text color="$textSecondary" fontSize={16} fontWeight="600" textAlign="center">
-          Aucun post masqué
+          {t.profileScreens.hiddenPosts.emptyTitle}
         </Text>
       </YStack>
     );
-  }, [hiddenPostsQuery.isLoading]);
+  }, [hiddenPostsQuery.isLoading, t]);
 
   return (
     <YStack flex={1} backgroundColor="$background" paddingTop={insets.top}>
@@ -144,7 +147,7 @@ export default function HiddenPostsScreen() {
           fontWeight="700"
           fontFamily="$heading"
         >
-          Posts masqués
+          {t.profileScreens.hiddenPosts.title}
         </Text>
         <View width={24} />
       </XStack>
@@ -178,7 +181,7 @@ export default function HiddenPostsScreen() {
           >
             <EyeOff size={16} color="#FFFFFF" />
             <Text color="$color" fontSize={14} fontWeight="600">
-              Affichage restauré
+              {t.profileScreens.hiddenPosts.restoredToast}
             </Text>
           </XStack>
         </XStack>

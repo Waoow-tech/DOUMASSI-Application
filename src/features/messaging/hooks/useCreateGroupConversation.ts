@@ -7,6 +7,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -20,10 +21,11 @@ export function useCreateGroupConversation() {
 
   return useMutation<string, Error, CreateGroupPayload>({
     mutationFn: async ({ name, participantIds }) => {
+      const t = getT();
       const trimmed = name.trim();
-      if (trimmed.length === 0) throw new Error('Le nom du groupe est requis');
-      if (trimmed.length > 80) throw new Error('Nom trop long (max 80 caractères)');
-      if (participantIds.length === 0) throw new Error('Sélectionne au moins un participant');
+      if (trimmed.length === 0) throw new Error(t.messaging.errors.groupNameRequired);
+      if (trimmed.length > 80) throw new Error(t.messaging.errors.groupNameTooLong);
+      if (participantIds.length === 0) throw new Error(t.messaging.errors.participantRequired);
 
       const { data, error } = await supabase.rpc('create_group_conversation', {
         p_name: trimmed,
@@ -35,7 +37,7 @@ export function useCreateGroupConversation() {
         throw error;
       }
       if (typeof data !== 'string') {
-        throw new Error('Réponse RPC invalide');
+        throw new Error(t.messaging.errors.invalidRpcResponse);
       }
       return data;
     },

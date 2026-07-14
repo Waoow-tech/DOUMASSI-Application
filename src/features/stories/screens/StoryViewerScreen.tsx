@@ -37,6 +37,7 @@ import {
   useMarkStoryViewed,
   useStoriesFeed,
 } from '@/features/stories/hooks/useStoriesFeed';
+import { getT, useTranslations } from '@/i18n';
 
 const PHOTO_DURATION_MS = 5000;
 const MIN_VIDEO_DURATION_MS = 5000;
@@ -49,14 +50,15 @@ function durationOf(story: StoryItem): number {
 }
 
 function formatRelativeTime(value: string): string {
+  const t = getT();
   const createdAt = new Date(value).getTime();
   if (Number.isNaN(createdAt)) return '';
   const elapsedMs = Math.max(0, Date.now() - createdAt);
   const minutes = Math.floor(elapsedMs / 60_000);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `${minutes}min`;
+  if (minutes < 1) return t.feed.stories.viewer.time.justNow;
+  if (minutes < 60) return t.feed.stories.viewer.time.minutes(minutes);
   const hours = Math.floor(minutes / 60);
-  return `${hours}h`;
+  return t.feed.stories.viewer.time.hours(hours);
 }
 
 function ProgressBars({
@@ -137,11 +139,13 @@ function StoryBackground({ story, isPaused }: { story: StoryItem; isPaused: bool
 }
 
 function ErrorState() {
+  const t = useTranslations();
+
   return (
     <YStack flex={1} backgroundColor="#000000" alignItems="center" justifyContent="center" gap={16}>
       <StatusBar hidden />
       <Text color="#FFFFFF" fontSize={18} fontWeight="700">
-        Aucune story à afficher
+        {t.feed.stories.viewer.errorTitle}
       </Text>
       <Button
         height={44}
@@ -152,13 +156,14 @@ function ErrorState() {
         onPress={() => router.back()}
         pressStyle={{ opacity: 0.86, scale: 0.98 }}
       >
-        Retour
+        {t.feed.stories.viewer.back}
       </Button>
     </YStack>
   );
 }
 
 export function StoryViewerScreen() {
+  const t = useTranslations();
   const params = useLocalSearchParams<{ userId?: string }>();
   const userIdParam = typeof params.userId === 'string' ? params.userId : undefined;
 
@@ -307,22 +312,24 @@ export function StoryViewerScreen() {
         onPress={goToPreviousStory}
         style={[styles.tapZone, { width: tapZoneWidth, left: 0 }]}
         accessibilityRole="button"
-        accessibilityLabel="Story précédente"
-        accessibilityHint="Tap pour revenir à la story précédente"
+        accessibilityLabel={t.feed.stories.viewer.previousA11y}
+        accessibilityHint={t.feed.stories.viewer.previousHint}
       />
       <Pressable
         onPress={handleTogglePause}
         style={[styles.tapZone, { width: tapZoneWidth, left: tapZoneWidth }]}
         accessibilityRole="button"
-        accessibilityLabel={isPaused ? 'Reprendre' : 'Pause'}
-        accessibilityHint={isPaused ? 'Tap pour reprendre la lecture' : 'Tap pour mettre en pause'}
+        accessibilityLabel={isPaused ? t.feed.stories.viewer.resume : t.feed.stories.viewer.pause}
+        accessibilityHint={
+          isPaused ? t.feed.stories.viewer.resumeHint : t.feed.stories.viewer.pauseHint
+        }
       />
       <Pressable
         onPress={goToNextStory}
         style={[styles.tapZone, { width: tapZoneWidth, left: tapZoneWidth * 2 }]}
         accessibilityRole="button"
-        accessibilityLabel="Story suivante"
-        accessibilityHint="Tap pour passer à la story suivante"
+        accessibilityLabel={t.feed.stories.viewer.nextA11y}
+        accessibilityHint={t.feed.stories.viewer.nextHint}
       />
 
       {/* Overlays : progress bars + header. Sont au-dessus des tap zones. */}
@@ -344,7 +351,7 @@ export function StoryViewerScreen() {
             onPress={handleOpenAuthor}
             style={styles.authorRow}
             accessibilityRole="button"
-            accessibilityLabel={`Ouvrir le profil de @${currentGroup.author_username}`}
+            accessibilityLabel={t.feed.stories.viewer.openAuthorA11y(currentGroup.author_username)}
           >
             {currentGroup.author_avatar_url ? (
               <Image
@@ -375,7 +382,7 @@ export function StoryViewerScreen() {
             onPress={() => router.back()}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel="Fermer"
+            accessibilityLabel={t.feed.stories.viewer.close}
             style={styles.closeButton}
           >
             <X size={22} color="#FFFFFF" strokeWidth={2.5} />
@@ -388,13 +395,13 @@ export function StoryViewerScreen() {
         <Pressable
           onPress={() => handleViewersOpenChange(true)}
           accessibilityRole="button"
-          accessibilityLabel="Voir qui a vu cette story"
-          accessibilityHint="Voir la liste des personnes ayant vu cette story"
+          accessibilityLabel={t.feed.stories.viewer.seenByA11y}
+          accessibilityHint={t.feed.stories.viewer.seenByHint}
           style={[styles.viewersButton, { bottom: insets.bottom + 24 }]}
         >
           <Eye size={18} color="#FFFFFF" />
           <Text color="#FFFFFF" fontSize={13} fontWeight="700">
-            Vu par
+            {t.feed.stories.viewer.seenBy}
           </Text>
         </Pressable>
       ) : null}

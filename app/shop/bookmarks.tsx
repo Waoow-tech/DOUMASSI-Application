@@ -27,12 +27,14 @@ import {
   useToggleListingBookmark,
   type ListingCard as ListingCardData,
 } from '@/features/marketplace/hooks/useListings';
+import { useTranslations } from '@/i18n';
 
 const GRID_GAP = 8;
 const NUM_COLUMNS = 2;
 const GUTTER = 12;
 
 export default function BookmarksScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const listRef = useRef<FlashListRef<ListingCardData>>(null);
@@ -117,12 +119,12 @@ export default function BookmarksScreen() {
             onPress={handleBack}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Retour"
+            accessibilityLabel={t.marketplace.common.back}
           >
             <ArrowLeft size={24} color="#FFFFFF" />
           </Pressable>
           <Text flex={1} color="$color" fontSize={18} fontWeight="700">
-            Mes favoris
+            {t.marketplace.bookmarks.title}
           </Text>
         </XStack>
 
@@ -141,10 +143,10 @@ export default function BookmarksScreen() {
               gap={8}
             >
               <Text fontSize={16} fontWeight="700" color="$color">
-                Impossible de charger tes favoris
+                {t.marketplace.bookmarks.errorTitle}
               </Text>
               <Text fontSize={13} color="$textSecondary" textAlign="center">
-                Tire vers le bas pour réessayer.
+                {t.marketplace.common.pullToRetry}
               </Text>
             </YStack>
           ) : allListings.length === 0 ? (
@@ -157,19 +159,19 @@ export default function BookmarksScreen() {
             >
               <BookmarkX size={48} color="#666" strokeWidth={1.5} />
               <Text fontSize={16} fontWeight="700" color="$color" textAlign="center">
-                Aucun favori pour l&apos;instant
+                {t.marketplace.bookmarks.emptyTitle}
               </Text>
               <Text fontSize={13} color="$textSecondary" textAlign="center">
-                Touche l&apos;icône signet sur une annonce pour la retrouver ici.
+                {t.marketplace.bookmarks.emptySubtitle}
               </Text>
               <Pressable
                 onPress={() => router.replace('/shop')}
                 accessibilityRole="button"
-                accessibilityLabel="Découvrir la boutique"
+                accessibilityLabel={t.marketplace.bookmarks.discoverCta}
                 style={styles.cta}
               >
                 <Text fontSize={14} fontWeight="800" color="#000000">
-                  Découvrir la boutique
+                  {t.marketplace.bookmarks.discoverCta}
                 </Text>
               </Pressable>
             </YStack>
