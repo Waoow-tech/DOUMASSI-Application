@@ -48,6 +48,7 @@ export const en: Translations = {
       finishSetup: 'Finish setup',
       skipForNow: 'Skip for now',
       errorGeneric: 'An unexpected error occurred',
+      selectedA11y: 'Cover photo selected',
     },
     settings: {
       title: 'Settings',
@@ -96,6 +97,29 @@ export const en: Translations = {
       expiredLink: 'Link expired. Please request a new reset email.',
       network: 'Network issue. Check your connection and try again.',
       unknown: 'An unexpected error occurred. Please try again.',
+    },
+    pendingDeletion: {
+      title: 'Deletion scheduled',
+      bodyPrefix:
+        'You requested the deletion of your account. Without action, it will be permanently deleted on ',
+      daysLeft: (n: number) => ` (in ${n} day${n > 1 ? 's' : ''})`,
+      cancelPending: 'Cancelling…',
+      cancelButton: 'Cancel the request',
+      cancelA11y: 'Cancel the deletion request',
+      manageButton: 'Manage in settings',
+      manageA11y: 'Open account settings',
+      laterButton: 'Later',
+      laterA11y: 'Close and continue',
+      cancelledTitle: 'Deletion cancelled',
+      cancelledMessage:
+        'Welcome back! Your account is kept. You can request deletion again anytime from Settings.',
+      errorTitle: 'Error',
+      errorFallback: 'Could not cancel right now. Please try again.',
+    },
+    exportData: {
+      dialogTitle: 'Export my DOUMASSI data',
+      sessionExpired: 'Session expired. Please sign in again and retry.',
+      failed: 'The export failed. Please try again in a moment.',
     },
   },
   profile: {

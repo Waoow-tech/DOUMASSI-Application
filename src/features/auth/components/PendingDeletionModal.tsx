@@ -26,6 +26,8 @@ import {
   useCancelDeletion,
   type DeletionRequestRow,
 } from '@/features/auth/hooks/useDeletionRequest';
+import { useTranslations } from '@/i18n';
+import { useLanguageStore } from '@/stores/languageStore';
 
 export interface PendingDeletionModalProps {
   open: boolean;
@@ -33,10 +35,10 @@ export interface PendingDeletionModalProps {
   onClose: () => void;
 }
 
-function formatScheduledDateFr(iso: string): string {
+function formatScheduledDate(iso: string, locale: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleDateString('fr-FR', {
+  return date.toLocaleDateString(locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -52,8 +54,14 @@ function formatDaysRemaining(iso: string): number {
 }
 
 export function PendingDeletionModal({ open, request, onClose }: PendingDeletionModalProps) {
+  const t = useTranslations();
+  const language = useLanguageStore((state) => state.language);
+  const copy = t.auth.pendingDeletion;
   const cancelDeletion = useCancelDeletion();
-  const formattedDate = formatScheduledDateFr(request.scheduled_delete_at);
+  const formattedDate = formatScheduledDate(
+    request.scheduled_delete_at,
+    language === 'en' ? 'en-US' : 'fr-FR'
+  );
   const daysLeft = formatDaysRemaining(request.scheduled_delete_at);
 
   const handleCancel = useCallback(() => {
@@ -61,19 +69,13 @@ export function PendingDeletionModal({ open, request, onClose }: PendingDeletion
       onSuccess: () => {
         onClose();
         // Confirmation simple via Alert pour ne pas dépendre d'un toast system.
-        Alert.alert(
-          'Suppression annulée',
-          'Bienvenue ! Ton compte est conservé. Tu peux refaire une demande à tout moment depuis Paramètres.'
-        );
+        Alert.alert(copy.cancelledTitle, copy.cancelledMessage);
       },
       onError: (err) => {
-        Alert.alert(
-          'Erreur',
-          err instanceof Error ? err.message : "Impossible d'annuler pour le moment. Réessaie."
-        );
+        Alert.alert(copy.errorTitle, err instanceof Error ? err.message : copy.errorFallback);
       },
     });
-  }, [cancelDeletion, onClose]);
+  }, [cancelDeletion, onClose, copy]);
 
   const handleOpenSettings = useCallback(() => {
     onClose();
@@ -97,15 +99,14 @@ export function PendingDeletionModal({ open, request, onClose }: PendingDeletion
 
         <YStack gap="$2">
           <Text fontSize={22} fontWeight="700" color="$color">
-            Suppression programmée
+            {copy.title}
           </Text>
           <Text fontSize={15} color="$textSecondary" lineHeight={22}>
-            Tu as demandé la suppression de ton compte. Sans action, il sera supprimé définitivement
-            le{' '}
+            {copy.bodyPrefix}
             <Text fontSize={15} color="$color" fontWeight="600">
               {formattedDate}
             </Text>
-            {daysLeft > 0 ? ` (dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''})` : ''}.
+            {daysLeft > 0 ? copy.daysLeft(daysLeft) : ''}.
           </Text>
         </YStack>
 
@@ -119,9 +120,9 @@ export function PendingDeletionModal({ open, request, onClose }: PendingDeletion
             size="$5"
             borderRadius="$10"
             accessibilityRole="button"
-            accessibilityLabel="Annuler la demande de suppression"
+            accessibilityLabel={copy.cancelA11y}
           >
-            {cancelDeletion.isPending ? 'Annulation…' : 'Annuler la demande'}
+            {cancelDeletion.isPending ? copy.cancelPending : copy.cancelButton}
           </Button>
 
           <Button
@@ -131,9 +132,9 @@ export function PendingDeletionModal({ open, request, onClose }: PendingDeletion
             size="$4"
             borderRadius="$10"
             accessibilityRole="button"
-            accessibilityLabel="Ouvrir les paramètres du compte"
+            accessibilityLabel={copy.manageA11y}
           >
-            Gérer dans les paramètres
+            {copy.manageButton}
           </Button>
 
           <Button
@@ -142,9 +143,9 @@ export function PendingDeletionModal({ open, request, onClose }: PendingDeletion
             color="$textSecondary"
             size="$3"
             accessibilityRole="button"
-            accessibilityLabel="Fermer et continuer"
+            accessibilityLabel={copy.laterA11y}
           >
-            Plus tard
+            {copy.laterButton}
           </Button>
         </YStack>
       </Sheet.Frame>
