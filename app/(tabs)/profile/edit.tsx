@@ -24,7 +24,7 @@ import { useUsernameAvailability } from '@/features/auth/hooks/useUsernameAvaila
 import { useEditProfile } from '@/features/profile/hooks/useEditProfile';
 import { useCurrentProfile } from '@/features/profile/hooks/useProfile';
 import {
-  editProfileSchema,
+  createEditProfileSchema,
   type EditProfileFormValues,
 } from '@/features/profile/schemas/editProfileSchema';
 import { getT, useTranslations } from '@/i18n';
@@ -108,6 +108,8 @@ export default function EditProfileScreen() {
   const [photoSheet, setPhotoSheet] = useState<'avatar' | 'cover' | null>(null);
   const [usernameTouched, setUsernameTouched] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
+
+  const editProfileSchema = useMemo(() => createEditProfileSchema(t.auth.validation), [t]);
 
   const form = useForm<EditProfileFormValues>({
     resolver: zodResolver(editProfileSchema),

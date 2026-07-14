@@ -3,15 +3,15 @@
 // Ticket E2-04 — Sprint 1 Auth & Onboarding.
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { mapAuthError } from '@/features/auth/lib/mapAuthError';
 import {
-  forgotPasswordSchema,
+  createForgotPasswordSchema,
   type ForgotPasswordFormValues,
 } from '@/features/auth/schemas/passwordResetSchema';
-import { getT } from '@/i18n';
+import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -20,9 +20,12 @@ import { supabase } from '@/lib/supabase';
 const RESET_REDIRECT_URL = 'doumassi://reset-password';
 
 export function useForgotPassword() {
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const forgotPasswordSchema = useMemo(() => createForgotPasswordSchema(t.auth.validation), [t]);
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),

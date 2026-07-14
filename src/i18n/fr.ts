@@ -123,6 +123,33 @@ export const fr = {
       sessionExpired: 'Session expirée. Reconnecte-toi puis réessaie.',
       failed: 'L’export a échoué. Réessaie dans un instant.',
     },
+    // Messages de validation Zod (schémas login/signup/reset/complete-account).
+    validation: {
+      identifierRequired: 'Identifiant requis',
+      invalidIdentifier: 'Entre un e-mail ou un numéro de téléphone valide',
+      passwordMinLength: 'Le mot de passe doit contenir au moins 8 caractères',
+      fullNameMinLength: 'Le nom complet doit contenir au moins 2 caractères',
+      fullNameMaxLength: 'Le nom complet ne peut pas dépasser 100 caractères',
+      bioMaxLength: 'La bio ne peut pas dépasser 250 caractères',
+      emailRequired: 'E-mail requis',
+      invalidEmail: 'Adresse e-mail invalide',
+      birthdayRequired: 'Date de naissance requise',
+      invalidDate: 'Date invalide (format attendu : JJ/MM/AAAA)',
+      passwordUppercase: 'Le mot de passe doit contenir au moins une majuscule',
+      passwordDigit: 'Le mot de passe doit contenir au moins un chiffre',
+      confirmPasswordRequired: 'Confirme ton mot de passe',
+      confirmationRequired: 'Confirmation requise',
+      mustAcceptTerms: 'Tu dois accepter les Conditions d’utilisation',
+      passwordsDoNotMatch: 'Les mots de passe ne correspondent pas',
+      usernameMinLength: 'Le nom d’utilisateur doit contenir au moins 3 caractères',
+      usernameMaxLength: 'Le nom d’utilisateur ne peut pas dépasser 30 caractères',
+      usernameFormat:
+        'Le nom d’utilisateur doit commencer par une lettre et ne contenir que des lettres, chiffres et underscores',
+      usernameNoTrailingUnderscore:
+        'Le nom d’utilisateur ne peut pas se terminer par un underscore',
+      usernameFormatReserved: 'Ce format de nom d’utilisateur est réservé',
+      usernameReserved: 'Ce nom d’utilisateur est réservé',
+    },
   },
   profile: {
     stats: {

@@ -7,24 +7,27 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { mapAuthError } from '@/features/auth/lib/mapAuthError';
-import { getT } from '@/i18n';
+import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
 import {
+  createLoginSchema,
   getLoginIdentifierType,
-  loginSchema,
   normalizePhoneIdentifier,
   type LoginFormValues,
 } from '../schemas/loginSchema';
 
 export function useLogin() {
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+
+  const loginSchema = useMemo(() => createLoginSchema(t.auth.validation), [t]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

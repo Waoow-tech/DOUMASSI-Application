@@ -1,18 +1,22 @@
 import { z } from 'zod';
 
-export const forgotPasswordSchema = z.object({
-  email: z.string().email('Adresse email invalide'),
-});
+import type { AuthValidation } from '@/i18n';
 
-export const resetPasswordSchema = z
-  .object({
-    password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
-    confirmPassword: z.string().min(8, 'Confirmation requise'),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Les mots de passe ne correspondent pas',
-    path: ['confirmPassword'],
+export const createForgotPasswordSchema = (v: AuthValidation) =>
+  z.object({
+    email: z.string().email(v.invalidEmail),
   });
 
-export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
-export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+export const createResetPasswordSchema = (v: AuthValidation) =>
+  z
+    .object({
+      password: z.string().min(8, v.passwordMinLength),
+      confirmPassword: z.string().min(8, v.confirmationRequired),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: v.passwordsDoNotMatch,
+      path: ['confirmPassword'],
+    });
+
+export type ForgotPasswordFormValues = z.infer<ReturnType<typeof createForgotPasswordSchema>>;
+export type ResetPasswordFormValues = z.infer<ReturnType<typeof createResetPasswordSchema>>;

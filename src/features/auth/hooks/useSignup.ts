@@ -9,19 +9,27 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { type Resolver, useForm } from 'react-hook-form';
 
 import { mapAuthError } from '@/features/auth/lib/mapAuthError';
 import { CGV_CURRENT_VERSION } from '@/features/legal/content/cgv';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
-import { signupSchema, type SignupFormInput, type SignupFormValues } from '../schemas/signupSchema';
+import {
+  createSignupSchema,
+  type SignupFormInput,
+  type SignupFormValues,
+} from '../schemas/signupSchema';
 
 export function useSignup() {
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
+
+  const signupSchema = useMemo(() => createSignupSchema(t.auth.validation), [t]);
 
   const form = useForm<SignupFormInput, unknown, SignupFormValues>({
     resolver: zodResolver(signupSchema) as Resolver<SignupFormInput, unknown, SignupFormValues>,
