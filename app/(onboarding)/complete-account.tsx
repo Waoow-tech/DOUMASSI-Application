@@ -66,7 +66,7 @@ export default function CompleteAccountScreen() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        setError('Session expired. Please sign in again.');
+        setError(t.auth.completeAccount.sessionExpired);
         return;
       }
 
@@ -89,7 +89,7 @@ export default function CompleteAccountScreen() {
       router.push('/(onboarding)/complete-profile');
     } catch (err: unknown) {
       logger.error('Complete account failed', err);
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      const message = err instanceof Error ? err.message : t.auth.completeAccount.unexpectedError;
       setError(message);
     } finally {
       setIsLoading(false);
@@ -149,7 +149,7 @@ export default function CompleteAccountScreen() {
               fontFamily="$heading"
               marginBottom="$1"
             >
-              Complete your account
+              {t.auth.completeAccount.title}
             </Text>
 
             <Text
@@ -159,7 +159,7 @@ export default function CompleteAccountScreen() {
               lineHeight={20}
               marginBottom="$2"
             >
-              Choose a username and confirm your birthday.
+              {t.auth.completeAccount.subtitle}
             </Text>
 
             {/* ── Username ── */}
@@ -170,7 +170,7 @@ export default function CompleteAccountScreen() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     id="complete-account-username-input"
-                    placeholder="Username"
+                    placeholder={t.auth.completeAccount.usernamePlaceholder}
                     placeholderTextColor="$placeholderColor"
                     value={value}
                     onChangeText={onChange}
@@ -218,7 +218,7 @@ export default function CompleteAccountScreen() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     id="complete-account-birthday-input"
-                    placeholder="Birthday (DD/MM/YYYY)"
+                    placeholder={t.auth.completeAccount.birthdayPlaceholder}
                     placeholderTextColor="$placeholderColor"
                     value={value}
                     onChangeText={(text) => handleBirthdayChange(text, onChange)}
@@ -279,7 +279,7 @@ export default function CompleteAccountScreen() {
               marginTop="$2"
               pressStyle={{ opacity: 0.7 }}
             >
-              Sign out
+              {t.auth.completeAccount.signOut}
             </Button>
           </YStack>
         </YStack>

@@ -84,7 +84,7 @@ export default function LoginScreen() {
             textAlign="center"
             fontFamily="$heading"
           >
-            Log in
+            {t.auth.login.title}
           </Text>
 
           {/* Champ : identifiant (email ou téléphone) */}
@@ -95,7 +95,7 @@ export default function LoginScreen() {
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   id="login-identifier-input"
-                  placeholder="Email address or phone number"
+                  placeholder={t.auth.login.identifierPlaceholder}
                   placeholderTextColor="$placeholderColor"
                   value={value}
                   onChangeText={onChange}
@@ -137,7 +137,7 @@ export default function LoginScreen() {
                 >
                   <Input
                     id="login-password-input"
-                    placeholder="Password"
+                    placeholder={t.auth.login.passwordPlaceholder}
                     placeholderTextColor="$placeholderColor"
                     value={value}
                     onChangeText={onChange}
@@ -160,7 +160,7 @@ export default function LoginScreen() {
                     pressStyle={{ opacity: 0.6 }}
                     accessibilityRole="button"
                     accessibilityLabel={
-                      showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'
+                      showPassword ? t.auth.common.hidePassword : t.auth.common.showPassword
                     }
                     hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   >
@@ -204,7 +204,7 @@ export default function LoginScreen() {
             }}
             marginTop="$2"
           >
-            {isLoading ? <Spinner size="small" color="$background" /> : 'Log in'}
+            {isLoading ? <Spinner size="small" color="$background" /> : t.auth.login.submit}
           </Button>
 
           {/* Lien "Forgot your password ?" */}
@@ -218,7 +218,7 @@ export default function LoginScreen() {
               pressStyle={{ opacity: 0.7 }}
               cursor="pointer"
             >
-              Forgot your password ?
+              {t.auth.login.forgotPassword}
             </Text>
           </Link>
 
@@ -241,14 +241,14 @@ export default function LoginScreen() {
             }}
             marginTop="$1"
           >
-            Create an account
+            {t.auth.login.createAccount}
           </Button>
 
           {/* Séparateur "or" */}
           <XStack alignItems="center" gap="$3" marginTop="$2">
             <YStack flex={1} height={1} backgroundColor="$borderColor" />
             <Text fontSize={12} color="$placeholderColor" fontWeight="600">
-              or
+              {t.auth.common.or}
             </Text>
             <YStack flex={1} height={1} backgroundColor="$borderColor" />
           </XStack>
