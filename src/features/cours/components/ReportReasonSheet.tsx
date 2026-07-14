@@ -7,9 +7,9 @@ import { Flag } from 'lucide-react-native';
 import { Pressable, StyleSheet } from 'react-native';
 import { Sheet, Text, XStack, YStack } from 'tamagui';
 
-import { REPORT_REASON_LABEL, type ReportReason } from '../hooks/useReportResource';
+import { useTranslations } from '@/i18n';
 
-const REASONS = Object.keys(REPORT_REASON_LABEL) as ReportReason[];
+import { REPORT_REASONS, type ReportReason } from '../hooks/useReportResource';
 
 export interface ReportReasonSheetProps {
   open: boolean;
@@ -24,6 +24,7 @@ export function ReportReasonSheet({
   onSelect,
   disabled = false,
 }: ReportReasonSheetProps) {
+  const t = useTranslations();
   return (
     <Sheet modal open={open} onOpenChange={onOpenChange} snapPoints={[45]} dismissOnSnapToBottom>
       <Sheet.Overlay
@@ -45,14 +46,14 @@ export function ReportReasonSheet({
           <XStack alignItems="center" gap={8} marginBottom={8}>
             <Flag size={18} color="#FF6B6B" />
             <Text fontSize={17} fontWeight="800" color="$color">
-              Signaler cette ressource
+              {t.cours.reportSheet.title}
             </Text>
           </XStack>
           <Text fontSize={13} color="$textSecondary" marginBottom={8}>
-            Pourquoi signales-tu ce contenu ?
+            {t.cours.reportSheet.subtitle}
           </Text>
 
-          {REASONS.map((reason) => (
+          {REPORT_REASONS.map((reason) => (
             <Pressable
               key={reason}
               onPress={() => {
@@ -60,11 +61,11 @@ export function ReportReasonSheet({
                 onSelect(reason);
               }}
               accessibilityRole="button"
-              accessibilityLabel={REPORT_REASON_LABEL[reason]}
+              accessibilityLabel={t.cours.reportReason[reason]}
               style={styles.row}
             >
               <Text fontSize={15} color="$color">
-                {REPORT_REASON_LABEL[reason]}
+                {t.cours.reportReason[reason]}
               </Text>
             </Pressable>
           ))}

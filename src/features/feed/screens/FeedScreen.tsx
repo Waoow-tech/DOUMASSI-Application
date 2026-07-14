@@ -10,6 +10,7 @@ import {
   Store,
   User,
   Wallet,
+  type LucideIcon,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -33,16 +34,12 @@ import { useFeed, useToggleFeedBookmark, useToggleFeedLike } from '@/features/fe
 import { type FeedStory, useFeedStories } from '@/features/feed/hooks/useFeedStories';
 import { useUnhidePost } from '@/features/feed/hooks/useHiddenPosts';
 import { SearchBar } from '@/features/profile/components/SearchBar';
+import { useTranslations } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 
 const logoSource = require('../../../../assets/Logo-Doumassi.webp') as number;
 
 type FeedTabId = 'social' | 'business' | 'ai' | 'wallet' | 'soon';
-
-type FeedTab = {
-  id: FeedTabId;
-  label: string;
-};
 
 type FeedToast = {
   message: string;
@@ -50,38 +47,16 @@ type FeedToast = {
   onAction?: () => void;
 };
 
-const FEED_TABS: FeedTab[] = [
-  { id: 'social', label: 'Social' },
-  { id: 'business', label: 'Business' },
-  { id: 'ai', label: 'AI' },
-  { id: 'wallet', label: 'Wallet' },
-  { id: 'soon', label: 'Soon' },
-];
+const FEED_TABS: FeedTabId[] = ['social', 'business', 'ai', 'wallet', 'soon'];
 
-const PLACEHOLDERS = {
-  business: {
-    Icon: Store,
-    title: 'Marketplace bientôt disponible',
-    subtitle: 'Achetez, vendez, découvrez.',
-  },
-  ai: {
-    Icon: Sparkles,
-    title: 'Doumassi AI bientôt disponible',
-    subtitle: "Assistant IA, génération d'images et plus.",
-  },
-  wallet: {
-    Icon: Wallet,
-    title: 'Dpay bientôt disponible',
-    subtitle: 'Votre wallet crypto intégré.',
-  },
-  soon: {
-    Icon: Rocket,
-    title: 'Encore plus à venir',
-    subtitle: 'DOUMASSI évolue. Restez connecté.',
-    manifest:
-      'Un espace social, business, créatif et financier pensé pour rassembler vos usages dans un seul univers.',
-  },
-} satisfies Record<Exclude<FeedTabId, 'social'>, React.ComponentProps<typeof FeedTabPlaceholder>>;
+// Icônes des placeholders des onglets pas encore livrés. Les libellés
+// (titre / sous-titre / manifest) sont fournis par le dico i18n côté composant.
+const PLACEHOLDER_ICONS = {
+  business: Store,
+  ai: Sparkles,
+  wallet: Wallet,
+  soon: Rocket,
+} satisfies Record<Exclude<FeedTabId, 'social'>, LucideIcon>;
 
 function FeedHeader({
   activeTab,
@@ -94,6 +69,8 @@ function FeedHeader({
   onSearchChange: (value: string) => void;
   onTabPress: (tab: FeedTabId) => void;
 }) {
+  const t = useTranslations();
+
   return (
     <YStack backgroundColor="$background" paddingTop="$3" paddingBottom="$2">
       <XStack alignItems="center" justifyContent="center" paddingHorizontal="$4" height={42}>
@@ -103,7 +80,7 @@ function FeedHeader({
           hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           style={styles.headerSideButton}
           accessibilityRole="button"
-          accessibilityLabel="Ouvrir mon profil"
+          accessibilityLabel={t.feed.screen.openProfileA11y}
         >
           <User size={22} color="#FFFFFF" />
         </TouchableOpacity>
@@ -118,7 +95,7 @@ function FeedHeader({
           hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           style={styles.headerSideButton}
           accessibilityRole="button"
-          accessibilityLabel="Ouvrir les paramètres"
+          accessibilityLabel={t.feed.screen.openSettingsA11y}
         >
           <Settings size={22} color="#FFFFFF" />
         </TouchableOpacity>
@@ -130,27 +107,28 @@ function FeedHeader({
         contentContainerStyle={styles.tabsContent}
       >
         {FEED_TABS.map((tab) => {
-          const isActive = activeTab === tab.id;
+          const isActive = activeTab === tab;
+          const label = t.feed.tabs[tab];
           return (
             <YStack
-              key={tab.id}
+              key={tab}
               height={36}
               paddingHorizontal={14}
               borderRadius={18}
               backgroundColor={isActive ? '#FFFFFF' : '$surface'}
               alignItems="center"
               justifyContent="center"
-              onPress={() => onTabPress(tab.id)}
+              onPress={() => onTabPress(tab)}
               pressStyle={{ scale: 0.97 }}
               accessibilityRole="button"
-              accessibilityLabel={`Ouvrir l'onglet ${tab.label}`}
+              accessibilityLabel={t.feed.tabs.openTabA11y(label)}
             >
               <Text
                 color={isActive ? '#000000' : '$textSecondary'}
                 fontSize={14}
                 fontWeight={isActive ? '700' : '500'}
               >
-                {tab.label}
+                {label}
               </Text>
             </YStack>
           );
@@ -160,18 +138,24 @@ function FeedHeader({
       <SearchBar
         value={searchValue}
         onChangeText={onSearchChange}
-        placeholder={activeTab === 'social' ? 'Rechercher des posts...' : 'Rechercher...'}
+        placeholder={
+          activeTab === 'social'
+            ? t.feed.screen.searchPostsPlaceholder
+            : t.feed.screen.searchPlaceholder
+        }
       />
     </YStack>
   );
 }
 
 function FeedEmptyState() {
+  const t = useTranslations();
+
   return (
     <YStack alignItems="center" justifyContent="center" padding="$6" gap="$3">
       <Search size={34} color="#A0A0A0" />
       <Text color="$color" fontSize={17} fontWeight="700" textAlign="center">
-        Suivez des comptes pour voir leurs posts ici
+        {t.feed.screen.emptyTitle}
       </Text>
       <Button
         height={42}
@@ -182,7 +166,7 @@ function FeedEmptyState() {
         onPress={() => router.push('/search')}
         pressStyle={{ opacity: 0.85, scale: 0.98 }}
       >
-        Découvrir des comptes
+        {t.feed.screen.emptyDiscover}
       </Button>
     </YStack>
   );
@@ -199,6 +183,7 @@ function FeedFooter({ isFetchingNextPage }: { isFetchingNextPage: boolean }) {
 }
 
 export function FeedScreen() {
+  const t = useTranslations();
   const [activeTab, setActiveTab] = useState<FeedTabId>('social');
   const [searchValue, setSearchValue] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -309,21 +294,21 @@ export function FeedScreen() {
         await supabase.rpc('increment_share_count', { p_post_id: selectedPost.id });
       }
     } catch {
-      showToast({ message: 'Partage impossible, réessayez' });
+      showToast({ message: t.feed.screen.toastShareFailed });
     }
-  }, [selectedPost, showToast]);
+  }, [selectedPost, showToast, t]);
 
   const handleDeleteSelectedPost = useCallback(async () => {
     if (!selectedPost) return;
 
     try {
       await deletePostMutation.mutateAsync(selectedPost.id);
-      showToast({ message: 'Post supprimé' });
+      showToast({ message: t.feed.screen.toastPostDeleted });
     } catch {
-      showToast({ message: 'Suppression impossible, réessayez' });
+      showToast({ message: t.feed.screen.toastDeleteFailed });
       throw new Error('Delete post failed');
     }
-  }, [deletePostMutation, selectedPost, showToast]);
+  }, [deletePostMutation, selectedPost, showToast, t]);
 
   const handleHiddenSelectedPost = useCallback(() => {
     if (!selectedPost) return;
@@ -331,17 +316,17 @@ export function FeedScreen() {
 
     showToast(
       {
-        message: 'Post masqué',
-        actionLabel: 'Annuler',
+        message: t.feed.screen.toastPostHidden,
+        actionLabel: t.feed.screen.undo,
         onAction: () => {
           unhidePostMutation.mutate(hiddenPostId, {
-            onSuccess: () => showToast({ message: 'Affichage restauré' }),
+            onSuccess: () => showToast({ message: t.feed.screen.toastDisplayRestored }),
           });
         },
       },
       5000
     );
-  }, [selectedPost, showToast, unhidePostMutation]);
+  }, [selectedPost, showToast, unhidePostMutation, t]);
 
   const renderPost = useCallback(
     ({ item }: { item: PostCardPost }) => (
@@ -377,7 +362,14 @@ export function FeedScreen() {
     // Les autres onglets (ai/wallet/soon) restent en placeholder jusqu'à
     // ce que les épiques correspondantes soient livrées.
     const isBusinessHub = activeTab === 'business';
-    const placeholder = isBusinessHub ? null : PLACEHOLDERS[activeTab];
+    const placeholder = isBusinessHub
+      ? null
+      : {
+          Icon: PLACEHOLDER_ICONS[activeTab],
+          title: t.feed.tabs.placeholders[activeTab].title,
+          subtitle: t.feed.tabs.placeholders[activeTab].subtitle,
+          manifest: activeTab === 'soon' ? t.feed.tabs.placeholders.soon.manifest : undefined,
+        };
 
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -444,7 +436,7 @@ export function FeedScreen() {
           activeOpacity={0.85}
           style={styles.composeFab}
           accessibilityRole="button"
-          accessibilityLabel="Créer un post"
+          accessibilityLabel={t.feed.screen.createPostA11y}
         >
           <SquarePen size={24} color="#000000" strokeWidth={2.4} />
         </TouchableOpacity>
@@ -458,8 +450,8 @@ export function FeedScreen() {
             onShare={() => void handleMenuShare()}
             onDelete={handleDeleteSelectedPost}
             onHidden={handleHiddenSelectedPost}
-            onHideError={() => showToast({ message: 'Masquage impossible, réessayez' })}
-            onCopyLink={() => showToast({ message: 'Lien copié' })}
+            onHideError={() => showToast({ message: t.feed.screen.toastHideFailed })}
+            onCopyLink={() => showToast({ message: t.feed.screen.toastLinkCopied })}
           />
         ) : null}
 

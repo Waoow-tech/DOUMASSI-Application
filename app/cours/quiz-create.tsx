@@ -8,7 +8,7 @@
 
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Check, Plus, Sparkles, Trash2, X } from 'lucide-react-native';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -25,6 +25,7 @@ import { QuizImportSheet } from '@/features/cours/components/QuizImportSheet';
 import { useCreateQuiz, type QuizQuestionType } from '@/features/cours/hooks/useCreateQuiz';
 import type { ParsedQuizQuestion } from '@/features/cours/lib/quizImport';
 import { SegmentedChoice } from '@/features/marketplace/components/SegmentedChoice';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 
 const MAX_TITLE = 120;
@@ -41,20 +42,15 @@ interface EditorQuestion {
   options: EditorOption[];
 }
 
-const TYPE_OPTIONS: { value: QuizQuestionType; label: string }[] = [
-  { value: 'single', label: 'Choix unique' },
-  { value: 'multiple', label: 'Choix multiple' },
-  { value: 'boolean', label: 'Vrai / Faux' },
-];
-
-function makeBooleanOptions(): EditorOption[] {
+function makeBooleanOptions(trueLabel: string, falseLabel: string): EditorOption[] {
   return [
-    { label: 'Vrai', isCorrect: true },
-    { label: 'Faux', isCorrect: false },
+    { label: trueLabel, isCorrect: true },
+    { label: falseLabel, isCorrect: false },
   ];
 }
 
 export default function QuizCreateScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     resourceId?: string;
@@ -70,11 +66,20 @@ export default function QuizCreateScreen() {
   const keyCounter = useRef(0);
   const nextKey = () => `q${keyCounter.current++}`;
 
-  const [title, setTitle] = useState(
-    params.resourceTitle ? `Quiz — ${String(params.resourceTitle)}` : ''
+  const [title, setTitle] = useState(() =>
+    params.resourceTitle ? t.cours.quizCreate.titlePrefix(String(params.resourceTitle)) : ''
   );
   const [questions, setQuestions] = useState<EditorQuestion[]>([]);
   const [isImportOpen, setIsImportOpen] = useState(false);
+
+  const typeOptions = useMemo(
+    () => [
+      { value: 'single' as const, label: t.cours.quizCreate.types.single },
+      { value: 'multiple' as const, label: t.cours.quizCreate.types.multiple },
+      { value: 'boolean' as const, label: t.cours.quizCreate.types.boolean },
+    ],
+    [t]
+  );
 
   // ---- Mutations de la liste de questions ----
 
@@ -104,24 +109,35 @@ export default function QuizCreateScreen() {
     setQuestions((prev) => prev.map((q, i) => (i === qi ? { ...q, prompt: text } : q)));
   }, []);
 
-  const setType = useCallback((qi: number, type: QuizQuestionType) => {
-    setQuestions((prev) =>
-      prev.map((q, i) => {
-        if (i !== qi) return q;
-        if (type === 'boolean') return { ...q, type, options: makeBooleanOptions() };
-        // single/multiple : garde les options mais si on repasse de boolean,
-        // repart sur 2 options vides.
-        const options =
-          q.type === 'boolean'
-            ? [
-                { label: '', isCorrect: true },
-                { label: '', isCorrect: false },
-              ]
-            : q.options;
-        return { ...q, type, options };
-      })
-    );
-  }, []);
+  const setType = useCallback(
+    (qi: number, type: QuizQuestionType) => {
+      setQuestions((prev) =>
+        prev.map((q, i) => {
+          if (i !== qi) return q;
+          if (type === 'boolean')
+            return {
+              ...q,
+              type,
+              options: makeBooleanOptions(
+                t.cours.quizCreate.boolean.true,
+                t.cours.quizCreate.boolean.false
+              ),
+            };
+          // single/multiple : garde les options mais si on repasse de boolean,
+          // repart sur 2 options vides.
+          const options =
+            q.type === 'boolean'
+              ? [
+                  { label: '', isCorrect: true },
+                  { label: '', isCorrect: false },
+                ]
+              : q.options;
+          return { ...q, type, options };
+        })
+      );
+    },
+    [t]
+  );
 
   const addOption = useCallback((qi: number) => {
     setQuestions((prev) =>
@@ -192,36 +208,39 @@ export default function QuizCreateScreen() {
       router.back();
       return;
     }
-    Alert.alert('Abandonner ce quiz ?', 'Tu perdras les questions saisies.', [
-      { text: 'Continuer', style: 'cancel' },
-      { text: 'Abandonner', style: 'destructive', onPress: () => router.back() },
+    Alert.alert(t.cours.quizCreate.discardTitle, t.cours.quizCreate.discardMessage, [
+      { text: t.cours.quizCreate.discardKeep, style: 'cancel' },
+      {
+        text: t.cours.quizCreate.discardConfirm,
+        style: 'destructive',
+        onPress: () => router.back(),
+      },
     ]);
-  }, [questions.length, title]);
+  }, [questions.length, title, t]);
 
   const validate = useCallback((): string | null => {
-    if (title.trim().length < 3) return 'Donne un titre au quiz (3 caractères min).';
-    if (questions.length === 0) return 'Ajoute au moins 1 question.';
+    const v = t.cours.quizCreate.validation;
+    if (title.trim().length < 3) return v.titleMin;
+    if (questions.length === 0) return v.noQuestions;
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i]!;
-      const label = `Question ${i + 1}`;
-      if (q.prompt.trim().length === 0) return `${label} : énoncé manquant.`;
-      if (q.options.length < 2) return `${label} : au moins 2 options.`;
-      if (q.options.some((o) => o.label.trim().length === 0))
-        return `${label} : toutes les options doivent avoir un libellé.`;
-      if (!q.options.some((o) => o.isCorrect))
-        return `${label} : indique au moins une bonne réponse.`;
+      const label = t.cours.quizCreate.questionLabel(i + 1);
+      if (q.prompt.trim().length === 0) return v.promptMissing(label);
+      if (q.options.length < 2) return v.minOptions(label);
+      if (q.options.some((o) => o.label.trim().length === 0)) return v.optionLabelMissing(label);
+      if (!q.options.some((o) => o.isCorrect)) return v.correctMissing(label);
     }
     return null;
-  }, [questions, title]);
+  }, [questions, title, t]);
 
   const handleSubmit = useCallback(async () => {
     const err = validate();
     if (err) {
-      Alert.alert('Quiz incomplet', err);
+      Alert.alert(t.cours.quizCreate.incompleteTitle, err);
       return;
     }
     if (!levelCode || !subjectCode) {
-      Alert.alert('Erreur', 'Niveau ou matière manquant.');
+      Alert.alert(t.cours.common.error, t.cours.quizCreate.missingTaxonomy);
       return;
     }
     try {
@@ -239,11 +258,11 @@ export default function QuizCreateScreen() {
       // Retour à la fiche — le quiz apparaîtra (invalidation ['cours','quiz']).
       router.back();
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Réessaie.';
+      const message = e instanceof Error ? e.message : t.cours.common.retry;
       logger.warn('create_quiz submit failed', { message });
-      Alert.alert('Publication impossible', message);
+      Alert.alert(t.cours.quizCreate.submitErrorTitle, message);
     }
-  }, [validate, levelCode, subjectCode, resourceId, title, questions, createQuiz]);
+  }, [validate, levelCode, subjectCode, resourceId, title, questions, createQuiz, t]);
 
   const isBusy = createQuiz.isPending;
 
@@ -269,12 +288,12 @@ export default function QuizCreateScreen() {
               disabled={isBusy}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
-              accessibilityLabel="Annuler"
+              accessibilityLabel={t.cours.common.cancel}
             >
               <ArrowLeft size={24} color="#FFFFFF" />
             </Pressable>
             <Text flex={1} color="$color" fontSize={18} fontWeight="700">
-              Créer un quiz
+              {t.cours.quizCreate.title}
             </Text>
           </XStack>
 
@@ -288,7 +307,7 @@ export default function QuizCreateScreen() {
               <Input
                 value={title}
                 onChangeText={setTitle}
-                placeholder="Titre du quiz"
+                placeholder={t.cours.quizCreate.titlePlaceholder}
                 placeholderTextColor="$placeholderColor"
                 maxLength={MAX_TITLE}
                 editable={!isBusy}
@@ -298,7 +317,7 @@ export default function QuizCreateScreen() {
                 borderRadius="$md"
                 height={48}
                 paddingHorizontal={14}
-                accessibilityLabel="Titre du quiz"
+                accessibilityLabel={t.cours.quizCreate.titleA11y}
               />
             </YStack>
 
@@ -307,13 +326,13 @@ export default function QuizCreateScreen() {
               onPress={() => setIsImportOpen(true)}
               disabled={isBusy}
               accessibilityRole="button"
-              accessibilityLabel="Importer depuis ton IA"
+              accessibilityLabel={t.cours.quizCreate.importA11y}
               style={styles.importRow}
             >
               <XStack alignItems="center" justifyContent="center" gap={8}>
                 <Sparkles size={16} color="#10D970" />
                 <Text fontSize={13} fontWeight="700" color="$color">
-                  J&apos;ai déjà mes questions (importer depuis mon IA)
+                  {t.cours.quizCreate.importCta}
                 </Text>
               </XStack>
             </Pressable>
@@ -330,14 +349,14 @@ export default function QuizCreateScreen() {
               >
                 <XStack alignItems="center" justifyContent="space-between">
                   <Text fontSize={13} fontWeight="800" color="$accentNeon">
-                    Question {qi + 1}
+                    {t.cours.quizCreate.questionLabel(qi + 1)}
                   </Text>
                   <Pressable
                     onPress={() => removeQuestion(qi)}
                     disabled={isBusy}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Supprimer la question ${qi + 1}`}
+                    accessibilityLabel={t.cours.quizCreate.deleteQuestionA11y(qi + 1)}
                   >
                     <Trash2 size={16} color="#FF6B6B" />
                   </Pressable>
@@ -345,8 +364,8 @@ export default function QuizCreateScreen() {
 
                 <Input
                   value={q.prompt}
-                  onChangeText={(t) => setPrompt(qi, t)}
-                  placeholder="Énoncé de la question"
+                  onChangeText={(text) => setPrompt(qi, text)}
+                  placeholder={t.cours.quizCreate.promptPlaceholder}
                   placeholderTextColor="$placeholderColor"
                   editable={!isBusy}
                   color="$color"
@@ -355,13 +374,13 @@ export default function QuizCreateScreen() {
                   borderRadius="$md"
                   height={44}
                   paddingHorizontal={12}
-                  accessibilityLabel={`Énoncé question ${qi + 1}`}
+                  accessibilityLabel={t.cours.quizCreate.promptA11y(qi + 1)}
                 />
 
                 <SegmentedChoice
-                  options={TYPE_OPTIONS}
+                  options={typeOptions}
                   value={q.type}
-                  onChange={(t) => setType(qi, t)}
+                  onChange={(val) => setType(qi, val)}
                   disabled={isBusy}
                 />
 
@@ -375,7 +394,9 @@ export default function QuizCreateScreen() {
                         disabled={isBusy}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         accessibilityRole={q.type === 'multiple' ? 'checkbox' : 'radio'}
-                        accessibilityLabel={`Bonne réponse : ${o.label || `option ${oi + 1}`}`}
+                        accessibilityLabel={t.cours.quizCreate.correctAnswerA11y(
+                          o.label || t.cours.quizCreate.optionFallback(oi + 1)
+                        )}
                         accessibilityState={{ checked: o.isCorrect, selected: o.isCorrect }}
                         style={[
                           styles.correctToggle,
@@ -389,8 +410,8 @@ export default function QuizCreateScreen() {
                       <Input
                         flex={1}
                         value={o.label}
-                        onChangeText={(t) => setOptionLabel(qi, oi, t)}
-                        placeholder={`Option ${oi + 1}`}
+                        onChangeText={(text) => setOptionLabel(qi, oi, text)}
+                        placeholder={t.cours.quizCreate.optionPlaceholder(oi + 1)}
                         placeholderTextColor="$placeholderColor"
                         editable={!isBusy && q.type !== 'boolean'}
                         color="$color"
@@ -400,7 +421,7 @@ export default function QuizCreateScreen() {
                         height={40}
                         paddingHorizontal={12}
                         fontSize={14}
-                        accessibilityLabel={`Libellé option ${oi + 1}`}
+                        accessibilityLabel={t.cours.quizCreate.optionLabelA11y(oi + 1)}
                       />
 
                       {/* Retirer une option (pas en boolean, min 2) */}
@@ -410,7 +431,7 @@ export default function QuizCreateScreen() {
                           disabled={isBusy}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                           accessibilityRole="button"
-                          accessibilityLabel={`Retirer l'option ${oi + 1}`}
+                          accessibilityLabel={t.cours.quizCreate.removeOptionA11y(oi + 1)}
                         >
                           <X size={15} color="#A0A0A0" />
                         </Pressable>
@@ -423,11 +444,11 @@ export default function QuizCreateScreen() {
                       onPress={() => addOption(qi)}
                       disabled={isBusy}
                       accessibilityRole="button"
-                      accessibilityLabel="Ajouter une option"
+                      accessibilityLabel={t.cours.quizCreate.addOptionA11y}
                       style={styles.addOption}
                     >
                       <Text fontSize={13} color="$textSecondary" fontWeight="600">
-                        + Ajouter une option
+                        {t.cours.quizCreate.addOption}
                       </Text>
                     </Pressable>
                   ) : null}
@@ -441,13 +462,13 @@ export default function QuizCreateScreen() {
                 onPress={addQuestion}
                 disabled={isBusy}
                 accessibilityRole="button"
-                accessibilityLabel="Ajouter une question"
+                accessibilityLabel={t.cours.quizCreate.addQuestion}
                 style={styles.addQuestion}
               >
                 <XStack alignItems="center" justifyContent="center" gap={8}>
                   <Plus size={18} color="#FFFFFF" strokeWidth={2} />
                   <Text fontSize={14} fontWeight="700" color="#FFFFFF">
-                    Ajouter une question
+                    {t.cours.quizCreate.addQuestion}
                   </Text>
                 </XStack>
               </Pressable>
@@ -467,7 +488,7 @@ export default function QuizCreateScreen() {
               onPress={() => void handleSubmit()}
               disabled={isBusy}
               accessibilityRole="button"
-              accessibilityLabel="Publier le quiz"
+              accessibilityLabel={t.cours.quizCreate.submitA11y}
               accessibilityState={{ disabled: isBusy }}
               style={[styles.cta, { backgroundColor: isBusy ? '#1A1A1A' : '#10D970' }]}
             >
@@ -475,7 +496,7 @@ export default function QuizCreateScreen() {
                 <ActivityIndicator color="#10D970" />
               ) : (
                 <Text fontSize={15} fontWeight="800" color="#000000">
-                  Publier le quiz
+                  {t.cours.quizCreate.submitCta}
                 </Text>
               )}
             </Pressable>

@@ -16,6 +16,7 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, View, YStack } from 'tamagui';
 
 import type { ListingItem } from '@/features/profile/hooks/useListings';
+import { useTranslations } from '@/i18n';
 
 interface ListingCardProps {
   item: ListingItem;
@@ -24,12 +25,6 @@ interface ListingCardProps {
   isLastColumn: boolean;
 }
 
-const BADGE_LABEL: Record<string, string> = {
-  offre_speciale: 'Promo',
-  nouveaute: 'Nouveau',
-  recommandation: 'Reco',
-};
-
 const BADGE_COLORS: Record<string, { bg: string; text: string }> = {
   offre_speciale: { bg: '#E53935', text: '#FFFFFF' },
   nouveaute: { bg: '#10D970', text: '#000000' },
@@ -37,6 +32,16 @@ const BADGE_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export function ListingCard({ item, size, gap, isLastColumn }: ListingCardProps) {
+  const t = useTranslations();
+
+  // Mapping clé badge → libellé traduit (l'ancien BADGE_LABEL statique a été
+  // remplacé par les clés i18n).
+  const BADGE_LABEL: Record<string, string> = {
+    offre_speciale: t.profileScreens.listingCard.badgePromo,
+    nouveaute: t.profileScreens.listingCard.badgeNew,
+    recommandation: t.profileScreens.listingCard.badgeReco,
+  };
+
   const handleViewProduct = useCallback(() => {
     router.push(`/shop/${item.id}`);
   }, [item.id]);
@@ -62,7 +67,10 @@ export function ListingCard({ item, size, gap, isLastColumn }: ListingCardProps)
         marginBottom={gap}
         position="relative"
         accessibilityRole="button"
-        accessibilityLabel={`Voir le produit ${item.title}, ${formattedPrice}`}
+        accessibilityLabel={t.profileScreens.listingCard.viewProductAccessibility(
+          item.title,
+          formattedPrice
+        )}
       >
         {/* Image 1:1 */}
         {mainImage ? (
@@ -148,7 +156,7 @@ export function ListingCard({ item, size, gap, isLastColumn }: ListingCardProps)
           pointerEvents="none"
         >
           <Text fontSize={11} fontWeight="600" color="#000000">
-            Voir le produit
+            {t.profileScreens.listingCard.viewProduct}
           </Text>
         </View>
       </YStack>

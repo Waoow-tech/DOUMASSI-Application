@@ -6,6 +6,7 @@ import { Text, XStack, YStack } from 'tamagui';
 
 import { MentionsText } from '@/components/MentionsText';
 import type { Comment } from '@/features/comments/hooks/useComments';
+import { getT, useTranslations } from '@/i18n';
 import { formatViewCount } from '@/utils/formatCount';
 
 type CommentCardProps = {
@@ -21,28 +22,29 @@ const HIT_SLOP = { top: 8, right: 8, bottom: 8, left: 8 };
 const LIKE_RED = '#FF3B30';
 
 function formatRelativeTime(value: string) {
+  const t = getT();
   const createdAt = new Date(value).getTime();
-  if (Number.isNaN(createdAt)) return '1min';
+  if (Number.isNaN(createdAt)) return t.feed.comments.time.minutes(1);
 
   const elapsedMs = Math.max(0, Date.now() - createdAt);
   const minutes = Math.floor(elapsedMs / 60_000);
 
-  if (minutes < 1) return '1min';
-  if (minutes < 60) return `${minutes}min`;
+  if (minutes < 1) return t.feed.comments.time.minutes(1);
+  if (minutes < 60) return t.feed.comments.time.minutes(minutes);
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return t.feed.comments.time.hours(hours);
 
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}j`;
+  if (days < 7) return t.feed.comments.time.days(days);
 
   const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `${weeks}sem`;
+  if (weeks < 5) return t.feed.comments.time.weeks(weeks);
 
   const months = Math.floor(days / 30);
-  if (months < 12) return `${months}mois`;
+  if (months < 12) return t.feed.comments.time.months(months);
 
-  return `${Math.floor(days / 365)}an`;
+  return t.feed.comments.time.years(Math.floor(days / 365));
 }
 
 function Avatar({ comment, size }: { comment: Comment; size: number }) {
@@ -82,6 +84,7 @@ export function CommentCard({
   onDelete,
   onToggleLike,
 }: CommentCardProps) {
+  const t = useTranslations();
   const isAuthor = currentUserId === comment.author_id;
   const relativeTime = formatRelativeTime(comment.created_at);
   const avatarSize = nested ? 28 : 32;
@@ -90,10 +93,10 @@ export function CommentCard({
     if (!isAuthor) return;
 
     void Haptics.selectionAsync();
-    Alert.alert('Supprimer ce commentaire ?', 'Cette action retirera le commentaire du post.', [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t.feed.comments.deleteTitle, t.feed.comments.deleteMessage, [
+      { text: t.feed.comments.cancel, style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: t.feed.comments.delete,
         style: 'destructive',
         onPress: () => onDelete(comment.id),
       },
@@ -134,11 +137,11 @@ export function CommentCard({
             onPress={() => onReply(comment)}
             hitSlop={HIT_SLOP}
             accessibilityRole="button"
-            accessibilityLabel={`Répondre à @${comment.author_username}`}
+            accessibilityLabel={t.feed.comments.replyA11y(comment.author_username)}
             style={styles.replyButton}
           >
             <Text color="$textSecondary" fontSize={12} fontWeight="700">
-              Répondre
+              {t.feed.comments.reply}
             </Text>
           </Pressable>
         ) : null}
@@ -148,7 +151,7 @@ export function CommentCard({
         onPress={handleLike}
         hitSlop={HIT_SLOP}
         accessibilityRole="button"
-        accessibilityLabel={`Aimer le commentaire de @${comment.author_username}`}
+        accessibilityLabel={t.feed.comments.likeA11y(comment.author_username)}
         style={styles.likeButton}
       >
         <Heart

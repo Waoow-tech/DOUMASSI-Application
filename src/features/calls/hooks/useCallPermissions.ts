@@ -8,6 +8,7 @@ import { Camera } from 'expo-camera';
 import * as Linking from 'expo-linking';
 import { Alert, Platform } from 'react-native';
 
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 
 export type CallType = 'audio' | 'video';
@@ -49,14 +50,18 @@ export async function requestCallPermissions(callType: CallType): Promise<boolea
 }
 
 function showPermissionDeniedAlert(kind: 'micro' | 'caméra') {
-  const what = kind === 'micro' ? 'micro' : 'caméra';
+  const t = getT();
+  const what =
+    kind === 'micro'
+      ? t.messaging.calls.permissions.deviceMic
+      : t.messaging.calls.permissions.deviceCamera;
   Alert.alert(
-    'Permission refusée',
-    `DOUMASSI a besoin d'accéder à ton ${what} pour passer cet appel. Active la permission dans les Réglages.`,
+    t.messaging.calls.permissions.deniedTitle,
+    t.messaging.calls.permissions.deniedMessage(what),
     [
-      { text: 'Annuler', style: 'cancel' },
+      { text: t.messaging.common.cancel, style: 'cancel' },
       {
-        text: 'Ouvrir les Réglages',
+        text: t.messaging.calls.permissions.openSettings,
         onPress: () => {
           // expo-linking ouvre les Réglages > Notre app sur iOS et Android
           if (Platform.OS === 'ios') {

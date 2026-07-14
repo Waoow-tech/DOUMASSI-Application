@@ -11,12 +11,14 @@ import { supabase } from '@/lib/supabase';
 
 export type ReportReason = 'inapproprie' | 'fausse_info' | 'spam' | 'autre';
 
-export const REPORT_REASON_LABEL: Record<ReportReason, string> = {
-  inapproprie: 'Contenu inapproprié',
-  fausse_info: 'Erreur ou fausse information',
-  spam: 'Spam ou publicité',
-  autre: 'Autre',
-};
+// Ordre d'affichage des raisons. Les libellés UI sont dans le dico i18n
+// (`t.cours.reportReason[reason]`) — on ne garde ici que l'énumération.
+export const REPORT_REASONS: readonly ReportReason[] = [
+  'inapproprie',
+  'fausse_info',
+  'spam',
+  'autre',
+];
 
 export function useReportResource() {
   return useMutation<void, Error, { resourceId: string; reason: ReportReason }>({

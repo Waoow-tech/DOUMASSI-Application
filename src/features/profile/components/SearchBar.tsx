@@ -2,13 +2,17 @@ import { Search } from 'lucide-react-native';
 import React from 'react';
 import { Input, XStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 interface SearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
 }
 
-export function SearchBar({ value, onChangeText, placeholder = 'Search...' }: SearchBarProps) {
+export function SearchBar({ value, onChangeText, placeholder }: SearchBarProps) {
+  const t = useTranslations();
+
   return (
     <XStack
       backgroundColor="$surface"
@@ -24,7 +28,7 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search...' }: Se
         flex={1}
         value={value}
         onChangeText={onChangeText}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t.profileScreens.searchBar.placeholder}
         placeholderTextColor="#A0A0A0"
         backgroundColor="transparent"
         borderWidth={0}

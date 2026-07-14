@@ -5,6 +5,8 @@
 
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 interface UnfollowConfirmModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -18,6 +20,8 @@ export function UnfollowConfirmModal({
   username,
   onConfirm,
 }: UnfollowConfirmModalProps) {
+  const t = useTranslations();
+
   return (
     <Sheet modal open={open} onOpenChange={onOpenChange} snapPoints={[30]} dismissOnSnapToBottom>
       <Sheet.Overlay
@@ -40,7 +44,7 @@ export function UnfollowConfirmModal({
         </XStack>
 
         <Text fontSize={18} fontWeight="700" color="$color" textAlign="center" marginBottom="$2">
-          Unfollow @{username}?
+          {t.profileScreens.unfollowModal.title(username)}
         </Text>
         <Text
           fontSize={14}
@@ -49,7 +53,7 @@ export function UnfollowConfirmModal({
           marginBottom="$4"
           lineHeight={20}
         >
-          You&apos;ll stop seeing their posts.
+          {t.profileScreens.unfollowModal.message}
         </Text>
 
         <XStack gap="$3">
@@ -66,7 +70,7 @@ export function UnfollowConfirmModal({
             onPress={() => onOpenChange(false)}
             pressStyle={{ opacity: 0.7 }}
           >
-            Cancel
+            {t.profileScreens.common.cancel}
           </Button>
           <Button
             flex={1}
@@ -82,7 +86,7 @@ export function UnfollowConfirmModal({
             }}
             pressStyle={{ opacity: 0.85, scale: 0.98 }}
           >
-            Unfollow
+            {t.profileScreens.unfollowModal.confirm}
           </Button>
         </XStack>
       </Sheet.Frame>

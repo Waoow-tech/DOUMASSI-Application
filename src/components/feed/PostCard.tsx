@@ -15,6 +15,7 @@ import { Text, XStack, YStack } from 'tamagui';
 
 import { MentionsText } from '@/components/MentionsText';
 import { InternalShareOptionsSheet } from '@/components/share/InternalShareOptionsSheet';
+import { getT, useTranslations } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { formatViewCount } from '@/utils/formatCount';
 
@@ -54,28 +55,29 @@ const TEXT_LINE_HEIGHT = 22;
 const MAX_CONTENT_LINES = 6;
 
 function formatRelativeTime(value: string) {
+  const t = getT();
   const createdAt = new Date(value).getTime();
-  if (Number.isNaN(createdAt)) return 'Il y a quelques instants';
+  if (Number.isNaN(createdAt)) return t.feed.time.justNow;
 
   const elapsedMs = Math.max(0, Date.now() - createdAt);
   const minutes = Math.floor(elapsedMs / 60_000);
 
-  if (minutes < 1) return 'Il y a quelques instants';
-  if (minutes < 60) return `Il y a ${minutes}min`;
+  if (minutes < 1) return t.feed.time.justNow;
+  if (minutes < 60) return t.feed.time.minutes(minutes);
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Il y a ${hours}h`;
+  if (hours < 24) return t.feed.time.hours(hours);
 
   const days = Math.floor(hours / 24);
-  if (days < 7) return `Il y a ${days}j`;
+  if (days < 7) return t.feed.time.days(days);
 
   const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `Il y a ${weeks}sem`;
+  if (weeks < 5) return t.feed.time.weeks(weeks);
 
   const months = Math.floor(days / 30);
-  if (months < 12) return `Il y a ${months}mois`;
+  if (months < 12) return t.feed.time.months(months);
 
-  return `Il y a ${Math.floor(days / 365)}an`;
+  return t.feed.time.years(Math.floor(days / 365));
 }
 
 function Avatar({
@@ -87,6 +89,7 @@ function Avatar({
   avatarUrl: string | null;
   onPress?: () => void;
 }) {
+  const t = useTranslations();
   const initial = username.trim().charAt(0).toUpperCase() || '?';
 
   return (
@@ -94,7 +97,7 @@ function Avatar({
       onPress={onPress}
       hitSlop={HIT_SLOP}
       accessibilityRole="button"
-      accessibilityLabel={`Voir le profil de @${username}`}
+      accessibilityLabel={t.feed.postCard.viewProfileA11y(username)}
     >
       <YStack
         width={40}
@@ -157,6 +160,7 @@ function CountAction({
 }
 
 function PostContent({ content, onOpenDetail }: { content: string; onOpenDetail?: () => void }) {
+  const t = useTranslations();
   const [isTruncated, setIsTruncated] = useState(false);
   const [measured, setMeasured] = useState(false);
 
@@ -175,7 +179,7 @@ function PostContent({ content, onOpenDetail }: { content: string; onOpenDetail?
     <Pressable
       onPress={onOpenDetail}
       accessibilityRole="button"
-      accessibilityLabel="Ouvrir le post"
+      accessibilityLabel={t.feed.postCard.openPost}
       style={styles.contentPressable}
     >
       <MentionsText
@@ -186,7 +190,7 @@ function PostContent({ content, onOpenDetail }: { content: string; onOpenDetail?
       />
       {isTruncated ? (
         <Text color="$textSecondary" fontSize={15} lineHeight={TEXT_LINE_HEIGHT} marginTop={2}>
-          ...plus
+          {t.feed.postCard.seeMore}
         </Text>
       ) : null}
     </Pressable>
@@ -202,6 +206,7 @@ function PostMedia({
   onOpenDetail?: () => void;
   thumbnail?: boolean;
 }) {
+  const t = useTranslations();
   const firstMediaUrl = post.media_urls[0];
   if (!firstMediaUrl) return null;
 
@@ -261,7 +266,7 @@ function PostMedia({
       <Pressable
         onPress={onOpenDetail}
         accessibilityRole="button"
-        accessibilityLabel="Ouvrir le post"
+        accessibilityLabel={t.feed.postCard.openPost}
       >
         <YStack aspectRatio={1} width="100%" overflow="hidden" backgroundColor="$surface">
           {image}
@@ -274,7 +279,7 @@ function PostMedia({
     <Pressable
       onPress={onOpenDetail}
       accessibilityRole="button"
-      accessibilityLabel="Ouvrir le media du post"
+      accessibilityLabel={t.feed.postCard.openPostMedia}
       style={styles.mediaPressable}
     >
       <YStack aspectRatio={4 / 5} width="100%" borderRadius={12} overflow="hidden">
@@ -295,6 +300,7 @@ export const PostCard = memo(function PostCard({
   onOpenProfile,
   onMenuPress,
 }: PostCardProps) {
+  const t = useTranslations();
   const likeScale = useRef(new Animated.Value(1)).current;
   const bookmarkSpin = useRef(new Animated.Value(0)).current;
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
@@ -392,7 +398,7 @@ export const PostCard = memo(function PostCard({
             onPress={onOpenProfile}
             hitSlop={HIT_SLOP}
             accessibilityRole="button"
-            accessibilityLabel={`Voir le profil de @${post.author_username}`}
+            accessibilityLabel={t.feed.postCard.viewProfileA11y(post.author_username)}
             style={styles.authorPressable}
           >
             <XStack alignItems="baseline" flexShrink={1} gap={5}>
@@ -412,7 +418,7 @@ export const PostCard = memo(function PostCard({
               onPress={onMenuPress}
               hitSlop={HIT_SLOP}
               accessibilityRole="button"
-              accessibilityLabel={`Ouvrir le menu du post de @${post.author_username}`}
+              accessibilityLabel={t.feed.postCard.openMenuA11y(post.author_username)}
             >
               <MoreHorizontal size={20} color="#FFFFFF" />
             </Pressable>
@@ -427,8 +433,8 @@ export const PostCard = memo(function PostCard({
         {variant === 'detail' ? null : (
           <XStack alignItems="center" gap={20} marginTop={12} width="100%">
             <CountAction
-              label={`Aimer le post de @${post.author_username}`}
-              hint={post.liked_by_me ? 'Tap pour retirer votre like' : 'Tap pour aimer ce post'}
+              label={t.feed.postCard.likeA11y(post.author_username)}
+              hint={post.liked_by_me ? t.feed.postCard.likeHintRemove : t.feed.postCard.likeHintAdd}
               count={post.like_count}
               onPress={handleLike}
             >
@@ -442,7 +448,7 @@ export const PostCard = memo(function PostCard({
             </CountAction>
 
             <CountAction
-              label={`Commenter le post de @${post.author_username}`}
+              label={t.feed.postCard.commentA11y(post.author_username)}
               count={post.comment_count}
               onPress={onOpenComments}
             >
@@ -450,7 +456,7 @@ export const PostCard = memo(function PostCard({
             </CountAction>
 
             <CountAction
-              label={`Partager le post de @${post.author_username}`}
+              label={t.feed.postCard.shareA11y(post.author_username)}
               count={post.share_count}
               onPress={() => setShareSheetOpen(true)}
             >
@@ -460,11 +466,11 @@ export const PostCard = memo(function PostCard({
             <XStack flex={1} />
 
             <CountAction
-              label={`Sauvegarder le post de @${post.author_username}`}
+              label={t.feed.postCard.bookmarkA11y(post.author_username)}
               hint={
                 post.bookmarked_by_me
-                  ? 'Tap pour retirer ce post de vos favoris'
-                  : 'Tap pour sauvegarder ce post dans vos favoris'
+                  ? t.feed.postCard.bookmarkHintRemove
+                  : t.feed.postCard.bookmarkHintAdd
               }
               onPress={handleBookmark}
             >

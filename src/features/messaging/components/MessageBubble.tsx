@@ -20,6 +20,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
 import { MentionsText } from '@/components/MentionsText';
+import { useTranslations } from '@/i18n';
 
 import type { MessageRow } from '../hooks/useConversationMessages';
 
@@ -95,6 +96,7 @@ function MessageBubbleComponent({
   onReplyPress,
   onLongPress,
 }: MessageBubbleProps) {
+  const t = useTranslations();
   const isDeleted = message.deleted_at !== null;
   const isEdited = message.edited_at !== null;
   const isOptimistic = message.id.startsWith('temp-');
@@ -172,7 +174,7 @@ function MessageBubbleComponent({
               <Pressable
                 onPress={handleReplyPress}
                 accessibilityRole="button"
-                accessibilityLabel={`Aller au message de ${replyParent.authorLabel}`}
+                accessibilityLabel={t.messaging.bubble.goToReplyA11y(replyParent.authorLabel)}
                 style={[
                   styles.replyEmbed,
                   {
@@ -201,7 +203,7 @@ function MessageBubbleComponent({
                   fontStyle={replyParent.isDeleted ? 'italic' : 'normal'}
                   numberOfLines={2}
                 >
-                  {replyParent.isDeleted ? '🚫 Message supprimé' : replyParent.preview}
+                  {replyParent.isDeleted ? t.messaging.bubble.deletedMessage : replyParent.preview}
                 </Text>
               </Pressable>
             ) : null}
@@ -211,7 +213,7 @@ function MessageBubbleComponent({
                 fontStyle="italic"
                 color={isMine ? COLORS.myText : COLORS.deletedText}
               >
-                🚫 Message supprimé
+                {t.messaging.bubble.deletedMessage}
               </Text>
             ) : (
               <>
@@ -222,7 +224,7 @@ function MessageBubbleComponent({
                     contentFit="cover"
                     transition={150}
                     recyclingKey={message.id}
-                    accessibilityLabel="Image envoyée"
+                    accessibilityLabel={t.messaging.bubble.imageSentA11y}
                   />
                 ) : null}
                 {message.attachment_type === 'voice' && message.attachment_url ? (
@@ -255,7 +257,7 @@ function MessageBubbleComponent({
             <XStack gap={4} alignItems="center" justifyContent="flex-end">
               {isFailed ? (
                 <Text fontSize={11} color="#FF3B30" fontWeight="600">
-                  Échec — taper pour réessayer
+                  {t.messaging.bubble.sendFailed}
                 </Text>
               ) : (
                 <>
@@ -265,7 +267,7 @@ function MessageBubbleComponent({
                       color={isMine ? 'rgba(0,0,0,0.55)' : COLORS.metaText}
                       fontStyle="italic"
                     >
-                      modifié
+                      {t.messaging.bubble.edited}
                     </Text>
                   ) : null}
                   <Text fontSize={11} color={isMine ? 'rgba(0,0,0,0.55)' : COLORS.metaText}>

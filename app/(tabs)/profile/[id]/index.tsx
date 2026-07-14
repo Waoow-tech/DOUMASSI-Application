@@ -33,6 +33,7 @@ import { useBlock } from '@/features/profile/hooks/useBlock';
 import { useFollow } from '@/features/profile/hooks/useFollow';
 import { useListings, type ListingItem } from '@/features/profile/hooks/useListings';
 import { useUserProfile, type PostGridItem } from '@/features/profile/hooks/useProfile';
+import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -40,6 +41,7 @@ const GRID_GAP = 2;
 const NUM_COLUMNS = 3;
 
 export default function OtherUserProfileScreen() {
+  const t = useTranslations();
   const { id } = useLocalSearchParams<{ id: string }>();
   // Expo Router peut retourner string | string[] — on narrow
   const targetUserId = typeof id === 'string' ? id : null;
@@ -99,7 +101,7 @@ export default function OtherUserProfileScreen() {
 
         if (data && data.length > 0) {
           // Blocage détecté — redirige vers le feed
-          Alert.alert('', 'User not available');
+          Alert.alert('', getT().profileScreens.otherProfile.userNotAvailable);
           router.replace('/feed');
           return;
         }
@@ -161,7 +163,7 @@ export default function OtherUserProfileScreen() {
       // URL incluse dans `message` car Android ignore la prop `url` de
       // Share.share et ne lit que `message` (cf bug remonté 2026-06-24).
       await Share.share({
-        message: `Découvre le profil de @${username} sur DOUMASSI ! 🚀\nhttps://doumassi.app/u/${username}`,
+        message: getT().profileScreens.otherProfile.shareMessage(username),
       });
     } catch {
       // Annulé
@@ -191,14 +193,19 @@ export default function OtherUserProfileScreen() {
     try {
       await block();
     } catch {
-      Alert.alert('Error', 'Could not block this user. Please try again.');
+      const t = getT();
+      Alert.alert(
+        t.profileScreens.otherProfile.blockErrorTitle,
+        t.profileScreens.otherProfile.blockErrorMessage
+      );
     }
   }, [block]);
 
   const handleReport = useCallback(() => {
     setIsMenuOpen(false);
     // TODO: Implémenter le report (Sprint futur)
-    Alert.alert('Report', 'Report feature coming soon.');
+    const t = getT();
+    Alert.alert(t.profileScreens.otherProfile.report, t.profileScreens.otherProfile.reportMessage);
   }, []);
 
   const handleFollowers = useCallback(() => {
@@ -268,10 +275,10 @@ export default function OtherUserProfileScreen() {
       >
         <AlertTriangle size={48} color="#A0A0A0" />
         <Text fontSize={18} fontWeight="600" color="$color" textAlign="center">
-          User not found
+          {t.profileScreens.otherProfile.userNotFound}
         </Text>
         <Text fontSize={14} color="$textSecondary" textAlign="center">
-          This account may have been deleted or doesn&apos;t exist.
+          {t.profileScreens.otherProfile.userNotFoundSubtitle}
         </Text>
         <Button
           height={44}
@@ -285,7 +292,7 @@ export default function OtherUserProfileScreen() {
           pressStyle={{ opacity: 0.85 }}
           icon={<ChevronLeft size={18} color="#000000" />}
         >
-          Go back
+          {t.profileScreens.common.goBack}
         </Button>
       </YStack>
     );
@@ -332,7 +339,7 @@ export default function OtherUserProfileScreen() {
           pressStyle={{ opacity: 0.7, scale: 0.98 }}
           icon={<MessageCircle size={16} color="#FFFFFF" />}
         >
-          Message
+          {t.profileScreens.otherProfile.messageButton}
         </Button>
       </XStack>
 
@@ -358,7 +365,7 @@ export default function OtherUserProfileScreen() {
             paddingHorizontal="$5"
             lineHeight={22}
           >
-            This account is private.{'\n'}Follow @{profile.username} to see their posts.
+            {t.profileScreens.otherProfile.accountPrivate(profile.username)}
           </Text>
         </YStack>
       ) : (
@@ -442,7 +449,7 @@ export default function OtherUserProfileScreen() {
               icon={<Share2 size={20} color="#FFFFFF" />}
             >
               <Text color="$color" fontSize={15} fontWeight="500">
-                Share profile
+                {t.profileScreens.otherProfile.shareProfile}
               </Text>
             </Button>
 
@@ -457,7 +464,7 @@ export default function OtherUserProfileScreen() {
               icon={<ShieldBan size={20} color="#FF3B30" />}
             >
               <Text color="$danger" fontSize={15} fontWeight="500">
-                Block @{profile.username}
+                {t.profileScreens.otherProfile.blockUser(profile.username)}
               </Text>
             </Button>
 
@@ -472,7 +479,7 @@ export default function OtherUserProfileScreen() {
               icon={<Flag size={20} color="#A0A0A0" />}
             >
               <Text color="$textSecondary" fontSize={15} fontWeight="500">
-                Report
+                {t.profileScreens.otherProfile.report}
               </Text>
             </Button>
           </YStack>
@@ -523,7 +530,7 @@ export default function OtherUserProfileScreen() {
           >
             <ShieldBan size={16} color="#FFFFFF" />
             <Text color="$color" fontSize={14} fontWeight="600">
-              User blocked
+              {t.profileScreens.otherProfile.userBlockedToast}
             </Text>
           </XStack>
         </XStack>

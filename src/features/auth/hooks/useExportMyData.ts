@@ -13,6 +13,7 @@ import { useMutation } from '@tanstack/react-query';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -37,10 +38,11 @@ export interface ExportResult {
 export function useExportMyData() {
   return useMutation<ExportResult, Error, void>({
     mutationFn: async () => {
+      const t = getT();
       // 1. Récupère la session pour le user_id (pour le nom de fichier)
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !sessionData.session) {
-        throw new Error('Session expirée. Reconnectez-vous puis réessayez.');
+        throw new Error(t.auth.exportData.sessionExpired);
       }
       const userId = sessionData.session.user.id;
 
@@ -52,7 +54,7 @@ export function useExportMyData() {
       });
       if (error) {
         logger.warn('export-data invoke failed', { message: error.message });
-        throw new Error("L'export a échoué. Réessayez dans un instant.");
+        throw new Error(t.auth.exportData.failed);
       }
       if (!data || typeof data !== 'object') {
         throw new Error('Réponse export-data invalide');
@@ -76,7 +78,7 @@ export function useExportMyData() {
       if (isAvailable) {
         await Sharing.shareAsync(fileUri, {
           mimeType: 'application/json',
-          dialogTitle: 'Exporter mes données DOUMASSI',
+          dialogTitle: t.auth.exportData.dialogTitle,
           UTI: 'public.json',
         });
       } else {

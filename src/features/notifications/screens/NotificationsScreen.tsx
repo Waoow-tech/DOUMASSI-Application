@@ -26,16 +26,12 @@ import {
   type NotificationFilter,
   type NotificationItem,
 } from '@/features/notifications/hooks/useNotifications';
+import { useTranslations } from '@/i18n';
 
 const logoSource = require('../../../../assets/Logo-Doumassi.webp') as number;
 
-const FILTERS: { id: NotificationFilter; label: string }[] = [
-  { id: 'all', label: 'Toutes' },
-  { id: 'unread', label: 'Non lus' },
-  { id: 'social', label: 'Social' },
-  { id: 'payment', label: 'Paiement' },
-  { id: 'ai', label: 'IA' },
-];
+// Les libellés des filtres sont résolus via i18n dans FilterTabs (réactif).
+const FILTER_IDS: NotificationFilter[] = ['all', 'unread', 'social', 'payment', 'ai'];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SEEN_DELAY_MS = 1000;
@@ -43,32 +39,20 @@ const SEEN_DELAY_MS = 1000;
 // Mock affiché en empty state sur l'onglet IA (cf. ticket : "toujours
 // afficher au moins 1 notif mock pour la démo"). created_at épinglé 7 jours
 // avant le chargement du module pour éviter la dérive cosmétique de l'âge
-// affiché pendant la session ("à l'instant" → "1min" → "2min"…).
-const AI_MOCK: NotificationItem = {
-  id: 'mock-ai-welcome',
-  recipient_id: '',
-  actor_id: null,
-  actor_username: null,
-  actor_full_name: null,
-  actor_avatar_url: null,
-  actor_is_verified: false,
-  type: 'system',
-  entity_type: null,
-  entity_id: null,
-  payload: { title: 'Bienvenue sur l’app' },
-  is_seen: true,
-  is_read: true,
-  created_at: new Date(Date.now() - 7 * DAY_MS).toISOString(),
-};
+// affiché pendant la session ("à l'instant" → "1min" → "2min"…). Le titre est
+// traduit et injecté à l'exécution (cf. `aiMock` dans le composant).
+const AI_MOCK_ID = 'mock-ai-welcome';
+const AI_MOCK_CREATED_AT = new Date(Date.now() - 7 * DAY_MS).toISOString();
 
 function NotificationsHeader() {
+  const t = useTranslations();
   return (
     <YStack backgroundColor="$background" paddingTop="$3" paddingBottom="$2">
       <XStack alignItems="center" justifyContent="center" paddingHorizontal="$4" height={42}>
         <Image source={logoSource} style={styles.logo} contentFit="contain" transition={200} />
       </XStack>
       <Text color="$color" fontSize={26} fontWeight="700" paddingHorizontal={20} marginTop="$2">
-        Notifications
+        {t.notifications.screen.title}
       </Text>
     </YStack>
   );
@@ -81,34 +65,36 @@ function FilterTabs({
   active: NotificationFilter;
   onChange: (filter: NotificationFilter) => void;
 }) {
+  const t = useTranslations();
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.filterTabsContent}
     >
-      {FILTERS.map((f) => {
-        const isActive = active === f.id;
+      {FILTER_IDS.map((id) => {
+        const isActive = active === id;
+        const label = t.notifications.filters[id];
         return (
           <YStack
-            key={f.id}
+            key={id}
             height={36}
             paddingHorizontal={14}
             borderRadius={18}
             backgroundColor={isActive ? '#FFFFFF' : '$surface'}
             alignItems="center"
             justifyContent="center"
-            onPress={() => onChange(f.id)}
+            onPress={() => onChange(id)}
             pressStyle={{ scale: 0.97 }}
             accessibilityRole="button"
-            accessibilityLabel={`Filtre ${f.label}`}
+            accessibilityLabel={t.notifications.screen.filterA11y(label)}
           >
             <Text
               color={isActive ? '#000000' : '$textSecondary'}
               fontSize={14}
               fontWeight={isActive ? '700' : '500'}
             >
-              {f.label}
+              {label}
             </Text>
           </YStack>
         );
@@ -134,25 +120,27 @@ function PeriodHeader({ label }: { label: string }) {
 }
 
 function EmptyState({ filter }: { filter: NotificationFilter }) {
+  const t = useTranslations();
   const { title, subtitle } = useMemo(() => {
+    const empty = t.notifications.empty;
     switch (filter) {
       case 'unread':
-        return { title: 'Aucune notification non lue', subtitle: '' };
+        return { title: empty.unreadTitle, subtitle: '' };
       case 'social':
-        return { title: 'Pas d’activité sociale récente', subtitle: '' };
+        return { title: empty.socialTitle, subtitle: '' };
       case 'payment':
-        return { title: 'Pas de transaction récente', subtitle: '' };
+        return { title: empty.paymentTitle, subtitle: '' };
       case 'ai':
         // L'onglet IA injecte AI_MOCK quand il n'y a rien — cet empty
         // state ne devrait jamais être atteint, sauf si la mock est retirée.
-        return { title: 'Pas de news IA pour l’instant', subtitle: '' };
+        return { title: empty.aiTitle, subtitle: '' };
       default:
         return {
-          title: 'Vous êtes à jour',
-          subtitle: 'Les likes et commentaires apparaîtront ici bientôt.',
+          title: empty.defaultTitle,
+          subtitle: empty.defaultSubtitle,
         };
     }
-  }, [filter]);
+  }, [filter, t]);
   return (
     <YStack alignItems="center" justifyContent="center" padding="$6" gap="$3" marginTop="$10">
       <Bell size={32} color="#A0A0A0" />
@@ -188,6 +176,7 @@ function partitionByPeriod(notifs: NotificationItem[]) {
 }
 
 export function NotificationsScreen() {
+  const t = useTranslations();
   const [filter, setFilter] = useState<NotificationFilter>('all');
   const query = useNotifications(filter);
   const markAllSeen = useMarkAllNotificationsSeen();
@@ -205,14 +194,36 @@ export function NotificationsScreen() {
     return () => clearTimeout(timer);
   }, [markAllSeen]);
 
+  // Notif mock IA construite ici pour récupérer le titre traduit (réactif).
+  // created_at reste épinglé au chargement du module (cf. AI_MOCK_CREATED_AT).
+  const aiMock = useMemo<NotificationItem>(
+    () => ({
+      id: AI_MOCK_ID,
+      recipient_id: '',
+      actor_id: null,
+      actor_username: null,
+      actor_full_name: null,
+      actor_avatar_url: null,
+      actor_is_verified: false,
+      type: 'system',
+      entity_type: null,
+      entity_id: null,
+      payload: { title: t.notifications.mock.welcomeTitle },
+      is_seen: true,
+      is_read: true,
+      created_at: AI_MOCK_CREATED_AT,
+    }),
+    [t]
+  );
+
   // Tab IA : on injecte la mock en tête si la liste est vide ou ne contient
   // pas déjà au moins une notif système. `list` est memoizé pour stabiliser
   // sa référence (sinon le useMemo de partitionByPeriod invalide à chaque
   // render).
   const list = useMemo(() => {
     const raw = query.data ?? [];
-    return filter === 'ai' && !raw.some((n) => n.type === 'system') ? [AI_MOCK, ...raw] : raw;
-  }, [filter, query.data]);
+    return filter === 'ai' && !raw.some((n) => n.type === 'system') ? [aiMock, ...raw] : raw;
+  }, [filter, query.data, aiMock]);
 
   const { followRequests, week, month, older } = useMemo(() => partitionByPeriod(list), [list]);
 
@@ -222,7 +233,7 @@ export function NotificationsScreen() {
   const handlePressNotif = useCallback(
     (notif: NotificationItem) => {
       // Marquer lu (optimistic) — ignoré pour la mock IA (id non-uuid).
-      if (notif.id !== AI_MOCK.id) markRead.mutate(notif.id);
+      if (notif.id !== AI_MOCK_ID) markRead.mutate(notif.id);
       // Route selon le type.
       switch (notif.type) {
         case 'follow':
@@ -291,7 +302,7 @@ export function NotificationsScreen() {
               paddingHorizontal="$4"
               paddingBottom="$2"
             >
-              Demandes de suivis ({followRequests.length})
+              {t.notifications.screen.followRequestsHeader(followRequests.length)}
             </Text>
             {followRequests.map((n) => (
               <FollowRequestCard key={n.id} notif={n} />
@@ -301,7 +312,7 @@ export function NotificationsScreen() {
 
         {week.length > 0 ? (
           <YStack>
-            <PeriodHeader label="CETTE SEMAINE" />
+            <PeriodHeader label={t.notifications.periods.week} />
             {week.map((n) => (
               <NotificationRow key={n.id} notif={n} onPress={handlePressNotif} />
             ))}
@@ -310,7 +321,7 @@ export function NotificationsScreen() {
 
         {month.length > 0 ? (
           <YStack>
-            <PeriodHeader label="CE MOIS" />
+            <PeriodHeader label={t.notifications.periods.month} />
             {month.map((n) => (
               <NotificationRow key={n.id} notif={n} onPress={handlePressNotif} />
             ))}
@@ -319,7 +330,7 @@ export function NotificationsScreen() {
 
         {older.length > 0 ? (
           <YStack>
-            <PeriodHeader label="PLUS ANCIEN" />
+            <PeriodHeader label={t.notifications.periods.older} />
             {older.map((n) => (
               <NotificationRow key={n.id} notif={n} onPress={handlePressNotif} />
             ))}

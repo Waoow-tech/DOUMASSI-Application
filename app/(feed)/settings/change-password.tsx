@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui';
@@ -10,38 +10,45 @@ import { z } from 'zod';
 
 import { mapAuthError } from '@/features/auth/lib/mapAuthError';
 import { useCurrentProfile } from '@/features/profile/hooks/useProfile';
+import { useTranslations } from '@/i18n';
+import type { ProfileScreensTranslations } from '@/i18n/fr/profileScreens';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
-const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, 'Mot de passe actuel requis'),
-    newPassword: z
-      .string()
-      .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
-      .regex(/[A-Z]/, 'Le mot de passe doit contenir au moins 1 majuscule')
-      .regex(/[0-9]/, 'Le mot de passe doit contenir au moins 1 chiffre'),
-    confirmPassword: z.string().min(1, 'Confirmation requise'),
-  })
-  .superRefine((values, ctx) => {
-    if (values.newPassword === values.currentPassword) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Le nouveau mot de passe doit être différent',
-        path: ['newPassword'],
-      });
-    }
+// Fabrique le schéma avec des messages traduits injectés (i18n). On passe le
+// sous-dictionnaire `changePassword` : la logique de validation reste identique,
+// seuls les libellés d'erreur sont paramétrés.
+function createChangePasswordSchema(cp: ProfileScreensTranslations['changePassword']) {
+  return z
+    .object({
+      currentPassword: z.string().min(1, cp.currentPasswordRequired),
+      newPassword: z
+        .string()
+        .min(8, cp.passwordMinLength)
+        .regex(/[A-Z]/, cp.passwordUppercase)
+        .regex(/[0-9]/, cp.passwordDigit),
+      confirmPassword: z.string().min(1, cp.confirmationRequired),
+    })
+    .superRefine((values, ctx) => {
+      if (values.newPassword === values.currentPassword) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: cp.newPasswordDifferent,
+          path: ['newPassword'],
+        });
+      }
 
-    if (values.confirmPassword !== values.newPassword) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Les mots de passe ne correspondent pas',
-        path: ['confirmPassword'],
-      });
-    }
-  });
+      if (values.confirmPassword !== values.newPassword) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: cp.passwordsDoNotMatch,
+          path: ['confirmPassword'],
+        });
+      }
+    });
+}
 
-type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
+type ChangePasswordValues = z.infer<ReturnType<typeof createChangePasswordSchema>>;
 
 function PasswordField({
   label,
@@ -114,12 +121,16 @@ function PasswordField({
 }
 
 export default function ChangePasswordScreen() {
+  const t = useTranslations();
+  const cp = t.profileScreens.changePassword;
   const profileQuery = useCurrentProfile();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
+
+  const changePasswordSchema = useMemo(() => createChangePasswordSchema(cp), [cp]);
 
   const form = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -136,7 +147,7 @@ export default function ChangePasswordScreen() {
   const samePasswordError =
     currentPasswordValue.length > 0 && newPasswordValue.length > 0
       ? currentPasswordValue === newPasswordValue
-        ? "Le nouveau mot de passe doit être différent de l'ancien"
+        ? cp.samePasswordError
         : undefined
       : undefined;
 
@@ -145,7 +156,7 @@ export default function ChangePasswordScreen() {
       const email = profileQuery.data?.email;
 
       if (!email) {
-        throw new Error('Email du compte indisponible');
+        throw new Error(cp.emailUnavailable);
       }
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -154,8 +165,8 @@ export default function ChangePasswordScreen() {
       });
 
       if (signInError) {
-        form.setError('currentPassword', { message: 'Mot de passe actuel incorrect' });
-        throw new Error('Mot de passe actuel incorrect');
+        form.setError('currentPassword', { message: cp.currentPasswordIncorrect });
+        throw new Error(cp.currentPasswordIncorrect);
       }
 
       const { error: updateError } = await supabase.auth.updateUser({
@@ -225,7 +236,7 @@ export default function ChangePasswordScreen() {
             fontWeight="700"
             fontFamily="$heading"
           >
-            Changer le mot de passe
+            {cp.title}
           </Text>
         </XStack>
 
@@ -241,7 +252,7 @@ export default function ChangePasswordScreen() {
               name="currentPassword"
               render={({ field: { onChange, onBlur, value } }) => (
                 <PasswordField
-                  label="Mot de passe actuel"
+                  label={cp.currentPasswordLabel}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -259,7 +270,7 @@ export default function ChangePasswordScreen() {
               name="newPassword"
               render={({ field: { onChange, onBlur, value } }) => (
                 <PasswordField
-                  label="Nouveau mot de passe"
+                  label={cp.newPasswordLabel}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -277,7 +288,7 @@ export default function ChangePasswordScreen() {
               name="confirmPassword"
               render={({ field: { onChange, onBlur, value } }) => (
                 <PasswordField
-                  label="Confirmer le nouveau mot de passe"
+                  label={cp.confirmPasswordLabel}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -309,11 +320,7 @@ export default function ChangePasswordScreen() {
               pressStyle={{ opacity: 0.85, scale: 0.98 }}
               marginTop="$2"
             >
-              {changePassword.isPending ? (
-                <Spinner color="$background" />
-              ) : (
-                'Mettre à jour le mot de passe'
-              )}
+              {changePassword.isPending ? <Spinner color="$background" /> : cp.submit}
             </Button>
           </YStack>
         </ScrollView>
@@ -331,7 +338,7 @@ export default function ChangePasswordScreen() {
             paddingVertical="$2"
           >
             <Text color="$color" fontSize={13} fontWeight="700">
-              Mot de passe mis à jour
+              {cp.toast}
             </Text>
           </YStack>
         ) : null}

@@ -15,8 +15,11 @@ import { Spinner, Text, XStack, YStack } from 'tamagui';
 import { PostCard, PostCardSkeleton, type PostCardPost } from '@/components/feed/PostCard';
 import { useBookmarks } from '@/features/feed/hooks/useBookmarks';
 import { useToggleFeedBookmark, useToggleFeedLike } from '@/features/feed/hooks/useFeed';
+import { useTranslations } from '@/i18n';
 
 function BookmarksHeader() {
+  const t = useTranslations();
+
   return (
     <XStack
       alignItems="center"
@@ -31,12 +34,12 @@ function BookmarksHeader() {
         padding="$2"
         width={40}
         accessibilityRole="button"
-        accessibilityLabel="Retour"
+        accessibilityLabel={t.feed.bookmarks.back}
       >
         <ArrowLeft size={24} color="#FFFFFF" />
       </YStack>
       <Text flex={1} textAlign="center" color="$color" fontSize={17} fontWeight="700">
-        Sauvegardés
+        {t.feed.bookmarks.title}
       </Text>
       {/* spacer pour centrer le titre malgré le bouton retour à gauche */}
       <YStack width={40} />
@@ -45,14 +48,16 @@ function BookmarksHeader() {
 }
 
 function BookmarksEmptyState() {
+  const t = useTranslations();
+
   return (
     <YStack alignItems="center" justifyContent="center" padding="$6" gap="$3" marginTop="$10">
       <Bookmark size={40} color="#A0A0A0" />
       <Text color="$color" fontSize={17} fontWeight="700" textAlign="center">
-        Vous n’avez encore rien sauvegardé
+        {t.feed.bookmarks.emptyTitle}
       </Text>
       <Text color="$textSecondary" fontSize={14} textAlign="center" maxWidth={280}>
-        Tap sur le marque-page d’un post pour le retrouver ici
+        {t.feed.bookmarks.emptySubtitle}
       </Text>
     </YStack>
   );

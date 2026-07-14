@@ -28,6 +28,8 @@ import {
   type TextStyle,
 } from 'react-native';
 
+import { useTranslations } from '@/i18n';
+
 // Pattern identique à `fn_extract_mentions` côté SQL. Le `g` flag est obligatoire
 // pour récupérer tous les matches via `matchAll`.
 const MENTION_REGEX = /@([A-Za-z0-9_]{3,30})/g;
@@ -95,6 +97,7 @@ function MentionsTextComponent({
   testID,
   accessibilityLabel,
 }: MentionsTextProps) {
+  const t = useTranslations();
   const fragments = useMemo(() => parseMentions(content ?? ''), [content]);
 
   const handlePress = useCallback(
@@ -149,7 +152,7 @@ function MentionsTextComponent({
             onPress={() => handlePress(fragment.username)}
             suppressHighlighting
             accessibilityRole="link"
-            accessibilityLabel={`Profil de ${fragment.username}`}
+            accessibilityLabel={t.feed.mentions.profileA11y(fragment.username)}
           >
             @{fragment.username}
           </Text>

@@ -16,6 +16,7 @@ import { usePushToken } from '@/features/auth/hooks/usePushToken';
 import { useIncomingCallListener } from '@/features/calls/hooks/useIncomingCallListener';
 import { useNotificationsUnreadCount } from '@/features/notifications/hooks/useNotifications';
 import { usePushNotificationsHandler } from '@/features/notifications/hooks/usePushNotificationsHandler';
+import { useTranslations } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 
 const ACTIVE_COLOR = '#FFFFFF';
@@ -45,6 +46,7 @@ function TabIcon({ Icon, focused }: TabIconProps) {
 // qu'il y ait une session valide (et sans violer les règles des hooks au
 // niveau du parent qui short-circuit avec des Redirect).
 function AuthenticatedTabs() {
+  const t = useTranslations();
   const unreadCount = useNotificationsUnreadCount();
   const insets = useSafeAreaInsets();
   // E4-14 : enregistrement du push token + handler de tap. Montés ici
@@ -104,14 +106,14 @@ function AuthenticatedTabs() {
           name="feed"
           options={{
             tabBarIcon: ({ focused }) => <TabIcon Icon={Home} focused={focused} />,
-            tabBarAccessibilityLabel: 'Accueil',
+            tabBarAccessibilityLabel: t.common.tabs.feed,
           }}
         />
         <Tabs.Screen
           name="notifications"
           options={{
             tabBarIcon: ({ focused }) => <TabIcon Icon={Bell} focused={focused} />,
-            tabBarAccessibilityLabel: 'Notifications',
+            tabBarAccessibilityLabel: t.common.tabs.notifications,
             // Cap à "99+" pour éviter un débordement visuel du badge sur les
             // gros volumes (la cible MVP n'y arrivera pas mais c'est défensif).
             tabBarBadge: unreadCount > 99 ? '99+' : unreadCount > 0 ? unreadCount : undefined,
@@ -121,21 +123,21 @@ function AuthenticatedTabs() {
           name="studio-ai"
           options={{
             tabBarIcon: ({ focused }) => <TabIcon Icon={Hash} focused={focused} />,
-            tabBarAccessibilityLabel: 'Doumassi AI',
+            tabBarAccessibilityLabel: t.common.tabs.studioAi,
           }}
         />
         <Tabs.Screen
           name="messages"
           options={{
             tabBarIcon: ({ focused }) => <TabIcon Icon={Send} focused={focused} />,
-            tabBarAccessibilityLabel: 'Messages',
+            tabBarAccessibilityLabel: t.common.tabs.messages,
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
             tabBarIcon: ({ focused }) => <TabIcon Icon={User} focused={focused} />,
-            tabBarAccessibilityLabel: 'Mon profil',
+            tabBarAccessibilityLabel: t.common.tabs.profile,
           }}
         />
       </Tabs>

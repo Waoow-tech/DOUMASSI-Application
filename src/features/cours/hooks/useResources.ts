@@ -14,12 +14,14 @@ const PAGE_SIZE = 20;
 export type ResourceType = 'cours' | 'fiche_revision' | 'exercices' | 'annale';
 export type ResourceSort = 'recent' | 'popular';
 
-export const RESOURCE_TYPE_LABEL: Record<ResourceType, string> = {
-  cours: 'Cours',
-  fiche_revision: 'Fiche de révision',
-  exercices: 'Exercices',
-  annale: 'Annale',
-};
+// Ordre d'affichage des types de ressource. Les libellés UI sont dans le dico
+// i18n (`t.cours.resourceType[type]`) — on ne garde ici que l'énumération.
+export const RESOURCE_TYPES: readonly ResourceType[] = [
+  'cours',
+  'fiche_revision',
+  'exercices',
+  'annale',
+];
 
 export interface ResourceListItem {
   id: string;

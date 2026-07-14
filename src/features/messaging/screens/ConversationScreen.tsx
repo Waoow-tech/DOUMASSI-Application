@@ -55,6 +55,7 @@ import {
 import { useRealtimeConversation } from '@/features/messaging/hooks/useRealtimeConversation';
 import { useSendMessage } from '@/features/messaging/hooks/useSendMessage';
 import { useProfilesByIds } from '@/features/profile/hooks/useProfilesByIds';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { uploadMessageAudio, uploadMessageImage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
@@ -66,6 +67,7 @@ type FeedItem =
   | { kind: 'call'; data: CallEntryRow; sortKey: string };
 
 export function ConversationScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   // E7-13 — `prefill` est passé en query param quand on arrive depuis le CTA
   // "Contacter le vendeur" d'une fiche marketplace. Il pré-remplit le
@@ -160,11 +162,11 @@ export function ConversationScreen() {
       const isDeleted = parent.deleted_at !== null;
       let preview: string;
       if (parent.attachment_type === 'image') {
-        preview = '📷 Photo';
+        preview = t.messaging.conversation.attachmentPhoto;
       } else if (parent.attachment_type === 'voice') {
-        preview = '🎙️ Message vocal';
+        preview = t.messaging.conversation.attachmentVoice;
       } else if (parent.attachment_type === 'video') {
-        preview = '🎬 Vidéo';
+        preview = t.messaging.conversation.attachmentVideo;
       } else {
         preview = (parent.content ?? '').slice(0, 50);
       }
@@ -178,15 +180,15 @@ export function ConversationScreen() {
       } else if (headerQuery.data?.display_name && !headerQuery.data.is_group) {
         otherLabel = `@${headerQuery.data.display_name}`;
       } else {
-        otherLabel = '@un membre';
+        otherLabel = t.messaging.conversation.replyAuthorUnknown;
       }
       return {
-        authorLabel: isParentMine ? 'votre message' : otherLabel,
+        authorLabel: isParentMine ? t.messaging.conversation.replyAuthorSelf : otherLabel,
         preview,
         isDeleted,
       };
     },
-    [headerQuery.data?.display_name, headerQuery.data?.is_group, meId, profilesById]
+    [headerQuery.data?.display_name, headerQuery.data?.is_group, meId, profilesById, t]
   );
 
   const handleSend = useCallback(
@@ -229,20 +231,21 @@ export function ConversationScreen() {
           {
             onError: (err) => {
               logger.warn('Send image message failed', { message: err.message });
-              Alert.alert("Échec de l'envoi", err.message);
+              Alert.alert(t.messaging.conversation.sendErrorTitle, err.message);
             },
           }
         );
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Upload échoué';
+        const msg =
+          err instanceof Error ? err.message : t.messaging.conversation.uploadFailedFallback;
         logger.warn('Upload message image failed', { message: msg });
-        Alert.alert("Échec de l'upload", msg);
+        Alert.alert(t.messaging.conversation.uploadErrorTitle, msg);
       } finally {
         setIsAttaching(false);
         setReplyingTo(null);
       }
     },
-    [convId, replyingTo, sendMessage]
+    [convId, replyingTo, sendMessage, t]
   );
 
   // Ticket #211 — envoi vocal.
@@ -266,32 +269,36 @@ export function ConversationScreen() {
           {
             onError: (err) => {
               logger.warn('Send voice message failed', { message: err.message });
-              Alert.alert("Échec de l'envoi", err.message);
+              Alert.alert(t.messaging.conversation.sendErrorTitle, err.message);
             },
           }
         );
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Upload audio échoué';
+        const msg =
+          err instanceof Error ? err.message : t.messaging.conversation.uploadAudioFailedFallback;
         logger.warn('Upload message audio failed', { message: msg });
-        Alert.alert("Échec de l'upload", msg);
+        Alert.alert(t.messaging.conversation.uploadErrorTitle, msg);
       } finally {
         setIsSendingVoice(false);
         setReplyingTo(null);
       }
     },
-    [convId, replyingTo, sendMessage]
+    [convId, replyingTo, sendMessage, t]
   );
 
   const handleAttach = useCallback(() => {
     if (isAttaching) return;
-    Alert.alert('Ajouter une image', undefined, [
+    Alert.alert(t.messaging.conversation.attachSheetTitle, undefined, [
       {
-        text: 'Galerie',
+        text: t.messaging.conversation.galleryOption,
         onPress: async () => {
           let perm = await ImagePicker.getMediaLibraryPermissionsAsync();
           if (!perm.granted) perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
           if (!perm.granted) {
-            Alert.alert('Permission refusée', "Active l'accès aux photos dans Réglages.");
+            Alert.alert(
+              t.messaging.conversation.permissionDeniedTitle,
+              t.messaging.conversation.photoPermissionMessage
+            );
             return;
           }
           const result = await ImagePicker.launchImageLibraryAsync({
@@ -305,12 +312,15 @@ export function ConversationScreen() {
         },
       },
       {
-        text: 'Caméra',
+        text: t.messaging.conversation.cameraOption,
         onPress: async () => {
           let perm = await ImagePicker.getCameraPermissionsAsync();
           if (!perm.granted) perm = await ImagePicker.requestCameraPermissionsAsync();
           if (!perm.granted) {
-            Alert.alert('Permission refusée', "Active l'accès à la caméra dans Réglages.");
+            Alert.alert(
+              t.messaging.conversation.permissionDeniedTitle,
+              t.messaging.conversation.cameraPermissionMessage
+            );
             return;
           }
           const result = await ImagePicker.launchCameraAsync({
@@ -322,9 +332,9 @@ export function ConversationScreen() {
           if (asset) await handleSendImage(asset.uri);
         },
       },
-      { text: 'Annuler', style: 'cancel' },
+      { text: t.messaging.common.cancel, style: 'cancel' },
     ]);
-  }, [handleSendImage, isAttaching]);
+  }, [handleSendImage, isAttaching, t]);
 
   const handleLongPressBubble = useCallback((message: MessageRow) => {
     setActionMessage(message);
@@ -355,14 +365,14 @@ export function ConversationScreen() {
       const index = feedItems.findIndex((it) => it.kind === 'message' && it.data.id === parentId);
       if (index === -1) {
         Alert.alert(
-          'Message non chargé',
-          'Le message parent est trop ancien. Faites défiler vers le haut puis réessayez.'
+          t.messaging.conversation.parentNotLoadedTitle,
+          t.messaging.conversation.parentNotLoadedMessage
         );
         return;
       }
       listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
     },
-    [feedItems]
+    [feedItems, t]
   );
 
   const replyingPreview = useMemo<ReplyingPreview | null>(() => {
@@ -416,12 +426,12 @@ export function ConversationScreen() {
           },
           onError: (err) => {
             logger.warn('Start call failed', { message: err.message });
-            Alert.alert("Impossible de lancer l'appel", err.message);
+            Alert.alert(t.messaging.calls.startErrorTitle, err.message);
           },
         }
       );
     },
-    [convId, startCall]
+    [convId, startCall, t]
   );
 
   const handleLoadMore = useCallback(() => {
@@ -461,8 +471,8 @@ export function ConversationScreen() {
           // Parent pas dans les pages chargées : on rend l'encart en mode "déchargé".
           replyParent = {
             id: item.reply_to_id,
-            authorLabel: 'Message',
-            preview: 'Faire défiler pour voir le message original…',
+            authorLabel: t.messaging.conversation.replyAuthorFallback,
+            preview: t.messaging.conversation.replyParentUnloaded,
             isDeleted: false,
           };
         }
@@ -492,6 +502,7 @@ export function ConversationScreen() {
       meId,
       messagesById,
       profilesById,
+      t,
     ]
   );
 
@@ -517,7 +528,7 @@ export function ConversationScreen() {
           onPress={handleBack}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
-          accessibilityLabel="Retour"
+          accessibilityLabel={t.messaging.common.back}
         >
           <ArrowLeft size={24} color="#FFFFFF" />
         </Pressable>
@@ -560,8 +571,8 @@ export function ConversationScreen() {
               disabled={startCall.isPending}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
-              accessibilityLabel="Appel audio"
-              accessibilityHint={`Tap pour appeler ${header?.display_name ?? ''} en audio`}
+              accessibilityLabel={t.messaging.calls.audioCallA11y}
+              accessibilityHint={t.messaging.calls.audioCallHint(header?.display_name ?? '')}
               accessibilityState={{ disabled: startCall.isPending }}
             >
               {startCall.isPending && startCall.variables?.callType === 'audio' ? (
@@ -577,8 +588,8 @@ export function ConversationScreen() {
               disabled={startCall.isPending}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
-              accessibilityLabel="Appel vidéo"
-              accessibilityHint={`Tap pour appeler ${header?.display_name ?? ''} en vidéo`}
+              accessibilityLabel={t.messaging.calls.videoCallA11y}
+              accessibilityHint={t.messaging.calls.videoCallHint(header?.display_name ?? '')}
               accessibilityState={{ disabled: startCall.isPending }}
             >
               {startCall.isPending && startCall.variables?.callType === 'video' ? (
@@ -600,7 +611,7 @@ export function ConversationScreen() {
           alignItems="center"
         >
           <Text fontSize={12} color="$textSecondary" textAlign="center">
-            Connexion temps réel indisponible — tirez pour rafraîchir
+            {t.messaging.conversation.realtimeDown}
           </Text>
         </YStack>
       )}
@@ -644,7 +655,7 @@ export function ConversationScreen() {
               ListEmptyComponent={
                 <YStack flex={1} alignItems="center" justifyContent="center" paddingVertical={80}>
                   <Text color="$textSecondary" fontSize={14}>
-                    Aucun message. Démarre la conversation 👋
+                    {t.messaging.conversation.emptyConversation}
                   </Text>
                 </YStack>
               }

@@ -29,6 +29,8 @@ import {
 import { Pressable, StyleSheet } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 type CategoryId = 'marketplace' | 'films' | 'immobilier' | 'jeux' | 'musique' | 'cours';
 
 // Images de fond par catégorie (webp optimisées ~20-60 Ko). Mapping SÉPARÉ du
@@ -45,7 +47,6 @@ const CATEGORY_IMAGES: Record<CategoryId, number> = {
 
 interface CategoryDef {
   id: CategoryId;
-  label: string;
   Icon: LucideIcon;
   /** Couleur de fond placeholder (sera remplacée par une image plus tard). */
   bgColor: string;
@@ -58,7 +59,6 @@ interface CategoryDef {
 const CATEGORIES: CategoryDef[] = [
   {
     id: 'marketplace',
-    label: 'MARKETPLACE',
     Icon: ShoppingBag,
     bgColor: '#1F1F1F',
     accentColor: '#10D970',
@@ -66,7 +66,6 @@ const CATEGORIES: CategoryDef[] = [
   },
   {
     id: 'films',
-    label: 'FILMS',
     Icon: Film,
     bgColor: '#2D1F3D',
     accentColor: '#8B5CF6',
@@ -74,7 +73,6 @@ const CATEGORIES: CategoryDef[] = [
   },
   {
     id: 'immobilier',
-    label: 'IMMOBILIER',
     Icon: Home,
     bgColor: '#3D2F1F',
     accentColor: '#F59E0B',
@@ -82,7 +80,6 @@ const CATEGORIES: CategoryDef[] = [
   },
   {
     id: 'jeux',
-    label: 'JEUX',
     Icon: Gamepad2,
     bgColor: '#1F2D3D',
     accentColor: '#3B82F6',
@@ -91,7 +88,6 @@ const CATEGORIES: CategoryDef[] = [
   },
   {
     id: 'musique',
-    label: 'MUSIQUE',
     Icon: Music,
     bgColor: '#3D1F2D',
     accentColor: '#EC4899',
@@ -99,7 +95,6 @@ const CATEGORIES: CategoryDef[] = [
   },
   {
     id: 'cours',
-    label: 'COURS',
     Icon: BookOpen,
     bgColor: '#1F3D2F',
     accentColor: '#10B981',
@@ -115,9 +110,11 @@ interface CategoryCardProps {
 }
 
 function CategoryCard({ category, variant }: CategoryCardProps) {
+  const t = useTranslations();
   const isActive = category.href != null;
   const { Icon } = category;
   const image = CATEGORY_IMAGES[category.id];
+  const label = t.feed.businessHub.categories[category.id];
 
   const handlePress = () => {
     if (!isActive || !category.href) return;
@@ -134,7 +131,9 @@ function CategoryCard({ category, variant }: CategoryCardProps) {
       disabled={!isActive}
       accessibilityRole="button"
       accessibilityLabel={
-        isActive ? `Ouvrir ${category.label}` : `${category.label} — bientôt disponible`
+        isActive
+          ? t.feed.businessHub.openCategoryA11y(label)
+          : t.feed.businessHub.comingSoonA11y(label)
       }
       accessibilityState={{ disabled: !isActive }}
       style={[styles.cardPressable, variant === 'small' ? styles.cardSmall : styles.cardWide]}
@@ -183,7 +182,7 @@ function CategoryCard({ category, variant }: CategoryCardProps) {
           borderRadius={4}
         >
           <Text fontSize={13} fontWeight="800" color="#FFFFFF" letterSpacing={0.5}>
-            {category.label}
+            {label}
           </Text>
         </View>
 
@@ -199,7 +198,7 @@ function CategoryCard({ category, variant }: CategoryCardProps) {
           pointerEvents="none"
         >
           <Text fontSize={11} fontWeight="700" color={isActive ? '#000000' : '#FFFFFF'}>
-            {isActive ? 'Voir plus' : 'Bientôt disponible'}
+            {isActive ? t.feed.businessHub.seeMore : t.feed.businessHub.comingSoon}
           </Text>
         </View>
       </YStack>

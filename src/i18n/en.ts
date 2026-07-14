@@ -1,7 +1,19 @@
 // ENGLISH dictionary — E11-01.
 // Must cover exactly the same keys as fr.ts (typed as `Translations`, so a
 // missing key is a TypeScript error).
+//
+// Sections splash/auth/profile/settings inline (fondation E11-01).
+// Zones E11-02→09 agrégées depuis src/i18n/en/<zone>.ts (chaque fichier est typé
+// contre son homologue FR → parité de clés garantie à la compilation).
 
+import { commonEn } from './en/common';
+import { coursEn } from './en/cours';
+import { feedEn } from './en/feed';
+import { gamesEn } from './en/games';
+import { marketplaceEn } from './en/marketplace';
+import { messagingEn } from './en/messaging';
+import { notificationsEn } from './en/notifications';
+import { profileScreensEn } from './en/profileScreens';
 import type { Translations } from './fr';
 
 export const en: Translations = {
@@ -36,6 +48,7 @@ export const en: Translations = {
       finishSetup: 'Finish setup',
       skipForNow: 'Skip for now',
       errorGeneric: 'An unexpected error occurred',
+      selectedA11y: 'Cover photo selected',
     },
     settings: {
       title: 'Settings',
@@ -85,6 +98,29 @@ export const en: Translations = {
       network: 'Network issue. Check your connection and try again.',
       unknown: 'An unexpected error occurred. Please try again.',
     },
+    pendingDeletion: {
+      title: 'Deletion scheduled',
+      bodyPrefix:
+        'You requested the deletion of your account. Without action, it will be permanently deleted on ',
+      daysLeft: (n: number) => ` (in ${n} day${n > 1 ? 's' : ''})`,
+      cancelPending: 'Cancelling…',
+      cancelButton: 'Cancel the request',
+      cancelA11y: 'Cancel the deletion request',
+      manageButton: 'Manage in settings',
+      manageA11y: 'Open account settings',
+      laterButton: 'Later',
+      laterA11y: 'Close and continue',
+      cancelledTitle: 'Deletion cancelled',
+      cancelledMessage:
+        'Welcome back! Your account is kept. You can request deletion again anytime from Settings.',
+      errorTitle: 'Error',
+      errorFallback: 'Could not cancel right now. Please try again.',
+    },
+    exportData: {
+      dialogTitle: 'Export my DOUMASSI data',
+      sessionExpired: 'Session expired. Please sign in again and retry.',
+      failed: 'The export failed. Please try again in a moment.',
+    },
   },
   profile: {
     stats: {
@@ -116,4 +152,12 @@ export const en: Translations = {
     languageFr: 'Français',
     languageEn: 'English',
   },
+  feed: feedEn,
+  profileScreens: profileScreensEn,
+  messaging: messagingEn,
+  notifications: notificationsEn,
+  marketplace: marketplaceEn,
+  cours: coursEn,
+  games: gamesEn,
+  common: commonEn,
 };

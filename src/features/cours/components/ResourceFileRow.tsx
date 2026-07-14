@@ -9,15 +9,17 @@ import { FileText, ImageIcon, ExternalLink } from 'lucide-react-native';
 import { Pressable, StyleSheet } from 'react-native';
 import { Text, View, XStack } from 'tamagui';
 
-function fileName(url: string): string {
+import { useTranslations } from '@/i18n';
+
+function fileName(url: string, fallback: string): string {
   try {
     const path = decodeURIComponent(url.split('?')[0] ?? url);
-    const last = path.split('/').pop() ?? 'fichier';
+    const last = path.split('/').pop() ?? fallback;
     // Les uploads sont nommés <uuid>.<ext> → on affiche juste l'extension en
     // majuscule + un index lisible côté écran (le nom uuid n'apporte rien).
     return last;
   } catch {
-    return 'fichier';
+    return fallback;
   }
 }
 
@@ -25,9 +27,9 @@ function isImage(url: string): boolean {
   return /\.(jpe?g|png|webp|gif)$/i.test(url.split('?')[0] ?? '');
 }
 
-function extLabel(url: string): string {
+function extLabel(url: string, fallback: string): string {
   const m = (url.split('?')[0] ?? '').match(/\.([a-z0-9]+)$/i);
-  return m ? m[1]!.toUpperCase() : 'FICHIER';
+  return m ? m[1]!.toUpperCase() : fallback;
 }
 
 export interface ResourceFileRowProps {
@@ -37,15 +39,18 @@ export interface ResourceFileRowProps {
 }
 
 export function ResourceFileRow({ url, index, onOpen }: ResourceFileRowProps) {
+  const t = useTranslations();
   const image = isImage(url);
   const Icon = image ? ImageIcon : FileText;
-  const label = `${image ? 'Image' : 'Document'} ${index + 1}`;
+  const kind = image ? t.cours.file.image : t.cours.file.document;
+  const label = t.cours.file.item(kind, index + 1);
+  const ext = extLabel(url, t.cours.file.defaultExt);
 
   return (
     <Pressable
       onPress={() => onOpen(url)}
       accessibilityRole="button"
-      accessibilityLabel={`Ouvrir ${label} (${extLabel(url)})`}
+      accessibilityLabel={t.cours.file.openA11y(label, ext)}
       style={styles.row}
     >
       <XStack
@@ -70,7 +75,7 @@ export function ResourceFileRow({ url, index, onOpen }: ResourceFileRowProps) {
             {label}
           </Text>
           <Text fontSize={11} color="$textSecondary" numberOfLines={1}>
-            {extLabel(url)} · {fileName(url)}
+            {ext} · {fileName(url, t.cours.file.defaultName)}
           </Text>
         </View>
         <ExternalLink size={16} color="#A0A0A0" />

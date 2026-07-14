@@ -29,6 +29,7 @@ import {
   useRequestDeletion,
 } from '@/features/auth/hooks/useDeletionRequest';
 import { useLogout } from '@/features/auth/hooks/useLogout';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 
 const CONFIRM_KEYWORD = 'SUPPRIMER';
@@ -45,24 +46,20 @@ function formatDate(iso: string): string {
 
 // ─── Écran "demande déjà en cours" ────────────────────────────────────────
 function PendingDeletionView({ request }: { request: DeletionRequestRow }) {
+  const t = useTranslations();
+  const da = t.profileScreens.deleteAccount;
   const cancelDeletion = useCancelDeletion();
   const scheduledDate = formatDate(request.scheduled_delete_at);
 
   const handleCancel = useCallback(async () => {
     try {
       await cancelDeletion.mutateAsync();
-      Alert.alert(
-        'Demande annulée',
-        'Votre demande de suppression a été annulée. Votre compte reste actif.'
-      );
+      Alert.alert(da.cancelledTitle, da.cancelledMessage);
     } catch (err) {
       logger.warn('Cancel deletion failed', { message: (err as Error).message });
-      Alert.alert(
-        'Erreur',
-        "L'annulation a échoué. Réessayez dans un instant ou contactez le support."
-      );
+      Alert.alert(da.errorTitle, da.cancelFailedMessage);
     }
-  }, [cancelDeletion]);
+  }, [cancelDeletion, da]);
 
   return (
     <YStack gap="$4" paddingTop="$3">
@@ -77,23 +74,22 @@ function PendingDeletionView({ request }: { request: DeletionRequestRow }) {
         <XStack gap="$3" alignItems="center">
           <AlertTriangle size={24} color="#FF3B30" />
           <Text color="$danger" fontSize={16} fontWeight="700">
-            Suppression programmée
+            {da.scheduledTitle}
           </Text>
         </XStack>
         <Text color="$color" fontSize={15} lineHeight={22}>
-          Votre compte sera définitivement supprimé le <Text fontWeight="700">{scheduledDate}</Text>
-          .
+          {da.scheduledBefore}
+          <Text fontWeight="700">{scheduledDate}</Text>.
         </Text>
         <Text color="$textSecondary" fontSize={13} lineHeight={20}>
-          Vous pouvez annuler cette demande à tout moment avant cette date en revenant ici. Une fois
-          la date passée, la suppression est définitive et irréversible.
+          {da.scheduledHint}
         </Text>
       </YStack>
 
       {request.reason ? (
         <YStack backgroundColor="$surface" borderRadius="$lg" padding="$4" gap="$2">
           <Text color="$textSecondary" fontSize={12} fontWeight="700" textTransform="uppercase">
-            Raison transmise
+            {da.reasonGiven}
           </Text>
           <Text color="$color" fontSize={14} lineHeight={20}>
             {request.reason}
@@ -112,11 +108,7 @@ function PendingDeletionView({ request }: { request: DeletionRequestRow }) {
         fontSize={15}
         pressStyle={{ opacity: 0.85, scale: 0.98 }}
       >
-        {cancelDeletion.isPending ? (
-          <Spinner color="#000000" />
-        ) : (
-          'Annuler la demande de suppression'
-        )}
+        {cancelDeletion.isPending ? <Spinner color="#000000" /> : da.cancelRequestButton}
       </Button>
     </YStack>
   );
@@ -124,6 +116,8 @@ function PendingDeletionView({ request }: { request: DeletionRequestRow }) {
 
 // ─── Écran "demander la suppression" ──────────────────────────────────────
 function RequestDeletionView() {
+  const t = useTranslations();
+  const da = t.profileScreens.deleteAccount;
   const requestDeletion = useRequestDeletion();
   const { logout } = useLogout();
   const [reason, setReason] = useState('');
@@ -139,15 +133,12 @@ function RequestDeletionView() {
       // Logout + redirect — le guard renvoie vers /welcome.
       await logout();
       // Le message info à l'user (date de suppression effective).
-      Alert.alert(
-        'Demande enregistrée',
-        'Votre compte sera supprimé dans 30 jours. Reconnectez-vous avant cette date pour annuler.'
-      );
+      Alert.alert(da.requestRecordedTitle, da.requestRecordedMessage);
     } catch (err) {
       logger.warn('Request deletion failed', { message: (err as Error).message });
-      Alert.alert('Erreur', "La demande n'a pas pu être enregistrée. Réessayez dans un instant.");
+      Alert.alert(da.errorTitle, da.requestFailedMessage);
     }
-  }, [requestDeletion, reason, logout]);
+  }, [requestDeletion, reason, logout, da]);
 
   return (
     <YStack gap="$4" paddingTop="$3">
@@ -163,28 +154,21 @@ function RequestDeletionView() {
         <XStack gap="$3" alignItems="center">
           <AlertTriangle size={22} color="#FF3B30" />
           <Text color="$danger" fontSize={15} fontWeight="700">
-            Action irréversible
+            {da.irreversibleTitle}
           </Text>
         </XStack>
         <Text color="$color" fontSize={14} lineHeight={20}>
-          Toutes vos données seront supprimées 30 jours après votre demande. Vous pouvez annuler à
-          tout moment avant cette échéance.
+          {da.irreversibleMessage}
         </Text>
       </YStack>
 
       {/* Liste de ce qui sera supprimé */}
       <YStack backgroundColor="$surface" borderRadius="$lg" padding="$4" gap="$3">
         <Text color="$textSecondary" fontSize={12} fontWeight="700" textTransform="uppercase">
-          Ce qui sera supprimé
+          {da.whatWillBeDeleted}
         </Text>
         <YStack gap="$2">
-          {[
-            'Votre profil (photo, bio, username)',
-            'Vos publications et commentaires',
-            'Vos messages privés',
-            'Vos abonnés et abonnements',
-            'Votre historique de connexion',
-          ].map((item) => (
+          {da.deletedItems.map((item) => (
             <XStack key={item} gap="$2" alignItems="flex-start">
               <Text color="$textSecondary" fontSize={14}>
                 •
@@ -200,12 +184,12 @@ function RequestDeletionView() {
       {/* Raison (optionnelle) */}
       <YStack gap="$2">
         <Text color="$textSecondary" fontSize={13} fontWeight="700">
-          Pourquoi nous quittez-vous ? (optionnel)
+          {da.reasonLabel}
         </Text>
         <TextArea
           value={reason}
           onChangeText={(text) => setReason(text.slice(0, 500))}
-          placeholder="Votre retour nous aide à améliorer DOUMASSI…"
+          placeholder={da.reasonPlaceholder}
           placeholderTextColor="$placeholderColor"
           minHeight={90}
           maxLength={500}
@@ -232,7 +216,7 @@ function RequestDeletionView() {
         fontSize={15}
         pressStyle={{ opacity: 0.85, scale: 0.98 }}
       >
-        Demander la suppression de mon compte
+        {da.requestButton}
       </Button>
 
       {/* Modal de confirmation à 2 étapes */}
@@ -259,16 +243,16 @@ function RequestDeletionView() {
           <YStack alignItems="center" gap="$2">
             <ShieldOff size={36} color="#FF3B30" />
             <Text color="$color" fontSize={18} fontWeight="800" textAlign="center">
-              Êtes-vous sûr ?
+              {da.sureTitle}
             </Text>
           </YStack>
 
           <Text color="$textSecondary" fontSize={14} textAlign="center" lineHeight={20}>
-            Tapez{' '}
+            {da.confirmBefore}
             <Text color="$danger" fontWeight="700">
               {CONFIRM_KEYWORD}
-            </Text>{' '}
-            pour confirmer la suppression de votre compte.
+            </Text>
+            {da.confirmAfter}
           </Text>
 
           <Input
@@ -306,7 +290,7 @@ function RequestDeletionView() {
               fontSize={14}
               pressStyle={{ opacity: 0.7 }}
             >
-              Annuler
+              {t.profileScreens.common.cancel}
             </Button>
             <Button
               flex={1}
@@ -321,7 +305,7 @@ function RequestDeletionView() {
               opacity={!canConfirm || requestDeletion.isPending ? 0.45 : 1}
               pressStyle={{ opacity: 0.85, scale: 0.98 }}
             >
-              {requestDeletion.isPending ? <Spinner color="#FFFFFF" /> : 'Confirmer la suppression'}
+              {requestDeletion.isPending ? <Spinner color="#FFFFFF" /> : da.confirmDelete}
             </Button>
           </XStack>
         </Sheet.Frame>
@@ -332,6 +316,7 @@ function RequestDeletionView() {
 
 // ─── Écran principal ───────────────────────────────────────────────────────
 export default function DeleteAccountScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const deletionRequestQuery = useDeletionRequest();
 
@@ -371,7 +356,7 @@ export default function DeleteAccountScreen() {
             fontWeight="700"
             fontFamily="$heading"
           >
-            Supprimer mon compte
+            {t.profileScreens.deleteAccount.title}
           </Text>
           <View width={24} />
         </XStack>

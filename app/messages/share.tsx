@@ -10,6 +10,7 @@ import { useGetOrCreateDm } from '@/features/messaging/hooks/useGetOrCreateDm';
 import { useSendMessage } from '@/features/messaging/hooks/useSendMessage';
 import { UserRow } from '@/features/profile/components/UserRow';
 import { type SearchUserResult, useSearchUsers } from '@/features/profile/hooks/useSearchUsers';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { Sentry } from '@/lib/sentry';
 import { supabase } from '@/lib/supabase';
@@ -38,6 +39,7 @@ function normalizeParam(value: string | string[] | undefined) {
 }
 
 export default function InternalShareRoute() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     type?: ShareKind;
@@ -90,7 +92,7 @@ export default function InternalShareRoute() {
     async (user: SearchUserResult) => {
       if (!message || !shareKind) return;
       if (user.id === currentUserId) {
-        setToast({ message: 'Choisissez un autre utilisateur' });
+        setToast({ message: t.messaging.share.toastSelectOther });
         return;
       }
 
@@ -112,7 +114,7 @@ export default function InternalShareRoute() {
           });
         }
 
-        setToast({ message: 'Envoyé dans DOUMASSI' });
+        setToast({ message: t.messaging.share.toastSent });
         redirectTimeoutRef.current = setTimeout(() => {
           router.replace(`/messages/${conversationId}`);
         }, 750);
@@ -123,10 +125,10 @@ export default function InternalShareRoute() {
           shareKind,
         });
         setSelectedUserId(null);
-        setToast({ message: 'Envoi impossible, réessayez' });
+        setToast({ message: t.messaging.share.toastSendFailed });
       }
     },
-    [currentUserId, getOrCreateDm, message, postId, sendMessage, shareKind, username]
+    [currentUserId, getOrCreateDm, message, postId, sendMessage, shareKind, username, t]
   );
 
   const renderUser = useCallback(
@@ -163,12 +165,12 @@ export default function InternalShareRoute() {
             chromeless
             onPress={handleBack}
             pressStyle={{ opacity: 0.7 }}
-            accessibilityLabel="Retour"
+            accessibilityLabel={t.messaging.common.back}
           >
             <ArrowLeft size={24} color="#FFFFFF" />
           </Button>
           <Text color="$color" fontSize={18} fontWeight="700">
-            Envoyer dans DOUMASSI
+            {t.messaging.share.title}
           </Text>
         </XStack>
 
@@ -189,7 +191,7 @@ export default function InternalShareRoute() {
               borderWidth={0}
               backgroundColor="transparent"
               color="$color"
-              placeholder="Rechercher un utilisateur..."
+              placeholder={t.messaging.share.searchPlaceholder}
               placeholderTextColor="$placeholderColor"
               autoCapitalize="none"
               autoCorrect={false}
@@ -207,7 +209,7 @@ export default function InternalShareRoute() {
                 chromeless
                 onPress={() => setQuery('')}
                 pressStyle={{ opacity: 0.65 }}
-                accessibilityLabel="Effacer la recherche"
+                accessibilityLabel={t.messaging.common.clearSearch}
               >
                 <X size={18} color="#A0A0A0" />
               </Button>
@@ -216,17 +218,17 @@ export default function InternalShareRoute() {
         </YStack>
 
         {!message ? (
-          <SearchState icon="error" title="Lien à partager indisponible." />
+          <SearchState icon="error" title={t.messaging.share.linkUnavailable} />
         ) : showEmptyState ? (
-          <SearchState icon="search" title="Recherchez par username ou nom" />
+          <SearchState icon="search" title={t.messaging.common.searchByUsernameOrName} />
         ) : isLoading ? (
           <YStack flex={1} alignItems="center" justifyContent="center">
             <Spinner size="large" color="$color" />
           </YStack>
         ) : isError ? (
-          <SearchState icon="error" title="Recherche impossible. Réessayez." />
+          <SearchState icon="error" title={t.messaging.common.searchError} />
         ) : showNoResults ? (
-          <SearchState icon="search" title={`Aucun utilisateur trouvé pour '@${debouncedQuery}'`} />
+          <SearchState icon="search" title={t.messaging.common.noResultsFor(debouncedQuery)} />
         ) : (
           <FlashList<SearchUserResult>
             data={visibleUsers}

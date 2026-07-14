@@ -10,6 +10,8 @@ import { memo } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 import type { CallEntryRow } from '../hooks/useConversationCalls';
 
 const COLORS = {
@@ -41,19 +43,21 @@ export interface CallEntryProps {
 }
 
 function CallEntryComponent({ call, isMine, onRecall }: CallEntryProps) {
+  const t = useTranslations();
   const duration = formatDuration(call.started_at, call.ended_at);
+  const entry = t.messaging.calls.entry;
 
   let icon: React.ReactNode;
   let label: string;
   if (call.status === 'missed') {
     icon = <PhoneMissed size={16} color={COLORS.iconMissed} />;
-    label = isMine ? 'Appel sans réponse' : 'Appel manqué';
+    label = isMine ? entry.noAnswer : entry.missed;
   } else if (call.status === 'rejected') {
     icon = <PhoneOff size={16} color={COLORS.iconMissed} />;
-    label = isMine ? 'Appel refusé par le destinataire' : 'Appel refusé';
+    label = isMine ? entry.rejectedByRecipient : entry.rejected;
   } else if (call.status === 'cancelled') {
     icon = <PhoneOff size={16} color={COLORS.textMuted} />;
-    label = isMine ? 'Appel annulé' : 'Appel annulé';
+    label = entry.cancelled;
   } else {
     // ended
     icon = isMine ? (
@@ -61,7 +65,7 @@ function CallEntryComponent({ call, isMine, onRecall }: CallEntryProps) {
     ) : (
       <PhoneIncoming size={16} color={COLORS.iconNormal} />
     );
-    label = call.call_type === 'video' ? 'Appel vidéo' : 'Appel audio';
+    label = call.call_type === 'video' ? entry.videoCall : entry.audioCall;
   }
 
   const callTypeIcon =
@@ -75,7 +79,7 @@ function CallEntryComponent({ call, isMine, onRecall }: CallEntryProps) {
     <Pressable
       onPress={() => onRecall?.(call.call_type)}
       accessibilityRole="button"
-      accessibilityLabel={`${label}${duration ? ` — ${duration}` : ''}. Tap pour rappeler.`}
+      accessibilityLabel={`${label}${duration ? ` — ${duration}` : ''}. ${entry.tapToRecall}`}
       style={styles.pressable}
     >
       <XStack

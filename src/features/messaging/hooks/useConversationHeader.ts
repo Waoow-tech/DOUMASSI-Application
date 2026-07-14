@@ -6,6 +6,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -23,6 +24,7 @@ export function useConversationHeader(conversationId: string | null) {
     queryKey: ['conversation', conversationId, 'header'],
     enabled: Boolean(conversationId),
     queryFn: async (): Promise<ConversationHeader | null> => {
+      const t = getT();
       if (!conversationId) return null;
 
       // 1. Récupère la conversation pour savoir si c'est un groupe
@@ -82,7 +84,7 @@ export function useConversationHeader(conversationId: string | null) {
         return {
           conversation_id: conversationId,
           is_group: false,
-          display_name: 'Compte supprimé',
+          display_name: t.messaging.deletedAccount,
           display_avatar_url: null,
           display_is_verified: false,
           other_user_id: null,

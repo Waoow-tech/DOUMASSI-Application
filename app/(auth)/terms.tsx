@@ -14,6 +14,7 @@ import {
   cgvFrSections,
   type LegalSection,
 } from '@/features/legal/content/cgv';
+import { useTranslations } from '@/i18n';
 
 const logoSource = require('../../assets/Logo-Doumassi.webp') as number;
 
@@ -37,6 +38,8 @@ function SectionList({ sections }: { sections: LegalSection[] }) {
 }
 
 export default function TermsScreen() {
+  const t = useTranslations();
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
       <YStack flex={1} backgroundColor="$background">
@@ -55,12 +58,12 @@ export default function TermsScreen() {
             size="$3"
             chromeless
             pressStyle={{ opacity: 0.65 }}
-            accessibilityLabel="Go back"
+            accessibilityLabel={t.common.a11y.goBack}
           >
             <ChevronLeft size={26} color="#FFFFFF" />
           </Button>
           <Text color="$color" fontSize={18} fontWeight="700" fontFamily="$heading">
-            Terms & Conditions
+            {t.common.terms.title}
           </Text>
           <YStack width={40} height={40} />
         </XStack>
@@ -80,10 +83,10 @@ export default function TermsScreen() {
                 source={logoSource}
                 style={{ width: 56, height: 56 }}
                 contentFit="contain"
-                accessibilityLabel="Logo DOUMASSI"
+                accessibilityLabel={t.common.a11y.logo}
               />
               <Text color="$textSecondary" fontSize={12}>
-                Version {CGV_CURRENT_VERSION}
+                {t.common.legal.version(CGV_CURRENT_VERSION)}
               </Text>
             </YStack>
 

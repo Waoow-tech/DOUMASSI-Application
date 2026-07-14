@@ -9,6 +9,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -28,6 +29,7 @@ export interface StartCallResult {
 export function useStartCall() {
   return useMutation<StartCallResult, Error, StartCallPayload>({
     mutationFn: async ({ conversationId, callType }) => {
+      const t = getT();
       const { data, error } = await supabase.functions.invoke<{
         call_id: string;
         room_url: string;
@@ -41,7 +43,7 @@ export function useStartCall() {
         throw error;
       }
       if (!data?.call_id || !data?.room_url || !data?.token) {
-        throw new Error('Réponse Edge Function invalide');
+        throw new Error(t.messaging.calls.startInvalidResponse);
       }
 
       return {

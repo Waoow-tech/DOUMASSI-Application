@@ -23,9 +23,11 @@ import {
   useSubmitQuizAttempt,
   type QuizAttemptResult,
 } from '@/features/cours/hooks/useQuizPlay';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 
 export default function QuizPlayScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
   const quizId = typeof params.id === 'string' ? params.id : null;
@@ -76,11 +78,11 @@ export default function QuizPlayScreen() {
       const res = await submitAttempt.mutateAsync({ quizId, answers: payload });
       setResult(res);
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Réessaie.';
+      const message = e instanceof Error ? e.message : t.cours.common.retry;
       logger.warn('submit quiz failed', { message });
-      Alert.alert('Erreur', message);
+      Alert.alert(t.cours.common.error, message);
     }
-  }, [quiz, quizId, allAnswered, answers, submitAttempt]);
+  }, [quiz, quizId, allAnswered, answers, submitAttempt, t]);
 
   const handleRetry = useCallback(() => {
     setAnswers({});
@@ -109,12 +111,12 @@ export default function QuizPlayScreen() {
         onPress={handleBack}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         accessibilityRole="button"
-        accessibilityLabel="Retour"
+        accessibilityLabel={t.cours.common.back}
       >
         <ArrowLeft size={24} color="#FFFFFF" />
       </Pressable>
       <Text flex={1} color="$color" fontSize={17} fontWeight="700" numberOfLines={1}>
-        {quiz?.title ?? 'Quiz'}
+        {quiz?.title ?? t.cours.quizPlay.fallbackTitle}
       </Text>
     </XStack>
   );
@@ -147,7 +149,7 @@ export default function QuizPlayScreen() {
             gap={8}
           >
             <Text fontSize={16} fontWeight="700" color="$color">
-              Quiz introuvable
+              {t.cours.quizPlay.notFoundTitle}
             </Text>
           </YStack>
         </YStack>
@@ -182,24 +184,24 @@ export default function QuizPlayScreen() {
                 {result.score_pct}%
               </Text>
               <Text fontSize={14} color="$color" fontWeight="600">
-                {result.correct_count}/{result.total_count} bonnes réponses
+                {t.cours.quizPlay.scoreResult(result.correct_count, result.total_count)}
               </Text>
               {best != null ? (
                 <Text fontSize={12} color="$textSecondary">
-                  Meilleur score : {best}%
+                  {t.cours.quizPlay.bestScore(best)}
                 </Text>
               ) : null}
             </YStack>
           ) : (
             <XStack alignItems="center" justifyContent="space-between" marginBottom={12}>
               <Text fontSize={13} color="$textSecondary">
-                {quiz.question_count} question{quiz.question_count > 1 ? 's' : ''}
+                {t.cours.quizPlay.questionCount(quiz.question_count)}
               </Text>
               {best != null ? (
                 <XStack alignItems="center" gap={4}>
                   <Trophy size={13} color="#10D970" />
                   <Text fontSize={12} color="$textSecondary">
-                    Meilleur : {best}%
+                    {t.cours.quizPlay.bestScoreShort(best)}
                   </Text>
                 </XStack>
               ) : null}
@@ -238,7 +240,7 @@ export default function QuizPlayScreen() {
 
                 {isMulti && !result ? (
                   <Text fontSize={11} color="$textSecondary">
-                    Plusieurs réponses possibles
+                    {t.cours.quizPlay.multipleHint}
                   </Text>
                 ) : null}
 
@@ -313,13 +315,13 @@ export default function QuizPlayScreen() {
             <Pressable
               onPress={handleRetry}
               accessibilityRole="button"
-              accessibilityLabel="Recommencer le quiz"
+              accessibilityLabel={t.cours.quizPlay.retryA11y}
               style={[styles.cta, { backgroundColor: '#FFFFFF' }]}
             >
               <XStack alignItems="center" justifyContent="center" gap={8}>
                 <RotateCcw size={16} color="#000000" strokeWidth={2.4} />
                 <Text fontSize={15} fontWeight="800" color="#000000">
-                  Recommencer
+                  {t.cours.quizPlay.retryCta}
                 </Text>
               </XStack>
             </Pressable>
@@ -328,7 +330,7 @@ export default function QuizPlayScreen() {
               onPress={() => void handleSubmit()}
               disabled={!allAnswered || submitAttempt.isPending}
               accessibilityRole="button"
-              accessibilityLabel="Valider mes réponses"
+              accessibilityLabel={t.cours.quizPlay.submitA11y}
               accessibilityState={{ disabled: !allAnswered || submitAttempt.isPending }}
               style={[
                 styles.cta,
@@ -341,7 +343,7 @@ export default function QuizPlayScreen() {
                 <ActivityIndicator color="#10D970" />
               ) : (
                 <Text fontSize={15} fontWeight="800" color={allAnswered ? '#000000' : '#666'}>
-                  {allAnswered ? 'Valider' : 'Réponds à toutes les questions'}
+                  {allAnswered ? t.cours.quizPlay.submitCta : t.cours.quizPlay.submitDisabled}
                 </Text>
               )}
             </Pressable>

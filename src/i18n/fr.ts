@@ -4,6 +4,19 @@
 // ⚠️ PAS de `as const` : on veut des valeurs typées `string` (structurel), sinon
 // chaque valeur FR deviendrait un type littéral que l'anglais ne pourrait matcher.
 // Tutoiement volontaire (cohérent avec le ton de l'app).
+//
+// Les sections splash/auth/profile/settings sont inline (fondation E11-01).
+// Les zones traduites en E11-02→09 vivent chacune dans src/i18n/fr/<zone>.ts
+// et sont agrégées ci-dessous par namespace.
+
+import { commonFr } from './fr/common';
+import { coursFr } from './fr/cours';
+import { feedFr } from './fr/feed';
+import { gamesFr } from './fr/games';
+import { marketplaceFr } from './fr/marketplace';
+import { messagingFr } from './fr/messaging';
+import { notificationsFr } from './fr/notifications';
+import { profileScreensFr } from './fr/profileScreens';
 
 export const fr = {
   splash: {
@@ -37,6 +50,7 @@ export const fr = {
       finishSetup: 'Terminer',
       skipForNow: 'Passer pour l’instant',
       errorGeneric: 'Une erreur inattendue est survenue',
+      selectedA11y: 'Photo de couverture sélectionnée',
     },
     settings: {
       title: 'Réglages',
@@ -86,6 +100,29 @@ export const fr = {
       network: 'Problème réseau. Vérifie ta connexion et réessaie.',
       unknown: 'Une erreur inattendue est survenue. Réessaie.',
     },
+    pendingDeletion: {
+      title: 'Suppression programmée',
+      bodyPrefix:
+        'Tu as demandé la suppression de ton compte. Sans action, il sera supprimé définitivement le ',
+      daysLeft: (n: number) => ` (dans ${n} jour${n > 1 ? 's' : ''})`,
+      cancelPending: 'Annulation…',
+      cancelButton: 'Annuler la demande',
+      cancelA11y: 'Annuler la demande de suppression',
+      manageButton: 'Gérer dans les paramètres',
+      manageA11y: 'Ouvrir les paramètres du compte',
+      laterButton: 'Plus tard',
+      laterA11y: 'Fermer et continuer',
+      cancelledTitle: 'Suppression annulée',
+      cancelledMessage:
+        'Bienvenue ! Ton compte est conservé. Tu peux refaire une demande à tout moment depuis Paramètres.',
+      errorTitle: 'Erreur',
+      errorFallback: 'Impossible d’annuler pour le moment. Réessaie.',
+    },
+    exportData: {
+      dialogTitle: 'Exporter mes données DOUMASSI',
+      sessionExpired: 'Session expirée. Reconnecte-toi puis réessaie.',
+      failed: 'L’export a échoué. Réessaie dans un instant.',
+    },
   },
   profile: {
     stats: {
@@ -117,6 +154,14 @@ export const fr = {
     languageFr: 'Français',
     languageEn: 'English',
   },
+  feed: feedFr,
+  profileScreens: profileScreensFr,
+  messaging: messagingFr,
+  notifications: notificationsFr,
+  marketplace: marketplaceFr,
+  cours: coursFr,
+  games: gamesFr,
+  common: commonFr,
 };
 
 export type Translations = typeof fr;

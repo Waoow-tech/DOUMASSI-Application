@@ -22,6 +22,7 @@ import { useCreateGroupConversation } from '@/features/messaging/hooks/useCreate
 import { useGetOrCreateDm } from '@/features/messaging/hooks/useGetOrCreateDm';
 import { UserRow } from '@/features/profile/components/UserRow';
 import { type SearchUserResult, useSearchUsers } from '@/features/profile/hooks/useSearchUsers';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 
 type Mode = 'dm' | 'group';
@@ -39,6 +40,7 @@ function SearchState({ icon, title }: { icon: 'search' | 'error'; title: string 
 }
 
 function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
+  const t = useTranslations();
   return (
     <XStack
       gap="$1"
@@ -53,7 +55,11 @@ function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => voi
           key={m}
           onPress={() => onChange(m)}
           accessibilityRole="button"
-          accessibilityLabel={m === 'dm' ? 'Nouvelle conversation 1-to-1' : 'Nouveau groupe'}
+          accessibilityLabel={
+            m === 'dm'
+              ? t.messaging.newConversation.toggleDmA11y
+              : t.messaging.newConversation.toggleGroupA11y
+          }
           accessibilityState={{ selected: mode === m }}
           style={[styles.toggleChip, mode === m ? styles.toggleChipActive : null]}
         >
@@ -62,7 +68,9 @@ function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => voi
             fontSize={14}
             fontWeight={mode === m ? '700' : '500'}
           >
-            {m === 'dm' ? 'Conversation' : 'Groupe'}
+            {m === 'dm'
+              ? t.messaging.newConversation.toggleDmLabel
+              : t.messaging.newConversation.toggleGroupLabel}
           </Text>
         </Pressable>
       ))}
@@ -71,6 +79,7 @@ function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => voi
 }
 
 export default function NewMessageRoute() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<Mode>('dm');
   const [query, setQuery] = useState('');
@@ -195,12 +204,14 @@ export default function NewMessageRoute() {
             chromeless
             onPress={handleBack}
             pressStyle={{ opacity: 0.7 }}
-            accessibilityLabel="Retour"
+            accessibilityLabel={t.messaging.common.back}
           >
             <ArrowLeft size={24} color="#FFFFFF" />
           </Button>
           <Text color="$color" fontSize={18} fontWeight="700">
-            {mode === 'dm' ? 'Nouvelle conversation' : 'Nouveau groupe'}
+            {mode === 'dm'
+              ? t.messaging.newConversation.titleDm
+              : t.messaging.newConversation.titleGroup}
           </Text>
         </XStack>
 
@@ -209,7 +220,7 @@ export default function NewMessageRoute() {
         {mode === 'group' ? (
           <YStack paddingHorizontal="$4" paddingTop="$3" gap="$2">
             <Input
-              placeholder="Nom du groupe"
+              placeholder={t.messaging.newConversation.groupNamePlaceholder}
               placeholderTextColor="$placeholderColor"
               value={groupName}
               onChangeText={setGroupName}
@@ -221,7 +232,7 @@ export default function NewMessageRoute() {
               height={44}
               paddingHorizontal="$3"
               fontSize={15}
-              accessibilityLabel="Nom du groupe"
+              accessibilityLabel={t.messaging.newConversation.groupNameA11y}
             />
             {selectedParticipants.length > 0 ? (
               <ScrollView
@@ -235,7 +246,9 @@ export default function NewMessageRoute() {
                       key={p.id}
                       onPress={() => handleToggleParticipant(p)}
                       accessibilityRole="button"
-                      accessibilityLabel={`Retirer @${p.username}`}
+                      accessibilityLabel={t.messaging.newConversation.removeParticipantA11y(
+                        p.username
+                      )}
                       style={styles.chip}
                     >
                       <Text color="#FFFFFF" fontSize={13} fontWeight="600">
@@ -267,7 +280,9 @@ export default function NewMessageRoute() {
               backgroundColor="transparent"
               color="$color"
               placeholder={
-                mode === 'dm' ? 'Rechercher un utilisateur...' : 'Ajouter des membres...'
+                mode === 'dm'
+                  ? t.messaging.newConversation.searchUserPlaceholder
+                  : t.messaging.newConversation.addMembersPlaceholder
               }
               placeholderTextColor="$placeholderColor"
               autoCapitalize="none"
@@ -277,7 +292,9 @@ export default function NewMessageRoute() {
               paddingHorizontal={0}
               fontSize={16}
               accessibilityLabel={
-                mode === 'dm' ? 'Rechercher un utilisateur' : 'Rechercher pour ajouter au groupe'
+                mode === 'dm'
+                  ? t.messaging.newConversation.searchUserA11y
+                  : t.messaging.newConversation.searchGroupA11y
               }
             />
             {query.length > 0 ? (
@@ -287,7 +304,7 @@ export default function NewMessageRoute() {
                 chromeless
                 onPress={() => setQuery('')}
                 pressStyle={{ opacity: 0.65 }}
-                accessibilityLabel="Effacer la recherche"
+                accessibilityLabel={t.messaging.common.clearSearch}
               >
                 <X size={18} color="#A0A0A0" />
               </Button>
@@ -300,8 +317,8 @@ export default function NewMessageRoute() {
             icon="search"
             title={
               mode === 'dm'
-                ? 'Recherchez par username ou nom'
-                : 'Recherchez et tape sur les membres pour les ajouter'
+                ? t.messaging.common.searchByUsernameOrName
+                : t.messaging.newConversation.searchHintGroup
             }
           />
         ) : isLoading ? (
@@ -309,9 +326,9 @@ export default function NewMessageRoute() {
             <Spinner size="large" color="$color" />
           </YStack>
         ) : isError ? (
-          <SearchState icon="error" title="Recherche impossible. Réessayez." />
+          <SearchState icon="error" title={t.messaging.common.searchError} />
         ) : showNoResults ? (
-          <SearchState icon="search" title={`Aucun utilisateur trouvé pour '@${debouncedQuery}'`} />
+          <SearchState icon="search" title={t.messaging.common.noResultsFor(debouncedQuery)} />
         ) : (
           <FlashList<SearchUserResult>
             data={users}
@@ -334,7 +351,8 @@ export default function NewMessageRoute() {
           >
             {createGroup.isError ? (
               <Text color="$danger" fontSize={13} marginBottom="$2" textAlign="center">
-                {createGroup.error?.message ?? 'Création échouée'}
+                {createGroup.error?.message ??
+                  t.messaging.newConversation.createGroupFailedFallback}
               </Text>
             ) : null}
             <Button
@@ -346,7 +364,7 @@ export default function NewMessageRoute() {
               size="$5"
               borderRadius="$10"
               accessibilityRole="button"
-              accessibilityLabel="Créer le groupe"
+              accessibilityLabel={t.messaging.newConversation.createGroupA11y}
               accessibilityState={{ disabled: !canCreateGroup }}
             >
               <Users size={18} color={canCreateGroup ? '#000000' : '#A0A0A0'} />
@@ -356,8 +374,8 @@ export default function NewMessageRoute() {
                 color={canCreateGroup ? '#000000' : '$textSecondary'}
               >
                 {createGroup.isPending
-                  ? 'Création…'
-                  : `Créer le groupe (${selectedParticipants.length})`}
+                  ? t.messaging.newConversation.creating
+                  : t.messaging.newConversation.createGroupButton(selectedParticipants.length)}
               </Text>
             </Button>
           </YStack>

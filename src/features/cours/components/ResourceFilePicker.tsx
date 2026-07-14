@@ -13,6 +13,8 @@ import { useCallback } from 'react';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 export interface PickedFile {
   uri: string;
   name: string | null;
@@ -34,6 +36,7 @@ export function ResourceFilePicker({
   maxFiles = DEFAULT_MAX,
   disabled = false,
 }: ResourceFilePickerProps) {
+  const t = useTranslations();
   const canAdd = files.length < maxFiles && !disabled;
 
   const handleAdd = useCallback(async () => {
@@ -50,9 +53,9 @@ export function ResourceFilePicker({
         .map((a) => ({ uri: a.uri, name: a.name ?? null, mimeType: a.mimeType ?? null }));
       onChange([...files, ...picked]);
     } catch {
-      Alert.alert('Sélection impossible', 'Impossible d’ouvrir le sélecteur de fichiers.');
+      Alert.alert(t.cours.filePicker.pickErrorTitle, t.cours.filePicker.pickErrorMessage);
     }
-  }, [canAdd, files, maxFiles, onChange]);
+  }, [canAdd, files, maxFiles, onChange, t]);
 
   const handleRemove = useCallback(
     (index: number) => {
@@ -87,14 +90,16 @@ export function ResourceFilePicker({
               <Icon size={18} color="#10D970" strokeWidth={2} />
             </View>
             <Text flex={1} fontSize={13} color="$color" numberOfLines={1}>
-              {f.name ?? `Fichier ${i + 1}`}
+              {f.name ?? t.cours.filePicker.fileFallback(i + 1)}
             </Text>
             <Pressable
               onPress={() => handleRemove(i)}
               disabled={disabled}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={t.cours.filePicker.removeA11y(
+                f.name ?? t.cours.filePicker.removeFallback(i + 1)
+              )}
               accessibilityRole="button"
-              accessibilityLabel={`Retirer ${f.name ?? `le fichier ${i + 1}`}`}
             >
               <X size={16} color="#A0A0A0" />
             </Pressable>
@@ -106,13 +111,13 @@ export function ResourceFilePicker({
         <Pressable
           onPress={() => void handleAdd()}
           accessibilityRole="button"
-          accessibilityLabel={`Ajouter un fichier (${files.length}/${maxFiles})`}
+          accessibilityLabel={t.cours.filePicker.addA11y(files.length, maxFiles)}
           style={styles.addRow}
         >
           <XStack alignItems="center" justifyContent="center" gap={8}>
             <Plus size={18} color="#FFFFFF" strokeWidth={2} />
             <Text fontSize={13} fontWeight="600" color="#FFFFFF">
-              Ajouter un PDF ou une image ({files.length}/{maxFiles})
+              {t.cours.filePicker.addCta(files.length, maxFiles)}
             </Text>
           </XStack>
         </Pressable>

@@ -190,7 +190,7 @@ export default function CoverPhotoScreen() {
                 source={{ uri: coverUri }}
                 style={{ width: '100%', height: '100%' }}
                 contentFit="cover"
-                accessibilityLabel="Cover photo sélectionnée"
+                accessibilityLabel={copy.selectedA11y}
               />
             ) : (
               <Camera size={36} color="#A0A0A0" />

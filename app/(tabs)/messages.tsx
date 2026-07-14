@@ -14,8 +14,10 @@ import {
   type ConversationListRow,
   useMyConversations,
 } from '@/features/messaging/hooks/useMyConversations';
+import { useTranslations } from '@/i18n';
 
 function MessagesEmptyState() {
+  const t = useTranslations();
   return (
     <YStack
       flex={1}
@@ -27,7 +29,7 @@ function MessagesEmptyState() {
     >
       <MessageCircle size={36} color="#A0A0A0" strokeWidth={1.7} />
       <Text color="$textSecondary" fontSize={15} textAlign="center">
-        Aucune conversation, démarrez-en une avec le +
+        {t.messaging.list.emptyState}
       </Text>
     </YStack>
   );
@@ -44,6 +46,7 @@ function MessagesSkeleton() {
 }
 
 export default function MessagesRoute() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const conversationsQuery = useMyConversations();
 
@@ -78,7 +81,7 @@ export default function MessagesRoute() {
         borderBottomColor="$borderColor"
       >
         <Text color="$color" fontSize={24} fontWeight="700">
-          Messages
+          {t.messaging.list.title}
         </Text>
         <Button
           circular
@@ -86,7 +89,7 @@ export default function MessagesRoute() {
           chromeless
           onPress={() => router.push('/messages/new')}
           pressStyle={{ opacity: 0.7 }}
-          accessibilityLabel="Nouvelle conversation"
+          accessibilityLabel={t.messaging.list.newConversationA11y}
         >
           <Plus size={24} color="#FFFFFF" />
         </Button>

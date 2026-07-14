@@ -17,11 +17,7 @@ export interface AuthorReputation {
   tier: ReputationTier;
 }
 
-export const REPUTATION_LABEL: Record<Exclude<ReputationTier, 'none'>, string> = {
-  expert: 'Expert',
-  confirme: 'Contributeur confirmé',
-  contributeur: 'Contributeur',
-};
+// Les libellés de palier sont dans le dico i18n (`t.cours.reputation[tier]`).
 
 function isTier(v: unknown): v is ReputationTier {
   return v === 'expert' || v === 'confirme' || v === 'contributeur' || v === 'none';

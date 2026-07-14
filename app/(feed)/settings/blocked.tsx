@@ -10,9 +10,11 @@ import { Button, Spinner, Text, View, XStack, YStack } from 'tamagui';
 import { UserRow, type UserRowData } from '@/features/profile/components/UserRow';
 import { useBlock } from '@/features/profile/hooks/useBlock';
 import { blockedUsersQueryKey, useBlockedUsers } from '@/features/profile/hooks/useBlockedUsers';
+import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 
 function UnblockButton({ user, onUnblocked }: { user: UserRowData; onUnblocked: () => void }) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
   const { unblock, isPending } = useBlock(user.id);
 
@@ -36,7 +38,11 @@ function UnblockButton({ user, onUnblocked }: { user: UserRowData; onUnblocked: 
         queryClient.setQueryData(blockedUsersQueryKey, previousUsers);
       }
 
-      Alert.alert('Could not unblock user', 'Please try again in a moment.');
+      const tt = getT();
+      Alert.alert(
+        tt.profileScreens.blockedUsers.unblockErrorTitle,
+        tt.profileScreens.blockedUsers.unblockErrorMessage
+      );
     } finally {
       void queryClient.invalidateQueries({ queryKey: blockedUsersQueryKey });
     }
@@ -58,7 +64,7 @@ function UnblockButton({ user, onUnblocked }: { user: UserRowData; onUnblocked: 
         <Spinner size="small" color="$danger" />
       ) : (
         <Button.Text color="$danger" fontSize={13} fontWeight="700">
-          Unblock
+          {t.profileScreens.blockedUsers.unblock}
         </Button.Text>
       )}
     </Button>
@@ -66,6 +72,7 @@ function UnblockButton({ user, onUnblocked }: { user: UserRowData; onUnblocked: 
 }
 
 export default function BlockedUsersScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const blockedUsersQuery = useBlockedUsers();
   const [toastVisible, setToastVisible] = useState(false);
@@ -98,14 +105,14 @@ export default function BlockedUsersScreen() {
       <YStack paddingVertical={100} alignItems="center" gap="$3" paddingHorizontal="$6">
         <ShieldCheck size={48} color="#A0A0A0" />
         <Text color="$textSecondary" fontSize={16} fontWeight="600" textAlign="center">
-          No blocked users
+          {t.profileScreens.blockedUsers.emptyTitle}
         </Text>
         <Text color="$placeholderColor" fontSize={14} textAlign="center">
-          You haven&apos;t blocked anyone yet.
+          {t.profileScreens.blockedUsers.emptySubtitle}
         </Text>
       </YStack>
     );
-  }, [blockedUsersQuery.isLoading]);
+  }, [blockedUsersQuery.isLoading, t]);
 
   return (
     <YStack flex={1} backgroundColor="$background" paddingTop={insets.top}>
@@ -130,7 +137,7 @@ export default function BlockedUsersScreen() {
           fontWeight="700"
           fontFamily="$heading"
         >
-          Blocked users
+          {t.profileScreens.blockedUsers.title}
         </Text>
         <View width={24} />
       </XStack>
@@ -164,7 +171,7 @@ export default function BlockedUsersScreen() {
           >
             <ShieldCheck size={16} color="#FFFFFF" />
             <Text color="$color" fontSize={14} fontWeight="600">
-              User unblocked
+              {t.profileScreens.blockedUsers.unblockedToast}
             </Text>
           </XStack>
         </XStack>

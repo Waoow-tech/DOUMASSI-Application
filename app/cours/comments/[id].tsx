@@ -28,22 +28,26 @@ import {
   type ResourceComment,
 } from '@/features/cours/hooks/useResourceComments';
 import { VerifiedBadge } from '@/features/profile/components/VerifiedBadge';
+import { getT, useTranslations } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 
+// Date relative des commentaires (langue courante lue à l'appel via getT).
 function relative(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
+  const time = getT().cours.comments.time;
   const min = Math.floor(Math.max(0, Date.now() - d.getTime()) / 60000);
-  if (min < 1) return "à l'instant";
-  if (min < 60) return `${min} min`;
+  if (min < 1) return time.justNow;
+  if (min < 60) return time.minutes(min);
   const h = Math.floor(min / 60);
-  if (h < 24) return `${h} h`;
+  if (h < 24) return time.hours(h);
   const j = Math.floor(h / 24);
-  if (j < 7) return `${j} j`;
-  return `${Math.floor(j / 7)} sem`;
+  if (j < 7) return time.days(j);
+  return time.weeks(Math.floor(j / 7));
 }
 
 export default function ResourceCommentsScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
   const resourceId = typeof params.id === 'string' ? params.id : null;
@@ -73,24 +77,24 @@ export default function ResourceCommentsScreen() {
       { resourceId, content },
       {
         onSuccess: () => setDraft(''),
-        onError: (err) => Alert.alert('Erreur', err.message || 'Réessaie.'),
+        onError: (err) => Alert.alert(t.cours.common.error, err.message || t.cours.common.retry),
       }
     );
-  }, [draft, resourceId, addComment]);
+  }, [draft, resourceId, addComment, t]);
 
   const handleDelete = useCallback(
     (commentId: string) => {
       if (!resourceId) return;
-      Alert.alert('Supprimer ce commentaire ?', undefined, [
-        { text: 'Annuler', style: 'cancel' },
+      Alert.alert(t.cours.comments.deleteConfirmTitle, undefined, [
+        { text: t.cours.comments.deleteCancel, style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t.cours.comments.deleteConfirm,
           style: 'destructive',
           onPress: () => deleteComment.mutate({ commentId, resourceId }),
         },
       ]);
     },
-    [deleteComment, resourceId]
+    [deleteComment, resourceId, t]
   );
 
   const renderItem = useCallback(
@@ -139,7 +143,7 @@ export default function ResourceCommentsScreen() {
               onPress={() => handleDelete(item.id)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
-              accessibilityLabel="Supprimer mon commentaire"
+              accessibilityLabel={t.cours.comments.deleteA11y}
             >
               <Trash2 size={15} color="#A0A0A0" />
             </Pressable>
@@ -147,7 +151,7 @@ export default function ResourceCommentsScreen() {
         </XStack>
       );
     },
-    [meId, handleDelete]
+    [meId, handleDelete, t]
   );
 
   return (
@@ -170,12 +174,12 @@ export default function ResourceCommentsScreen() {
               onPress={handleBack}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
-              accessibilityLabel="Retour"
+              accessibilityLabel={t.cours.common.back}
             >
               <ArrowLeft size={24} color="#FFFFFF" />
             </Pressable>
             <Text flex={1} color="$color" fontSize={18} fontWeight="700">
-              Entraide
+              {t.cours.comments.title}
             </Text>
           </XStack>
 
@@ -193,10 +197,10 @@ export default function ResourceCommentsScreen() {
                 gap={6}
               >
                 <Text fontSize={15} fontWeight="700" color="$color">
-                  Aucun commentaire
+                  {t.cours.comments.emptyTitle}
                 </Text>
                 <Text fontSize={13} color="$textSecondary" textAlign="center">
-                  Pose une question ou partage une remarque sur cette ressource.
+                  {t.cours.comments.emptySubtitle}
                 </Text>
               </YStack>
             ) : (
@@ -224,7 +228,7 @@ export default function ResourceCommentsScreen() {
               flex={1}
               value={draft}
               onChangeText={setDraft}
-              placeholder="Écrire un commentaire…"
+              placeholder={t.cours.comments.placeholder}
               placeholderTextColor="$placeholderColor"
               multiline
               maxLength={2000}
@@ -236,13 +240,13 @@ export default function ResourceCommentsScreen() {
               maxHeight={120}
               paddingHorizontal={14}
               paddingTop={12}
-              accessibilityLabel="Écrire un commentaire"
+              accessibilityLabel={t.cours.comments.inputA11y}
             />
             <Pressable
               onPress={handleSend}
               disabled={draft.trim().length === 0 || addComment.isPending}
               accessibilityRole="button"
-              accessibilityLabel="Envoyer"
+              accessibilityLabel={t.cours.comments.sendA11y}
               style={[
                 styles.sendBtn,
                 {

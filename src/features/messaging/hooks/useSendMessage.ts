@@ -12,6 +12,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 import { uuidv4 } from '@/lib/uuid';
@@ -65,23 +66,24 @@ export function useSendMessage() {
       attachmentUrl,
       replyToId,
     }) => {
+      const t = getT();
       const trimmed = content.trim();
       const isText = attachmentType === 'text';
 
       // Pour un message texte, content obligatoire. Pour un attachment, content
       // optionnel (caption) — la CHECK constraint DB exige juste qu'au moins
       // `content` OU `attachment_url` soit présent.
-      if (isText && trimmed.length === 0) throw new Error('Message vide');
+      if (isText && trimmed.length === 0) throw new Error(t.messaging.errors.messageEmpty);
       if (trimmed.length > MAX_CONTENT_LENGTH) {
-        throw new Error(`Message trop long (max ${MAX_CONTENT_LENGTH} caractères)`);
+        throw new Error(t.messaging.errors.messageTooLong(MAX_CONTENT_LENGTH));
       }
       if (!isText && !attachmentUrl) {
-        throw new Error('Attachment URL requise pour ce type de message');
+        throw new Error(t.messaging.errors.attachmentUrlRequired);
       }
 
       const { data: session, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session.session) {
-        throw new Error('Session expirée. Reconnectez-vous.');
+        throw new Error(t.messaging.errors.sessionExpired);
       }
 
       const { data, error } = await supabase

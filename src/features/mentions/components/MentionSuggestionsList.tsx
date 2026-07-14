@@ -20,6 +20,7 @@ import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Spinner, Text, XStack, YStack } from 'tamagui';
 
 import type { SearchUserResult } from '@/features/profile/hooks/useSearchUsers';
+import { useTranslations } from '@/i18n';
 
 export interface MentionSuggestionsListProps {
   suggestions: SearchUserResult[];
@@ -38,6 +39,8 @@ export function MentionSuggestionsList({
   visible,
   onSelect,
 }: MentionSuggestionsListProps) {
+  const t = useTranslations();
+
   if (!visible) return null;
 
   // Cas chargement : on affiche un spinner pour signaler à l'utilisateur que
@@ -55,7 +58,7 @@ export function MentionSuggestionsList({
       >
         <Spinner size="small" color="$accentNeon" />
         <Text fontSize={13} color="$textSecondary">
-          Recherche…
+          {t.feed.mentions.searching}
         </Text>
       </XStack>
     );
@@ -75,7 +78,7 @@ export function MentionSuggestionsList({
         paddingHorizontal="$3"
       >
         <Text fontSize={13} color="$textSecondary">
-          Aucun utilisateur trouvé
+          {t.feed.mentions.noResults}
         </Text>
       </XStack>
     );
@@ -99,7 +102,7 @@ export function MentionSuggestionsList({
             key={user.id}
             onPress={() => onSelect(user)}
             accessibilityRole="button"
-            accessibilityLabel={`Mentionner @${user.username}`}
+            accessibilityLabel={t.feed.mentions.mentionA11y(user.username)}
             style={styles.chip}
           >
             <YStack

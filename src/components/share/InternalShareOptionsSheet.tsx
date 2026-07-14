@@ -1,6 +1,8 @@
 import { ExternalLink, Send } from 'lucide-react-native';
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 type InternalShareOptionsSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -14,6 +16,7 @@ export function InternalShareOptionsSheet({
   onShareOutside,
   onShareInside,
 }: InternalShareOptionsSheetProps) {
+  const t = useTranslations();
   const close = () => onOpenChange(false);
 
   const handleShareOutside = () => {
@@ -48,12 +51,12 @@ export function InternalShareOptionsSheet({
 
         <YStack gap="$1">
           <ShareOption
-            label="Partager hors DOUMASSI"
+            label={t.feed.share.outside}
             icon={<ExternalLink size={20} color="#FFFFFF" />}
             onPress={handleShareOutside}
           />
           <ShareOption
-            label="Envoyer dans DOUMASSI"
+            label={t.feed.share.inside}
             icon={<Send size={20} color="#FFFFFF" />}
             onPress={handleShareInside}
           />

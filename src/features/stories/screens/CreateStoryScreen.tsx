@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Text, XStack, YStack } from 'tamagui';
 
 import { useCreateStory } from '@/features/stories/hooks/useCreateStory';
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
@@ -48,6 +49,7 @@ function formatTimer(secs: number): string {
 // ---------------------------------------------------------------------------
 
 export function CreateStoryScreen() {
+  const t = useTranslations();
   const navigation = useNavigation();
   const createStory = useCreateStory();
 
@@ -100,7 +102,10 @@ export function CreateStoryScreen() {
       // player.duration is in seconds (expo-video); asset.duration from picker is unreliable on Android
       if (videoPlayer.duration > MAX_VIDEO_SECS) {
         setCapturedAsset(null);
-        Alert.alert('Vidéo trop longue', `La vidéo doit faire ${MAX_VIDEO_SECS} secondes maximum.`);
+        Alert.alert(
+          t.feed.stories.create.videoTooLongTitle,
+          t.feed.stories.create.videoTooLongMessage(MAX_VIDEO_SECS)
+        );
       } else {
         videoPlayer.play();
       }
@@ -121,7 +126,7 @@ export function CreateStoryScreen() {
     });
 
     return () => sub.remove();
-  }, [capturedAsset, videoPlayer]);
+  }, [capturedAsset, videoPlayer, t]);
 
   // -------------------------------------------------------------------------
   // Timer helpers
@@ -174,7 +179,7 @@ export function CreateStoryScreen() {
       }
     } catch (err) {
       // stopRecording() résout recordAsync (pas de throw) — toute exception ici est réelle
-      Alert.alert('Erreur', "L'enregistrement vidéo a échoué. Vérifiez les permissions micro.");
+      Alert.alert(t.feed.stories.create.errorTitle, t.feed.stories.create.recordingFailed);
       logger.error('video_recording_failed', err instanceof Error ? err : new Error(String(err)));
     } finally {
       setIsRecording(false);
@@ -197,7 +202,10 @@ export function CreateStoryScreen() {
     let perm = await ImagePicker.getMediaLibraryPermissionsAsync();
     if (!perm.granted) perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Permission refusée', "Activez l'accès aux photos dans les Réglages.");
+      Alert.alert(
+        t.feed.stories.create.permissionDeniedTitle,
+        t.feed.stories.create.photoPermissionMessage
+      );
       return;
     }
     try {
@@ -213,8 +221,8 @@ export function CreateStoryScreen() {
         const durationSecs = asset.duration ? asset.duration / 1000 : 0;
         if (durationSecs > MAX_VIDEO_SECS) {
           Alert.alert(
-            'Vidéo trop longue',
-            `La vidéo doit faire ${MAX_VIDEO_SECS} secondes maximum.`
+            t.feed.stories.create.videoTooLongTitle,
+            t.feed.stories.create.videoTooLongMessage(MAX_VIDEO_SECS)
           );
           return;
         }
@@ -268,10 +276,10 @@ export function CreateStoryScreen() {
           paddingHorizontal="$5"
         >
           <Text color="$color" textAlign="center" fontSize={16}>
-            Activez l&apos;accès à la caméra dans les Réglages pour utiliser les stories.
+            {t.feed.stories.create.cameraPermissionMessage}
           </Text>
           <Button onPress={() => router.back()} backgroundColor="$backgroundFocus" color="$color">
-            Retour
+            {t.feed.stories.create.back}
           </Button>
         </YStack>
       </SafeAreaView>
@@ -326,7 +334,7 @@ export function CreateStoryScreen() {
               borderRadius="$10"
               icon={<RefreshCw size={16} color="#FFFFFF" />}
             >
-              Recommencer
+              {t.feed.stories.create.retake}
             </Button>
 
             <Button
@@ -339,7 +347,11 @@ export function CreateStoryScreen() {
               borderRadius="$10"
               paddingHorizontal="$5"
             >
-              {createStory.isPending ? <ActivityIndicator color="#000000" /> : 'Publier'}
+              {createStory.isPending ? (
+                <ActivityIndicator color="#000000" />
+              ) : (
+                t.feed.stories.create.publish
+              )}
             </Button>
           </XStack>
 
@@ -370,7 +382,7 @@ export function CreateStoryScreen() {
               paddingHorizontal="$3"
             >
               <Text color="#FFFFFF" fontSize={13} textAlign="center">
-                {createStory.error?.message ?? 'Erreur lors de la publication.'}
+                {createStory.error?.message ?? t.feed.stories.create.publishErrorFallback}
               </Text>
             </YStack>
           ) : null}
@@ -410,7 +422,7 @@ export function CreateStoryScreen() {
               padding="$2"
               pressStyle={{ opacity: 0.6 }}
               accessibilityRole="button"
-              accessibilityLabel="Fermer la caméra"
+              accessibilityLabel={t.feed.stories.create.closeCameraA11y}
             >
               <Text color="#FFFFFF" fontSize={22} fontWeight="700">
                 ✕
@@ -435,11 +447,15 @@ export function CreateStoryScreen() {
                   paddingVertical="$1"
                   pressStyle={{ opacity: 0.7 }}
                   accessibilityRole="tab"
-                  accessibilityLabel={m === 'image' ? 'Mode photo' : 'Mode vidéo'}
+                  accessibilityLabel={
+                    m === 'image'
+                      ? t.feed.stories.create.photoModeA11y
+                      : t.feed.stories.create.videoModeA11y
+                  }
                   accessibilityState={{ selected: mode === m }}
                 >
                   <Text color={mode === m ? '#000000' : '#FFFFFF'} fontSize={13} fontWeight="600">
-                    {m === 'image' ? 'Photo' : 'Vidéo'}
+                    {m === 'image' ? t.feed.stories.create.photo : t.feed.stories.create.video}
                   </Text>
                 </YStack>
               ))}
@@ -451,7 +467,7 @@ export function CreateStoryScreen() {
               padding="$2"
               pressStyle={{ opacity: 0.6 }}
               accessibilityRole="button"
-              accessibilityLabel="Changer de caméra (avant / arrière)"
+              accessibilityLabel={t.feed.stories.create.switchCameraA11y}
             >
               <SwitchCamera size={26} color="#FFFFFF" />
             </YStack>
@@ -492,7 +508,7 @@ export function CreateStoryScreen() {
               padding="$3"
               pressStyle={{ opacity: 0.6 }}
               accessibilityRole="button"
-              accessibilityLabel="Choisir depuis la galerie"
+              accessibilityLabel={t.feed.stories.create.pickFromGalleryA11y}
             >
               <ImageIcon size={30} color="#FFFFFF" />
             </YStack>
@@ -505,7 +521,9 @@ export function CreateStoryScreen() {
               delayLongPress={200}
               accessibilityRole="button"
               accessibilityLabel={
-                mode === 'image' ? 'Prendre une photo' : 'Maintenir pour enregistrer une vidéo'
+                mode === 'image'
+                  ? t.feed.stories.create.takePhotoA11y
+                  : t.feed.stories.create.holdToRecordA11y
               }
             >
               <YStack

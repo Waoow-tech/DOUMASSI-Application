@@ -36,6 +36,7 @@ import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -48,6 +49,7 @@ function formatDuration(seconds: number): string {
 }
 
 export default function CallScreen() {
+  const t = useTranslations();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     id: string;
@@ -201,10 +203,10 @@ export default function CallScreen() {
   const remoteAudioTrack = remoteParticipant?.audioTrack || null;
 
   const titleText = useMemo(() => {
-    if (status === 'connecting') return 'Appel en cours…';
-    if (status === 'ended') return 'Appel terminé';
+    if (status === 'connecting') return t.messaging.calls.active.connecting;
+    if (status === 'ended') return t.messaging.calls.active.ended;
     return formatDuration(durationSec);
-  }, [status, durationSec]);
+  }, [status, durationSec, t]);
 
   return (
     <View flex={1} backgroundColor="#000000">
@@ -280,7 +282,7 @@ export default function CallScreen() {
           <XStack alignItems="center" gap={8} marginTop={2}>
             <ActivityIndicator size="small" color="#10D970" />
             <Text color="#A0A0A0" fontSize={12}>
-              Connexion à la room…
+              {t.messaging.calls.active.connectingToRoom}
             </Text>
           </XStack>
         ) : null}
@@ -303,7 +305,9 @@ export default function CallScreen() {
             { backgroundColor: isMuted ? '#FF3B30' : 'rgba(255,255,255,0.18)' },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={isMuted ? 'Réactiver le micro' : 'Couper le micro'}
+          accessibilityLabel={
+            isMuted ? t.messaging.calls.active.unmuteMicA11y : t.messaging.calls.active.muteMicA11y
+          }
         >
           {isMuted ? <MicOff size={22} color="#FFFFFF" /> : <Mic size={22} color="#FFFFFF" />}
         </Pressable>
@@ -316,7 +320,11 @@ export default function CallScreen() {
               { backgroundColor: isCameraOff ? '#FF3B30' : 'rgba(255,255,255,0.18)' },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={isCameraOff ? 'Activer la caméra' : 'Couper la caméra'}
+            accessibilityLabel={
+              isCameraOff
+                ? t.messaging.calls.active.turnOnCameraA11y
+                : t.messaging.calls.active.turnOffCameraA11y
+            }
           >
             {isCameraOff ? (
               <CameraOff size={22} color="#FFFFFF" />
@@ -331,7 +339,7 @@ export default function CallScreen() {
             onPress={handleSwitchCamera}
             style={[styles.controlButton, { backgroundColor: 'rgba(255,255,255,0.18)' }]}
             accessibilityRole="button"
-            accessibilityLabel="Changer de caméra"
+            accessibilityLabel={t.messaging.calls.active.switchCameraA11y}
           >
             <SwitchCamera size={22} color="#FFFFFF" />
           </Pressable>
@@ -342,7 +350,7 @@ export default function CallScreen() {
           onPress={() => void handleHangup('ended')}
           style={[styles.controlButton, styles.hangupButton]}
           accessibilityRole="button"
-          accessibilityLabel="Raccrocher"
+          accessibilityLabel={t.messaging.calls.active.hangUpA11y}
         >
           <Phone size={22} color="#FFFFFF" />
         </Pressable>

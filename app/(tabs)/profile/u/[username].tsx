@@ -17,6 +17,7 @@ import { ChevronLeft, UserX } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Button, Spinner, Text, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -26,6 +27,7 @@ type ResolveState =
   | { status: 'error'; message: string };
 
 export default function ResolveUsernameRoute() {
+  const t = useTranslations();
   const { username } = useLocalSearchParams<{ username: string }>();
   const rawUsername = typeof username === 'string' ? username : null;
   const normalized = rawUsername?.toLowerCase().replace(/^@+/, '').trim() ?? null;
@@ -89,10 +91,12 @@ export default function ResolveUsernameRoute() {
       >
         <UserX size={48} color="#A0A0A0" />
         <Text fontSize={18} fontWeight="600" color="$color" textAlign="center">
-          Utilisateur introuvable
+          {t.profileScreens.resolveUsername.notFoundTitle}
         </Text>
         <Text fontSize={14} color="$textSecondary" textAlign="center">
-          {rawUsername ? `@${rawUsername} n'existe pas ou a été supprimé.` : 'Username invalide.'}
+          {rawUsername
+            ? t.profileScreens.resolveUsername.notFoundMessage(rawUsername)
+            : t.profileScreens.resolveUsername.invalidUsername}
         </Text>
         <Button
           marginTop="$2"
@@ -101,7 +105,7 @@ export default function ResolveUsernameRoute() {
           backgroundColor="$accentNeon"
           color="#000000"
         >
-          Retour
+          {t.profileScreens.common.goBack}
         </Button>
       </YStack>
     );
@@ -117,13 +121,13 @@ export default function ResolveUsernameRoute() {
       backgroundColor="$background"
     >
       <Text fontSize={16} fontWeight="600" color="$color" textAlign="center">
-        Erreur de chargement
+        {t.profileScreens.resolveUsername.errorTitle}
       </Text>
       <Text fontSize={13} color="$textSecondary" textAlign="center">
         {state.message}
       </Text>
       <Button marginTop="$2" onPress={() => router.back()} icon={ChevronLeft}>
-        Retour
+        {t.profileScreens.common.goBack}
       </Button>
     </YStack>
   );

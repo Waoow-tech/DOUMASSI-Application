@@ -15,6 +15,7 @@ import {
   useRejectFollowRequest,
   type NotificationItem,
 } from '@/features/notifications/hooks/useNotifications';
+import { useTranslations } from '@/i18n';
 
 const AVATAR_SIZE = 40;
 
@@ -25,11 +26,12 @@ export interface FollowRequestCardProps {
 export const FollowRequestCard = memo(function FollowRequestCard({
   notif,
 }: FollowRequestCardProps) {
+  const t = useTranslations();
   const accept = useAcceptFollowRequest();
   const reject = useRejectFollowRequest();
   const isPending = accept.isPending || reject.isPending;
   const requesterId = notif.actor_id;
-  const username = notif.actor_username ?? 'inconnu';
+  const username = notif.actor_username ?? t.notifications.followRequest.unknownUser;
 
   if (!requesterId) {
     // Notif sans acteur : on ne devrait jamais arriver ici pour follow_request.
@@ -87,7 +89,7 @@ export const FollowRequestCard = memo(function FollowRequestCard({
           <Text color="$color" fontSize={15} fontWeight="700">
             @{username}{' '}
             <Text color="$textSecondary" fontWeight="400">
-              veut vous suivre
+              {t.notifications.followRequest.wantsToFollowYou}
             </Text>
           </Text>
         </Pressable>
@@ -109,7 +111,11 @@ export const FollowRequestCard = memo(function FollowRequestCard({
           onPress={handleAccept}
           pressStyle={{ opacity: 0.85 }}
         >
-          {accept.isPending ? <ActivityIndicator color="#000000" /> : 'Confirmer'}
+          {accept.isPending ? (
+            <ActivityIndicator color="#000000" />
+          ) : (
+            t.notifications.followRequest.confirm
+          )}
         </Button>
         <Button
           flex={1}
@@ -126,7 +132,11 @@ export const FollowRequestCard = memo(function FollowRequestCard({
           onPress={handleReject}
           pressStyle={{ opacity: 0.85 }}
         >
-          {reject.isPending ? <ActivityIndicator color="#FFFFFF" /> : 'Refuser'}
+          {reject.isPending ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            t.notifications.followRequest.reject
+          )}
         </Button>
       </XStack>
     </YStack>

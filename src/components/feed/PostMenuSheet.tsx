@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 import { Button, Sheet, Text, XStack, YStack } from 'tamagui';
 
 import { useHidePost } from '@/features/feed/hooks/useHiddenPosts';
+import { useTranslations } from '@/i18n';
 
 export type PostMenuSheetProps = {
   postId: string;
@@ -32,6 +33,7 @@ export function PostMenuSheet({
   onReported,
   onCopyLink,
 }: PostMenuSheetProps) {
+  const t = useTranslations();
   const hidePostMutation = useHidePost();
   const close = () => onOpenChange(false);
 
@@ -44,7 +46,7 @@ export function PostMenuSheet({
     await Clipboard.setStringAsync(`https://doumassi.app/post/${postId}`);
     close();
     onCopyLink?.();
-    Alert.alert('Lien copié', 'Le lien du post est prêt à être partagé.');
+    Alert.alert(t.feed.postMenu.linkCopiedTitle, t.feed.postMenu.linkCopiedMessage);
   };
 
   const handleHide = async () => {
@@ -62,33 +64,29 @@ export function PostMenuSheet({
   const handleReport = () => {
     close();
     onReported?.();
-    Alert.alert('Signalement', 'Cette action sera disponible au Sprint 4.');
+    Alert.alert(t.feed.postMenu.reportTitle, t.feed.postMenu.reportMessage);
   };
 
   const handleDelete = () => {
     if (!onDelete) return;
 
-    Alert.alert(
-      'Supprimer ce post ?',
-      'Cette action est irréversible. Le post sera retiré du feed.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await onDelete();
-            } catch {
-              return;
-            }
+    Alert.alert(t.feed.postMenu.deleteTitle, t.feed.postMenu.deleteMessage, [
+      { text: t.feed.postMenu.cancel, style: 'cancel' },
+      {
+        text: t.feed.postMenu.deleteConfirm,
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await onDelete();
+          } catch {
+            return;
+          }
 
-            close();
-            onDeleted?.();
-          },
+          close();
+          onDeleted?.();
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
@@ -118,15 +116,24 @@ export function PostMenuSheet({
         </XStack>
 
         <YStack gap="$1">
-          <MenuButton label="Partager" onPress={handleShare} />
-          <MenuButton label="Copier le lien" onPress={() => void handleCopyLink()} />
+          <MenuButton label={t.feed.postMenu.share} onPress={handleShare} />
+          <MenuButton label={t.feed.postMenu.copyLink} onPress={() => void handleCopyLink()} />
 
           {isAuthor ? (
-            <MenuButton label="Supprimer" danger Icon={Trash2} onPress={handleDelete} />
+            <MenuButton
+              label={t.feed.postMenu.delete}
+              danger
+              Icon={Trash2}
+              onPress={handleDelete}
+            />
           ) : (
             <>
-              <MenuButton label="Masquer ce post" Icon={EyeOff} onPress={() => void handleHide()} />
-              <MenuButton label="Signaler" onPress={handleReport} />
+              <MenuButton
+                label={t.feed.postMenu.hide}
+                Icon={EyeOff}
+                onPress={() => void handleHide()}
+              />
+              <MenuButton label={t.feed.postMenu.report} onPress={handleReport} />
             </>
           )}
         </YStack>

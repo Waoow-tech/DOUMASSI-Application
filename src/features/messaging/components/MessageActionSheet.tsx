@@ -14,6 +14,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 import { Button, Sheet, Spinner, Text, TextArea, XStack, YStack } from 'tamagui';
 
+import { useTranslations } from '@/i18n';
+
 import type { MessageRow } from '../hooks/useConversationMessages';
 
 export interface MessageActionSheetProps {
@@ -43,6 +45,7 @@ export function MessageActionSheet({
   editIsPending = false,
   deleteIsPending = false,
 }: MessageActionSheetProps) {
+  const t = useTranslations();
   const [mode, setMode] = useState<'menu' | 'editing'>('menu');
   const [editingContent, setEditingContent] = useState('');
 
@@ -76,7 +79,10 @@ export function MessageActionSheet({
     if (!message) return;
     const trimmed = editingContent.trim();
     if (trimmed.length === 0) {
-      Alert.alert('Contenu vide', 'Le message ne peut pas être vide.');
+      Alert.alert(
+        t.messaging.actionSheet.emptyContentTitle,
+        t.messaging.actionSheet.emptyContentMessage
+      );
       return;
     }
     try {
@@ -84,21 +90,21 @@ export function MessageActionSheet({
       onOpenChange(false);
     } catch (e) {
       Alert.alert(
-        'Édition impossible',
-        e instanceof Error ? e.message : 'Réessayez dans un instant.'
+        t.messaging.actionSheet.editFailedTitle,
+        e instanceof Error ? e.message : t.messaging.actionSheet.retryLater
       );
     }
-  }, [message, editingContent, onEdit, onOpenChange]);
+  }, [message, editingContent, onEdit, onOpenChange, t]);
 
   const handleDelete = useCallback(() => {
     if (!message) return;
     Alert.alert(
-      'Supprimer ce message ?',
-      'Le contenu sera remplacé par « Message supprimé » pour tous les participants. Action irréversible.',
+      t.messaging.actionSheet.deleteConfirmTitle,
+      t.messaging.actionSheet.deleteConfirmMessage,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t.messaging.common.cancel, style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t.messaging.actionSheet.deleteAction,
           style: 'destructive',
           onPress: async () => {
             try {
@@ -106,15 +112,15 @@ export function MessageActionSheet({
               onOpenChange(false);
             } catch (e) {
               Alert.alert(
-                'Suppression impossible',
-                e instanceof Error ? e.message : 'Réessayez dans un instant.'
+                t.messaging.actionSheet.deleteFailedTitle,
+                e instanceof Error ? e.message : t.messaging.actionSheet.retryLater
               );
             }
           },
         },
       ]
     );
-  }, [message, onDelete, onOpenChange]);
+  }, [message, onDelete, onOpenChange, t]);
 
   return (
     <Sheet
@@ -141,11 +147,11 @@ export function MessageActionSheet({
                 onPress={handleReply}
                 style={styles.row}
                 accessibilityRole="button"
-                accessibilityLabel="Répondre à ce message"
+                accessibilityLabel={t.messaging.actionSheet.replyA11y}
               >
                 <CornerUpLeft size={20} color="#FFFFFF" />
                 <Text color="$color" fontSize={16}>
-                  Répondre
+                  {t.messaging.actionSheet.reply}
                 </Text>
               </Pressable>
             ) : null}
@@ -154,11 +160,11 @@ export function MessageActionSheet({
                 onPress={handleStartEdit}
                 style={styles.row}
                 accessibilityRole="button"
-                accessibilityLabel="Modifier ce message"
+                accessibilityLabel={t.messaging.actionSheet.editA11y}
               >
                 <Edit3 size={20} color="#FFFFFF" />
                 <Text color="$color" fontSize={16}>
-                  Modifier
+                  {t.messaging.actionSheet.edit}
                 </Text>
               </Pressable>
             ) : null}
@@ -167,7 +173,7 @@ export function MessageActionSheet({
                 onPress={handleDelete}
                 style={styles.row}
                 accessibilityRole="button"
-                accessibilityLabel="Supprimer ce message"
+                accessibilityLabel={t.messaging.actionSheet.deleteA11y}
               >
                 {deleteIsPending ? (
                   <Spinner color="#FF3B30" />
@@ -175,7 +181,7 @@ export function MessageActionSheet({
                   <Trash2 size={20} color="#FF3B30" />
                 )}
                 <Text color="$danger" fontSize={16} fontWeight="600">
-                  Supprimer
+                  {t.messaging.actionSheet.delete}
                 </Text>
               </Pressable>
             ) : null}
@@ -183,12 +189,12 @@ export function MessageActionSheet({
         ) : (
           <YStack gap="$3">
             <Text color="$textSecondary" fontSize={12} fontWeight="700" textTransform="uppercase">
-              Modifier le message
+              {t.messaging.actionSheet.editHeader}
             </Text>
             <TextArea
               value={editingContent}
               onChangeText={(text) => setEditingContent(text.slice(0, MAX_CONTENT_LENGTH))}
-              placeholder="Tape ton message…"
+              placeholder={t.messaging.actionSheet.editPlaceholder}
               placeholderTextColor="$placeholderColor"
               backgroundColor="$background"
               borderColor="$borderColor"
@@ -213,7 +219,7 @@ export function MessageActionSheet({
                 height={44}
                 fontWeight="600"
               >
-                Annuler
+                {t.messaging.common.cancel}
               </Button>
               <Button
                 flex={1}
@@ -226,7 +232,7 @@ export function MessageActionSheet({
                 fontWeight="800"
                 opacity={editIsPending || editingContent.trim().length === 0 ? 0.5 : 1}
               >
-                {editIsPending ? <Spinner color="#000000" /> : 'Enregistrer'}
+                {editIsPending ? <Spinner color="#000000" /> : t.messaging.actionSheet.save}
               </Button>
             </XStack>
           </YStack>

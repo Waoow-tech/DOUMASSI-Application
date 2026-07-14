@@ -6,7 +6,9 @@
 import { Award, Sparkles, Star } from 'lucide-react-native';
 import { View, XStack, Text } from 'tamagui';
 
-import { REPUTATION_LABEL, type ReputationTier } from '../hooks/useAuthorReputation';
+import { useTranslations } from '@/i18n';
+
+import { type ReputationTier } from '../hooks/useAuthorReputation';
 
 const TIER_STYLE: Record<
   Exclude<ReputationTier, 'none'>,
@@ -23,6 +25,7 @@ export interface ReputationBadgeProps {
 }
 
 export function ReputationBadge({ tier, size = 'md' }: ReputationBadgeProps) {
+  const t = useTranslations();
   if (tier === 'none') return null;
   const style = TIER_STYLE[tier];
   const { Icon } = style;
@@ -39,7 +42,7 @@ export function ReputationBadge({ tier, size = 'md' }: ReputationBadgeProps) {
       <XStack alignItems="center" gap={4}>
         <Icon size={iconSize} color={style.color} strokeWidth={2.2} />
         <Text fontSize={fontSize} fontWeight="700" color={style.color}>
-          {REPUTATION_LABEL[tier]}
+          {t.cours.reputation[tier]}
         </Text>
       </XStack>
     </View>
