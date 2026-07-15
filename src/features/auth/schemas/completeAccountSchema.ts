@@ -6,23 +6,28 @@
 
 import { z } from 'zod';
 
-import { usernameSchema } from './usernameRules';
+import type { AuthValidation } from '@/i18n';
 
-export const completeAccountSchema = z.object({
-  username: usernameSchema,
+import { createUsernameSchema } from './usernameRules';
 
-  birthday: z
-    .string()
-    .min(1, 'Birthday is required')
-    .refine((val) => {
-      const match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-      if (!match?.[1] || !match[2] || !match[3]) return false;
-      const day = parseInt(match[1], 10);
-      const month = parseInt(match[2], 10);
-      const year = parseInt(match[3], 10);
-      const date = new Date(year, month - 1, day);
-      return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
-    }, 'Invalid date (expected format: DD/MM/YYYY)'),
-});
+export const createCompleteAccountSchema = (v: AuthValidation) =>
+  z.object({
+    username: createUsernameSchema(v),
 
-export type CompleteAccountFormValues = z.infer<typeof completeAccountSchema>;
+    birthday: z
+      .string()
+      .min(1, v.birthdayRequired)
+      .refine((val) => {
+        const match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!match?.[1] || !match[2] || !match[3]) return false;
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10);
+        const year = parseInt(match[3], 10);
+        const date = new Date(year, month - 1, day);
+        return (
+          date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+        );
+      }, v.invalidDate),
+  });
+
+export type CompleteAccountFormValues = z.infer<ReturnType<typeof createCompleteAccountSchema>>;

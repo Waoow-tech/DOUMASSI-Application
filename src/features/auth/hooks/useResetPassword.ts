@@ -8,15 +8,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { mapAuthError } from '@/features/auth/lib/mapAuthError';
 import {
-  resetPasswordSchema,
+  createResetPasswordSchema,
   type ResetPasswordFormValues,
 } from '@/features/auth/schemas/passwordResetSchema';
-import { getT } from '@/i18n';
+import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -43,10 +43,13 @@ function extractTokensFromUrl(url: string): {
 }
 
 export function useResetPassword() {
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [hasValidSession, setHasValidSession] = useState(false);
+
+  const resetPasswordSchema = useMemo(() => createResetPasswordSchema(t.auth.validation), [t]);
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),

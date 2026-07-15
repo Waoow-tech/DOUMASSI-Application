@@ -9,7 +9,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { Button, Input, ScrollView, Spinner, Text, YStack } from 'tamagui';
@@ -17,7 +17,7 @@ import { Button, Input, ScrollView, Spinner, Text, YStack } from 'tamagui';
 import { useUsernameAvailability } from '@/features/auth/hooks/useUsernameAvailability';
 import { formatBirthdayInput } from '@/features/auth/lib/formatBirthday';
 import {
-  completeAccountSchema,
+  createCompleteAccountSchema,
   type CompleteAccountFormValues,
 } from '@/features/auth/schemas/completeAccountSchema';
 import { useTranslations } from '@/i18n';
@@ -30,6 +30,8 @@ export default function CompleteAccountScreen() {
   const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const completeAccountSchema = useMemo(() => createCompleteAccountSchema(t.auth.validation), [t]);
 
   const form = useForm<CompleteAccountFormValues>({
     resolver: zodResolver(completeAccountSchema),

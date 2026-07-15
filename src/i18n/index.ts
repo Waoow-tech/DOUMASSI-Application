@@ -27,3 +27,6 @@ export function getT(): Translations {
 }
 
 export type { Translations };
+
+/** Sous-objet des messages de validation Zod (schémas auth). */
+export type AuthValidation = Translations['auth']['validation'];

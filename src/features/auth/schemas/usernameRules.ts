@@ -19,6 +19,8 @@
 
 import { z } from 'zod';
 
+import type { AuthValidation } from '@/i18n';
+
 /** Pattern temporaire généré par le trigger Supabase pour les users Google. */
 export const TEMP_USERNAME_PATTERN = /^user_[0-9a-f]{8}$/;
 
@@ -82,23 +84,22 @@ export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Schéma Zod partagé pour valider un username.
- * Réutilisé par signupSchema et completeAccountSchema.
+ * Fabrique du schéma Zod partagé pour valider un username.
+ * Réutilisée par createSignupSchema et createCompleteAccountSchema.
+ * Paramétrée par les messages i18n (`t.auth.validation`) pour suivre la langue.
  */
-export const usernameSchema = z
-  .string()
-  .min(3, 'Username must be at least 3 characters')
-  .max(30, 'Username cannot exceed 30 characters')
-  .regex(
-    /^[a-zA-Z][a-zA-Z0-9_]*$/,
-    'Username must start with a letter and contain only letters, numbers and underscores'
-  )
-  .refine((val) => !val.endsWith('_'), {
-    message: 'Username cannot end with an underscore',
-  })
-  .refine((val) => !TEMP_USERNAME_PATTERN.test(val), {
-    message: 'This username format is reserved',
-  })
-  .refine((val) => !RESERVED_USERNAMES.has(val.toLowerCase()), {
-    message: 'This username is reserved',
-  });
+export const createUsernameSchema = (v: AuthValidation) =>
+  z
+    .string()
+    .min(3, v.usernameMinLength)
+    .max(30, v.usernameMaxLength)
+    .regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, v.usernameFormat)
+    .refine((val) => !val.endsWith('_'), {
+      message: v.usernameNoTrailingUnderscore,
+    })
+    .refine((val) => !TEMP_USERNAME_PATTERN.test(val), {
+      message: v.usernameFormatReserved,
+    })
+    .refine((val) => !RESERVED_USERNAMES.has(val.toLowerCase()), {
+      message: v.usernameReserved,
+    });

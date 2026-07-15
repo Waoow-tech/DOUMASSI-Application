@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { AuthValidation } from '@/i18n';
+
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_REGEX = /^\+?\d{8,15}$/;
 
@@ -21,15 +23,16 @@ export function getLoginIdentifierType(identifier: string) {
   return null;
 }
 
-export const loginSchema = z.object({
-  identifier: z
-    .string()
-    .trim()
-    .min(3, 'Identifier is required')
-    .refine((value) => getLoginIdentifierType(value) !== null, {
-      message: 'Enter a valid email or phone number',
-    }),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-});
+export const createLoginSchema = (v: AuthValidation) =>
+  z.object({
+    identifier: z
+      .string()
+      .trim()
+      .min(3, v.identifierRequired)
+      .refine((value) => getLoginIdentifierType(value) !== null, {
+        message: v.invalidIdentifier,
+      }),
+    password: z.string().min(8, v.passwordMinLength),
+  });
 
-export type LoginFormValues = z.infer<typeof loginSchema>;
+export type LoginFormValues = z.infer<ReturnType<typeof createLoginSchema>>;

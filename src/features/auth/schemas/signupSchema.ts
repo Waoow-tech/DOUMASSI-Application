@@ -10,49 +10,52 @@
 
 import { z } from 'zod';
 
-import { usernameSchema } from './usernameRules';
+import type { AuthValidation } from '@/i18n';
 
-export const signupSchema = z
-  .object({
-    fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+import { createUsernameSchema } from './usernameRules';
 
-    username: usernameSchema,
+export const createSignupSchema = (v: AuthValidation) =>
+  z
+    .object({
+      fullName: z.string().min(2, v.fullNameMinLength),
 
-    email: z.string().min(1, 'Email is required').email('Invalid email address'),
+      username: createUsernameSchema(v),
 
-    birthday: z
-      .string()
-      .min(1, 'Birthday is required')
-      .refine((val) => {
-        const match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-        if (!match?.[1] || !match[2] || !match[3]) return false;
-        const day = parseInt(match[1], 10);
-        const month = parseInt(match[2], 10);
-        const year = parseInt(match[3], 10);
-        const date = new Date(year, month - 1, day);
-        return (
-          date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
-        );
-      }, 'Invalid date (expected format: DD/MM/YYYY)'),
+      email: z.string().min(1, v.emailRequired).email(v.invalidEmail),
 
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-      .regex(/[0-9]/, 'Password must contain at least one number'),
+      birthday: z
+        .string()
+        .min(1, v.birthdayRequired)
+        .refine((val) => {
+          const match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+          if (!match?.[1] || !match[2] || !match[3]) return false;
+          const day = parseInt(match[1], 10);
+          const month = parseInt(match[2], 10);
+          const year = parseInt(match[3], 10);
+          const date = new Date(year, month - 1, day);
+          return (
+            date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+          );
+        }, v.invalidDate),
 
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+      password: z
+        .string()
+        .min(8, v.passwordMinLength)
+        .regex(/[A-Z]/, v.passwordUppercase)
+        .regex(/[0-9]/, v.passwordDigit),
 
-    acceptedTerms: z.literal(true, {
-      error: 'You must accept the Terms and Conditions',
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
+      confirmPassword: z.string().min(1, v.confirmPasswordRequired),
 
-export type SignupFormValues = z.infer<typeof signupSchema>;
+      acceptedTerms: z.literal(true, {
+        error: v.mustAcceptTerms,
+      }),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: v.passwordsDoNotMatch,
+      path: ['confirmPassword'],
+    });
+
+export type SignupFormValues = z.infer<ReturnType<typeof createSignupSchema>>;
 
 export type SignupFormInput = Omit<SignupFormValues, 'acceptedTerms'> & {
   acceptedTerms: boolean;
