@@ -144,7 +144,7 @@ export default function SignupScreen() {
               fontFamily="$heading"
               marginBottom="$1"
             >
-              Create an account
+              {t.auth.signup.title}
             </Text>
 
             {/* Full name */}
@@ -155,7 +155,7 @@ export default function SignupScreen() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     id="signup-fullname-input"
-                    placeholder="Full name"
+                    placeholder={t.auth.signup.fullNamePlaceholder}
                     placeholderTextColor="$placeholderColor"
                     value={value}
                     onChangeText={onChange}
@@ -188,7 +188,7 @@ export default function SignupScreen() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     id="signup-username-input"
-                    placeholder="Username"
+                    placeholder={t.auth.signup.usernamePlaceholder}
                     placeholderTextColor="$placeholderColor"
                     value={value}
                     onChangeText={onChange}
@@ -236,7 +236,7 @@ export default function SignupScreen() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     id="signup-email-input"
-                    placeholder="Email or phone number"
+                    placeholder={t.auth.signup.identifierPlaceholder}
                     placeholderTextColor="$placeholderColor"
                     value={value}
                     onChangeText={onChange}
@@ -270,7 +270,7 @@ export default function SignupScreen() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     id="signup-birthday-input"
-                    placeholder="Birthday (DD/MM/YYYY)"
+                    placeholder={t.auth.signup.birthdayPlaceholder}
                     placeholderTextColor="$placeholderColor"
                     value={value}
                     onChangeText={(text) => handleBirthdayChange(text, onChange)}
@@ -311,7 +311,7 @@ export default function SignupScreen() {
                   >
                     <Input
                       id="signup-password-input"
-                      placeholder="Password"
+                      placeholder={t.auth.signup.passwordPlaceholder}
                       placeholderTextColor="$placeholderColor"
                       value={value}
                       onChangeText={onChange}
@@ -365,7 +365,7 @@ export default function SignupScreen() {
                   >
                     <Input
                       id="signup-confirm-password-input"
-                      placeholder="Confirm password"
+                      placeholder={t.auth.signup.confirmPasswordPlaceholder}
                       placeholderTextColor="$placeholderColor"
                       value={value}
                       onChangeText={onChange}
@@ -426,7 +426,7 @@ export default function SignupScreen() {
                     </Checkbox>
                     <XStack flex={1} flexWrap="wrap" gap="$1">
                       <Text fontSize={13} color="$textSecondary" lineHeight={18}>
-                        I agree to the
+                        {t.auth.signup.termsAgree}
                       </Text>
                       <Link href="/terms" asChild>
                         <Text
@@ -439,11 +439,11 @@ export default function SignupScreen() {
                           pressStyle={{ opacity: 0.7 }}
                           cursor="pointer"
                         >
-                          Terms and Conditions
+                          {t.auth.signup.termsLink}
                         </Text>
                       </Link>
                       <Text fontSize={13} color="$textSecondary" lineHeight={18}>
-                        and
+                        {t.auth.signup.termsAnd}
                       </Text>
                       <Link href="/privacy" asChild>
                         <Text
@@ -456,7 +456,7 @@ export default function SignupScreen() {
                           pressStyle={{ opacity: 0.7 }}
                           cursor="pointer"
                         >
-                          Privacy Policy
+                          {t.auth.signup.privacyLink}
                         </Text>
                       </Link>
                     </XStack>
@@ -492,11 +492,11 @@ export default function SignupScreen() {
               marginTop="$1"
               opacity={submitDisabled ? 0.5 : 1}
             >
-              {isLoading ? <Spinner size="small" color="$background" /> : 'Create an account'}
+              {isLoading ? <Spinner size="small" color="$background" /> : t.auth.signup.submit}
             </Button>
 
             {/* Séparateur Google */}
-            <Separator text="Or log in with" />
+            <Separator text={t.auth.signup.orLogInWith} />
 
             {/* Bouton Google */}
             <Button
@@ -536,7 +536,7 @@ export default function SignupScreen() {
             {/* Lien vers login */}
             <XStack justifyContent="center" gap="$1.5" marginTop="$1">
               <Text fontSize={13} color="$textSecondary">
-                Already registered ?
+                {t.auth.signup.alreadyRegistered}
               </Text>
               <Link href="/(auth)/login" asChild>
                 <Text
@@ -547,7 +547,7 @@ export default function SignupScreen() {
                   pressStyle={{ opacity: 0.7 }}
                   cursor="pointer"
                 >
-                  Log in
+                  {t.auth.signup.logIn}
                 </Text>
               </Link>
             </XStack>
