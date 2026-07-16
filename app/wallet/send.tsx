@@ -6,13 +6,14 @@
 
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, User as UserIcon } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Input, Spinner, Text, XStack, YStack } from 'tamagui';
 
+import { useProfilesByIds } from '@/features/profile/hooks/useProfilesByIds';
 import { useSearchUsers, type SearchUserResult } from '@/features/profile/hooks/useSearchUsers';
 import { useWallet, useWalletTransfer, newIdempotencyKey } from '@/features/wallet/hooks/useWallet';
 import { mapWalletError } from '@/features/wallet/lib/mapWalletError';
@@ -68,6 +69,12 @@ export default function WalletSendScreen() {
   const t = useTranslations();
   const insets = useSafeAreaInsets();
 
+  // Mode pourboire (E12-06) : `?to=<userId>&tip=1` depuis la carte auteur d'un
+  // cours. Le destinataire est alors pré-rempli et l'étape de recherche sautée.
+  const params = useLocalSearchParams<{ to?: string; tip?: string }>();
+  const presetToId = typeof params.to === 'string' && params.to.length > 0 ? params.to : null;
+  const isTip = params.tip === '1';
+
   const [query, setQuery] = useState('');
   const [recipient, setRecipient] = useState<SearchUserResult | null>(null);
   const [amountText, setAmountText] = useState('');
@@ -75,6 +82,26 @@ export default function WalletSendScreen() {
   const walletQuery = useWallet();
   const searchQuery = useSearchUsers(query);
   const transfer = useWalletTransfer();
+
+  // Résout le destinataire pré-rempli (username/avatar) à partir de son id.
+  const { profilesById } = useProfilesByIds(presetToId ? [presetToId] : []);
+
+  useEffect(() => {
+    if (!presetToId) return;
+    const p = profilesById.get(presetToId);
+    if (!p) return;
+    setRecipient((current) =>
+      current?.id === p.id
+        ? current
+        : {
+            id: p.id,
+            username: p.username,
+            full_name: p.full_name,
+            avatar_url: p.avatar_url,
+            is_verified: false,
+          }
+    );
+  }, [presetToId, profilesById]);
 
   const balance = walletQuery.data ?? 0;
   const amount = useMemo(() => {
@@ -115,15 +142,13 @@ export default function WalletSendScreen() {
     }
 
     transfer.mutate(
-      { toUserId: recipient.id, amount, idempotencyKey: idempotencyKeyRef.current },
+      { toUserId: recipient.id, amount, idempotencyKey: idempotencyKeyRef.current, isTip },
       {
         onSuccess: () => {
           // Succès : le prochain envoi doit être un nouveau mouvement.
           idempotencyKeyRef.current = null;
-          Alert.alert(
-            t.wallet.send.successTitle,
-            t.wallet.send.successMessage(amount, recipient.username)
-          );
+          const copy = isTip ? t.wallet.tip : t.wallet.send;
+          Alert.alert(copy.successTitle, copy.successMessage(amount, recipient.username));
           router.back();
         },
         onError: (err) => {
@@ -132,7 +157,7 @@ export default function WalletSendScreen() {
         },
       }
     );
-  }, [recipient, amount, transfer, t]);
+  }, [recipient, amount, transfer, t, isTip]);
 
   return (
     <>
@@ -156,7 +181,7 @@ export default function WalletSendScreen() {
             <ArrowLeft size={24} color="#FFFFFF" />
           </Pressable>
           <Text flex={1} color="$color" fontSize={18} fontWeight="700">
-            {t.wallet.send.title}
+            {isTip ? t.wallet.tip.title : t.wallet.send.title}
           </Text>
         </XStack>
 
@@ -243,16 +268,20 @@ export default function WalletSendScreen() {
                 <Text flex={1} fontSize={15} fontWeight="600" color="$color" numberOfLines={1}>
                   @{recipient.username}
                 </Text>
-                <Text
-                  fontSize={13}
-                  color="$accentNeon"
-                  fontWeight="700"
-                  onPress={() => setRecipient(null)}
-                  pressStyle={{ opacity: 0.7 }}
-                  cursor="pointer"
-                >
-                  {t.wallet.send.change}
-                </Text>
+                {/* En mode pourboire le destinataire est imposé (l'auteur du
+                    cours) : pas de « Changer ». */}
+                {presetToId ? null : (
+                  <Text
+                    fontSize={13}
+                    color="$accentNeon"
+                    fontWeight="700"
+                    onPress={() => setRecipient(null)}
+                    pressStyle={{ opacity: 0.7 }}
+                    cursor="pointer"
+                  >
+                    {t.wallet.send.change}
+                  </Text>
+                )}
               </XStack>
             </YStack>
 

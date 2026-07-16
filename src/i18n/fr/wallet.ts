@@ -51,6 +51,16 @@ export const walletFr = {
     },
   },
 
+  // Pourboires créateurs (E12-06). Réutilise le flow d'envoi (send.*) en mode tip.
+  tip: {
+    /** Bouton depuis la carte auteur d'un cours. */
+    cta: 'Offrir un pourboire',
+    title: 'Offrir un pourboire',
+    successTitle: 'Merci !',
+    successMessage: (amount: number, username: string) =>
+      `${amount} Dcoins offerts à @${username}.`,
+  },
+
   // Libellés des types de transaction (enum DB).
   txType: {
     grant: 'Crédit offert',
