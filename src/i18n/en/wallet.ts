@@ -22,6 +22,30 @@ export const walletEn: WalletTranslations = {
     retry: 'Retry',
   },
 
+  send: {
+    cta: 'Send',
+    title: 'Send Dcoins',
+    searchPlaceholder: 'Search for a user',
+    searchHint: 'Type at least 2 characters to search.',
+    noResults: 'No user found.',
+    recipientLabel: 'Recipient',
+    change: 'Change',
+    amountLabel: 'Amount',
+    available: (n: number) => `Available balance: ${n} Dcoins`,
+    submit: 'Send',
+    sending: 'Sending…',
+    successTitle: 'Sent!',
+    successMessage: (amount: number, username: string) => `${amount} Dcoins sent to @${username}.`,
+    errorTitle: 'Could not send',
+    errors: {
+      insufficient: 'Insufficient balance.',
+      self: 'You cannot send Dcoins to yourself.',
+      recipientNotFound: 'Recipient not found.',
+      invalidAmount: 'Enter a valid amount (greater than 0).',
+      generic: 'Something went wrong. Please try again.',
+    },
+  },
+
   txType: {
     grant: 'Credit granted',
     reward: 'Reward',
