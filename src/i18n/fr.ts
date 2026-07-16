@@ -17,6 +17,7 @@ import { marketplaceFr } from './fr/marketplace';
 import { messagingFr } from './fr/messaging';
 import { notificationsFr } from './fr/notifications';
 import { profileScreensFr } from './fr/profileScreens';
+import { walletFr } from './fr/wallet';
 
 export const fr = {
   splash: {
@@ -227,6 +228,7 @@ export const fr = {
   cours: coursFr,
   games: gamesFr,
   common: commonFr,
+  wallet: walletFr,
 };
 
 export type Translations = typeof fr;

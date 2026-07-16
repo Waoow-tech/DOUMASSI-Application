@@ -348,13 +348,14 @@ export default function SettingsScreen() {
   const profile = profileQuery.data;
   const blockedUsersCount = blockedUsersQuery.data?.length ?? 0;
 
+  // `href` défini => la feature est livrée : on navigue (pas de badge « Bientôt »).
   const doumassiFeatures = useMemo(
     () => [
-      { icon: Wallet, label: t.profileScreens.settings.featureWallet },
-      { icon: Sparkles, label: t.profileScreens.settings.featureAi },
-      { icon: Store, label: t.profileScreens.settings.featureMarketplace },
-      { icon: MessageSquare, label: t.profileScreens.settings.featureMessaging },
-      { icon: Phone, label: t.profileScreens.settings.featureCalls },
+      { icon: Wallet, label: t.profileScreens.settings.featureWallet, href: '/wallet' as const },
+      { icon: Sparkles, label: t.profileScreens.settings.featureAi, href: null },
+      { icon: Store, label: t.profileScreens.settings.featureMarketplace, href: null },
+      { icon: MessageSquare, label: t.profileScreens.settings.featureMessaging, href: null },
+      { icon: Phone, label: t.profileScreens.settings.featureCalls, href: null },
     ],
     [t]
   );
@@ -514,8 +515,8 @@ export default function SettingsScreen() {
                 key={item.label}
                 icon={item.icon}
                 label={item.label}
-                trailing={<Badge>{t.profileScreens.settings.badgeSoon}</Badge>}
-                onPress={soonAlert}
+                trailing={item.href ? null : <Badge>{t.profileScreens.settings.badgeSoon}</Badge>}
+                onPress={item.href ? () => router.push(item.href) : soonAlert}
                 isLast={index === doumassiFeatures.length - 1}
               />
             ))}

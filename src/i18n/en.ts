@@ -14,6 +14,7 @@ import { marketplaceEn } from './en/marketplace';
 import { messagingEn } from './en/messaging';
 import { notificationsEn } from './en/notifications';
 import { profileScreensEn } from './en/profileScreens';
+import { walletEn } from './en/wallet';
 import type { Translations } from './fr';
 
 export const en: Translations = {
@@ -222,4 +223,5 @@ export const en: Translations = {
   cours: coursEn,
   games: gamesEn,
   common: commonEn,
+  wallet: walletEn,
 };
