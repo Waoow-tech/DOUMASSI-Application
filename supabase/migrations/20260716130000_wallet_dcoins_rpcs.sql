@@ -171,9 +171,10 @@ security definer
 set search_path = public
 as $$
 declare
-  v_user       uuid := auth.uid();
-  v_out_type   public.wallet_transaction_type;
-  v_in_type    public.wallet_transaction_type;
+  v_user        uuid := auth.uid();
+  v_out_type    public.wallet_transaction_type;
+  v_in_type     public.wallet_transaction_type;
+  v_existing    bigint;
   v_new_balance bigint;
 begin
   if v_user is null then
@@ -212,17 +213,35 @@ begin
     perform 1 from public.wallets where user_id = v_user     for update;
   end if;
 
-  -- Débit émetteur (contrôle de solde + idempotence dans le helper).
+  -- Idempotence décidée UNE SEULE FOIS, au niveau du transfert (clé émetteur).
+  -- Si déjà traité : on ne rejoue NI le débit NI le crédit.
+  select balance_after into v_existing
+  from public.wallet_transactions
+  where user_id = v_user and idempotency_key = p_idempotency_key;
+
+  if found then
+    return v_existing;  -- transfert déjà appliqué : no-op des deux côtés
+  end if;
+
+  -- Débit émetteur (contrôle de solde dans le helper).
   v_new_balance := public._wallet_apply(
     v_user, -p_amount, v_out_type, p_idempotency_key,
     p_to_user, p_reference_type, p_reference_id
   );
 
-  -- Crédit récepteur — même clé d'idempotence : l'unicité est scopée
-  -- (user_id, idempotency_key), donc les deux lignes coexistent, et un retry
-  -- est neutralisé des deux côtés.
+  -- Crédit récepteur — clé DÉRIVÉE et namespacée, surtout PAS la clé brute.
+  --
+  -- Pourquoi : `_wallet_apply` fait son propre check d'idempotence par leg. Si
+  -- on réutilisait la clé brute et que le récepteur possédait déjà une ligne
+  -- avec cette clé (issue d'une de SES opérations), son crédit ferait no-op
+  -- alors que l'émetteur vient d'être débité => des Dcoins détruits et
+  -- l'invariant sum(amount)=0 cassé.
+  -- Le namespace ':in:<émetteur>' rend cette collision structurellement
+  -- impossible, tout en gardant la neutralisation des retries (la clé dérivée
+  -- est déterministe pour un transfert donné).
   perform public._wallet_apply(
-    p_to_user, p_amount, v_in_type, p_idempotency_key,
+    p_to_user, p_amount, v_in_type,
+    p_idempotency_key || ':in:' || v_user::text,
     v_user, p_reference_type, p_reference_id
   );
 
@@ -291,10 +310,12 @@ revoke execute on function public.wallet_spend(bigint, text, text, uuid, jsonb)
 --   select public.wallet_spend(30, 'test-spend-1');                      -- => 70
 --   -- 5) Solde insuffisant
 --   select public.wallet_spend(10000, 'test-spend-2');                   -- => "Solde insuffisant"
---   -- 6) Transfert : 2 lignes qui s'annulent
+--   -- 6) Transfert : 2 lignes qui s'annulent (conservation)
 --   select public.wallet_transfer('<autre_user>', 20, 'test-tr-1');      -- => 50
+--   -- NB : la ligne du récepteur porte la clé dérivée 'test-tr-1:in:<émetteur>',
+--   -- d'où le LIKE sur le préfixe plutôt qu'une égalité.
 --   select sum(amount) from public.wallet_transactions
---     where idempotency_key = 'test-tr-1';                               -- => 0 (conservation)
+--     where idempotency_key like 'test-tr-1%';                           -- => 0 (conservation)
 --   -- 7) Transfert vers soi-même
 --   select public.wallet_transfer(auth.uid(), 5, 'test-tr-2');           -- => interdit
 --   -- 8) Le solde reste égal à la somme du ledger (invariant fondamental)
