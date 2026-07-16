@@ -5,7 +5,7 @@
 
 import { FlashList } from '@shopify/flash-list';
 import { router, Stack } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Send } from 'lucide-react-native';
 import { useCallback, useMemo } from 'react';
 import { Pressable, RefreshControl, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -180,6 +180,20 @@ export default function WalletScreen() {
                     </XStack>
                   )}
                 </YStack>
+
+                {/* Envoyer des Dcoins (E12-05) */}
+                <Button
+                  onPress={() => router.push('/wallet/send')}
+                  backgroundColor="$accentNeon"
+                  color="#000000"
+                  fontWeight="800"
+                  fontSize={15}
+                  height={48}
+                  borderRadius="$10"
+                  icon={<Send size={18} color="#000000" />}
+                >
+                  {t.wallet.send.cta}
+                </Button>
 
                 <Text
                   fontSize={13}

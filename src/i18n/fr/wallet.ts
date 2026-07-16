@@ -24,6 +24,33 @@ export const walletFr = {
     retry: 'Réessayer',
   },
 
+  // Flow d'envoi de Dcoins (E12-05).
+  send: {
+    /** Bouton d'entrée depuis l'écran Portefeuille. */
+    cta: 'Envoyer',
+    title: 'Envoyer des Dcoins',
+    searchPlaceholder: 'Rechercher un utilisateur',
+    searchHint: 'Tape au moins 2 caractères pour chercher.',
+    noResults: 'Aucun utilisateur trouvé.',
+    recipientLabel: 'Destinataire',
+    change: 'Changer',
+    amountLabel: 'Montant',
+    available: (n: number) => `Solde disponible : ${n} Dcoins`,
+    submit: 'Envoyer',
+    sending: 'Envoi…',
+    successTitle: 'Envoyé !',
+    successMessage: (amount: number, username: string) =>
+      `${amount} Dcoins envoyés à @${username}.`,
+    errorTitle: 'Envoi impossible',
+    errors: {
+      insufficient: 'Solde insuffisant.',
+      self: 'Tu ne peux pas t’envoyer des Dcoins à toi-même.',
+      recipientNotFound: 'Destinataire introuvable.',
+      invalidAmount: 'Entre un montant valide (supérieur à 0).',
+      generic: 'Une erreur est survenue. Réessaie.',
+    },
+  },
+
   // Libellés des types de transaction (enum DB).
   txType: {
     grant: 'Crédit offert',
