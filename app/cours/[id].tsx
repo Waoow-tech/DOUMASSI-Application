@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Bookmark,
   ChevronRight,
+  Coins,
   Eye,
   Flag,
   GraduationCap,
@@ -439,6 +440,25 @@ export default function ResourceDetailScreen() {
                   <ChevronRight size={16} color="#A0A0A0" />
                 </XStack>
               </Pressable>
+
+              {/* Pourboire en Dcoins (E12-06) — pas sur ses propres cours. */}
+              {isMine ? null : (
+                <Button
+                  onPress={() => router.push(`/wallet/send?to=${resource.author_id}&tip=1`)}
+                  backgroundColor="transparent"
+                  borderWidth={1}
+                  borderColor="$accentNeon"
+                  color="$accentNeon"
+                  fontWeight="700"
+                  fontSize={14}
+                  height={44}
+                  borderRadius="$10"
+                  icon={<Coins size={18} color="#10D970" />}
+                  pressStyle={{ opacity: 0.8 }}
+                >
+                  {t.wallet.tip.cta}
+                </Button>
+              )}
             </YStack>
 
             {/* Entraide — commentaires */}

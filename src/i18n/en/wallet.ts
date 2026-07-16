@@ -46,6 +46,13 @@ export const walletEn: WalletTranslations = {
     },
   },
 
+  tip: {
+    cta: 'Send a tip',
+    title: 'Send a tip',
+    successTitle: 'Thank you!',
+    successMessage: (amount: number, username: string) => `${amount} Dcoins sent to @${username}.`,
+  },
+
   txType: {
     grant: 'Credit granted',
     reward: 'Reward',
