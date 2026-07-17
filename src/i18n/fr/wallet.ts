@@ -14,6 +14,9 @@ export const walletFr = {
 
   historyTitle: 'Historique',
 
+  /** Toast de gain (E12-08). */
+  rewardToast: (amount: number) => `+${amount} Dcoins gagnés !`,
+
   empty: {
     title: 'Aucune transaction',
     subtitle: 'Tes mouvements de Dcoins apparaîtront ici.',

@@ -12,6 +12,8 @@ export const walletEn: WalletTranslations = {
 
   historyTitle: 'History',
 
+  rewardToast: (amount: number) => `+${amount} Dcoins earned!`,
+
   empty: {
     title: 'No transactions yet',
     subtitle: 'Your Dcoins activity will show up here.',

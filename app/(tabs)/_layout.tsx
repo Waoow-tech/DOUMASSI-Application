@@ -16,6 +16,8 @@ import { usePushToken } from '@/features/auth/hooks/usePushToken';
 import { useIncomingCallListener } from '@/features/calls/hooks/useIncomingCallListener';
 import { useNotificationsUnreadCount } from '@/features/notifications/hooks/useNotifications';
 import { usePushNotificationsHandler } from '@/features/notifications/hooks/usePushNotificationsHandler';
+import { RewardToast } from '@/features/wallet/components/RewardToast';
+import { useClaimDailyReward } from '@/features/wallet/hooks/useWallet';
 import { useTranslations } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 
@@ -73,6 +75,10 @@ function AuthenticatedTabs() {
   }, []);
   useIncomingCallListener(meId);
 
+  // E12-08 : réclame le bonus de connexion quotidienne (1×/jour, idempotent
+  // serveur). Affiche un toast « +N Dcoins » si un gain a lieu.
+  useClaimDailyReward();
+
   // Tab bar dynamique : on remonte la barre de la zone safe area système
   // (gesture navigation Android moderne + home indicator iOS). Sans ça,
   // la barre est posée au ras du bas → icônes coupées par la zone gestes.
@@ -86,6 +92,7 @@ function AuthenticatedTabs() {
 
   return (
     <>
+      <RewardToast />
       {deletionReminder.shouldShow && deletionReminder.request ? (
         <PendingDeletionModal
           open={deletionReminder.shouldShow}
