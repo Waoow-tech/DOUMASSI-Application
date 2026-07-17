@@ -199,4 +199,21 @@ export const marketplaceEn: MarketplaceTranslations = {
   similar: {
     title: 'Similar listings',
   },
+
+  boost: {
+    sponsoredTitle: 'Sponsored',
+    sponsoredBadge: 'Sponsored',
+    cta: 'Boost',
+    confirmTitle: 'Boost my listing',
+    confirmMessage: (cost: number, days: number, balance: number) =>
+      `Feature your listing for ${days} days for ${cost} Dcoins.\nCurrent balance: ${balance} Dcoins.`,
+    confirmAction: 'Boost',
+    cancel: 'Cancel',
+    successTitle: 'Listing boosted!',
+    successMessage: (days: number) => `Your listing is featured for ${days} days.`,
+    errorTitle: 'Could not boost',
+    insufficient: 'Insufficient balance. Earn Dcoins to boost your listing.',
+    genericError: 'Something went wrong. Please try again.',
+    sending: 'Boosting…',
+  },
 };
