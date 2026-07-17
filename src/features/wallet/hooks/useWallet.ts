@@ -10,9 +10,11 @@
 // d'écriture, donc toute tentative d'INSERT/UPDATE direct serait refusée.
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
+import { useRewardToastStore } from '@/stores/rewardToastStore';
 
 const PAGE_SIZE = 20;
 
@@ -185,6 +187,43 @@ export function useWalletTransfer() {
       void queryClient.invalidateQueries({ queryKey: walletQueryKey });
     },
   });
+}
+
+interface DailyClaimResult {
+  granted: boolean;
+  amount: number;
+  balance: number;
+}
+
+/**
+ * Réclame le bonus de connexion quotidienne (E12-07 `wallet_claim_daily`).
+ * À monter UNE fois dans le layout authentifié. Idempotent côté serveur (1×/jour),
+ * donc sans risque même si le composant se remonte. Si un gain a lieu, invalide
+ * le solde et déclenche le toast de récompense.
+ */
+export function useClaimDailyReward() {
+  const queryClient = useQueryClient();
+  const showRewardToast = useRewardToastStore((s) => s.show);
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    if (doneRef.current) return;
+    doneRef.current = true;
+
+    void (async () => {
+      const { data, error } = await supabase.rpc('wallet_claim_daily');
+      if (error) {
+        // Non bloquant : un bonus raté n'empêche pas d'utiliser l'app.
+        logger.warn('wallet_claim_daily failed', { message: error.message });
+        return;
+      }
+      const result = data as DailyClaimResult | null;
+      if (result?.granted) {
+        queryClient.invalidateQueries({ queryKey: walletQueryKey });
+        showRewardToast(result.amount);
+      }
+    })();
+  }, [queryClient, showRewardToast]);
 }
 
 export interface SpendVariables {
