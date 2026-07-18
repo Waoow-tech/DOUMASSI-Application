@@ -18,8 +18,8 @@
 // éviter l'aller-retour).
 
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Bookmark, Eye, MapPin } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Bookmark, Eye, MapPin, Rocket } from 'lucide-react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Text, View, XStack, YStack } from 'tamagui';
@@ -31,8 +31,14 @@ import {
   useListingDetail,
   useSimilarListings,
 } from '@/features/marketplace/hooks/useListingDetail';
-import { useToggleListingBookmark } from '@/features/marketplace/hooks/useListings';
+import {
+  LISTING_BOOST_COST,
+  LISTING_BOOST_DAYS,
+  useBoostListing,
+  useToggleListingBookmark,
+} from '@/features/marketplace/hooks/useListings';
 import { useGetOrCreateDm } from '@/features/messaging/hooks/useGetOrCreateDm';
+import { newIdempotencyKey, useWallet } from '@/features/wallet/hooks/useWallet';
 import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
@@ -93,6 +99,11 @@ export default function ListingDetailScreen() {
   const { listings: similar } = useSimilarListings(listingId);
   const toggleBookmark = useToggleListingBookmark();
   const getOrCreateDm = useGetOrCreateDm();
+  const walletQuery = useWallet();
+  const boost = useBoostListing();
+  // Clé d'idempotence du boost en cours : générée une fois, conservée en cas
+  // d'échec (retry = même clé => pas de double débit), remise à zéro au succès.
+  const boostKeyRef = useRef<string | null>(null);
 
   const [meId, setMeId] = useState<string | null>(null);
   useEffect(() => {
@@ -147,6 +158,45 @@ export default function ListingDetailScreen() {
     // d'une annonce similaire à une autre).
     router.replace(`/shop/${otherId}`);
   }, []);
+
+  // E12-09 — Booster mon annonce (dépense de Dcoins)
+  const doBoost = useCallback(() => {
+    if (!listing) return;
+    if (!boostKeyRef.current) boostKeyRef.current = newIdempotencyKey();
+    boost.mutate(
+      { listingId: listing.id, idempotencyKey: boostKeyRef.current },
+      {
+        onSuccess: () => {
+          boostKeyRef.current = null; // prochain boost = nouvelle dépense
+          Alert.alert(
+            t.marketplace.boost.successTitle,
+            t.marketplace.boost.successMessage(LISTING_BOOST_DAYS)
+          );
+        },
+        onError: (err) => {
+          // On conserve la clé : un nouvel essai rejoue la même opération.
+          const insufficient = err.message?.toLowerCase().includes('solde insuffisant');
+          Alert.alert(
+            t.marketplace.boost.errorTitle,
+            insufficient ? t.marketplace.boost.insufficient : t.marketplace.boost.genericError
+          );
+        },
+      }
+    );
+  }, [listing, boost, t]);
+
+  const handleBoost = useCallback(() => {
+    if (!listing) return;
+    const balance = walletQuery.data ?? 0;
+    Alert.alert(
+      t.marketplace.boost.confirmTitle,
+      t.marketplace.boost.confirmMessage(LISTING_BOOST_COST, LISTING_BOOST_DAYS, balance),
+      [
+        { text: t.marketplace.boost.cancel, style: 'cancel' },
+        { text: t.marketplace.boost.confirmAction, onPress: doBoost },
+      ]
+    );
+  }, [listing, walletQuery.data, t, doBoost]);
 
   // E7-13 — CTA Contacter vendeur
   const handleContactSeller = useCallback(() => {
@@ -418,16 +468,25 @@ export default function ListingDetailScreen() {
           borderTopColor="$borderColor"
         >
           {isMyListing ? (
-            <View
-              backgroundColor="$surface"
-              borderRadius={9999}
-              paddingVertical={14}
-              alignItems="center"
+            <Pressable
+              onPress={handleBoost}
+              disabled={boost.isPending}
+              accessibilityRole="button"
+              accessibilityLabel={t.marketplace.boost.cta}
+              accessibilityState={{ disabled: boost.isPending }}
+              style={[styles.cta, { backgroundColor: boost.isPending ? '#1A1A1A' : '#10D970' }]}
             >
-              <Text fontSize={14} fontWeight="700" color="$textSecondary">
-                {t.marketplace.detail.ownListing}
-              </Text>
-            </View>
+              {boost.isPending ? (
+                <ActivityIndicator color="#10D970" />
+              ) : (
+                <XStack alignItems="center" gap={8}>
+                  <Rocket size={18} color="#000000" />
+                  <Text fontSize={15} fontWeight="800" color="#000000">
+                    {t.marketplace.boost.cta} · {LISTING_BOOST_COST} Dcoins
+                  </Text>
+                </XStack>
+              )}
+            </Pressable>
           ) : (
             <Pressable
               onPress={handleContactSeller}

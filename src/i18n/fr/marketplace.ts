@@ -218,6 +218,24 @@ export const marketplaceFr = {
   similar: {
     title: 'Annonces similaires',
   },
+
+  // Mise en avant payée en Dcoins (E12-09).
+  boost: {
+    sponsoredTitle: 'Sponsorisé',
+    sponsoredBadge: 'Sponsorisé',
+    cta: 'Booster',
+    confirmTitle: 'Booster mon annonce',
+    confirmMessage: (cost: number, days: number, balance: number) =>
+      `Mets ton annonce en avant pendant ${days} jours pour ${cost} Dcoins.\nSolde actuel : ${balance} Dcoins.`,
+    confirmAction: 'Booster',
+    cancel: 'Annuler',
+    successTitle: 'Annonce boostée !',
+    successMessage: (days: number) => `Ton annonce est mise en avant pendant ${days} jours.`,
+    errorTitle: 'Boost impossible',
+    insufficient: 'Solde insuffisant. Gagne des Dcoins pour booster ton annonce.',
+    genericError: 'Une erreur est survenue. Réessaie.',
+    sending: 'Boost…',
+  },
 };
 
 export type MarketplaceTranslations = typeof marketplaceFr;

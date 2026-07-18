@@ -26,6 +26,7 @@ import { AdvancedFiltersSheet } from '@/features/marketplace/components/Advanced
 import { CategoryChips } from '@/features/marketplace/components/CategoryChips';
 import { ListingCard } from '@/features/marketplace/components/ListingCard';
 import { QuickFiltersBar } from '@/features/marketplace/components/QuickFiltersBar';
+import { SponsoredRow } from '@/features/marketplace/components/SponsoredRow';
 import {
   useListings,
   useToggleListingBookmark,
@@ -309,6 +310,9 @@ export default function MarketplaceGridScreen() {
               onEndReached={handleLoadMore}
               onEndReachedThreshold={0.4}
               contentContainerStyle={styles.gridContent}
+              // Vitrine « Sponsorisé » en tête — masquée pendant une recherche
+              // (l'utilisateur cherche un item précis, pas une pub).
+              ListHeaderComponent={searchQuery.trim() ? null : <SponsoredRow />}
               refreshControl={
                 <RefreshControl
                   refreshing={isManualRefreshing}

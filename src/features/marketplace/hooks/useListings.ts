@@ -7,8 +7,9 @@
 // anon + authenticated → la marketplace est visible sans compte. `bookmarked_by_me`
 // reste null/false pour les visiteurs anon.
 
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { walletQueryKey } from '@/features/wallet/hooks/useWallet';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
@@ -142,6 +143,57 @@ export function useListings(filters: ListingsFilters = {}) {
   });
 }
 
+/** Prix d'un boost (affichage). Doit rester aligné avec le [BARÈME] de la RPC. */
+export const LISTING_BOOST_COST = 50;
+export const LISTING_BOOST_DAYS = 7;
+
+/**
+ * Annonces à mise en avant active (section « Sponsorisé »). RPC get_boosted_listings
+ * (E12-09), découplée de la pagination principale. Grantée anon + authenticated.
+ */
+export function useBoostedListings() {
+  return useQuery({
+    queryKey: ['marketplace', 'boosted'],
+    queryFn: async (): Promise<ListingCard[]> => {
+      const { data, error } = await supabase.rpc('get_boosted_listings', { p_limit: 10 });
+      if (error) {
+        logger.warn('get_boosted_listings failed', { message: error.message });
+        throw error;
+      }
+      return ((data ?? []) as ListingsRpcRow[]).map(mapRowToCard);
+    },
+    staleTime: 60_000,
+  });
+}
+
+/**
+ * Booster une annonce : dépense LISTING_BOOST_COST Dcoins via la RPC boost_listing
+ * (E12-09, atomique côté serveur). La clé d'idempotence est fournie par l'appelant
+ * (générée une seule fois par action — voir newIdempotencyKey).
+ */
+export function useBoostListing() {
+  const queryClient = useQueryClient();
+
+  return useMutation<string, Error, { listingId: string; idempotencyKey: string }>({
+    mutationFn: async ({ listingId, idempotencyKey }): Promise<string> => {
+      const { data, error } = await supabase.rpc('boost_listing', {
+        p_listing_id: listingId,
+        p_idempotency_key: idempotencyKey,
+      });
+      if (error) {
+        logger.warn('boost_listing failed', { message: error.message, listingId });
+        throw error;
+      }
+      return String(data ?? ''); // boosted_until
+    },
+    onSuccess: () => {
+      // Le solde a baissé, et la vitrine sponsorisée a changé.
+      void queryClient.invalidateQueries({ queryKey: walletQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ['marketplace', 'boosted'] });
+    },
+  });
+}
+
 /**
  * Toggle bookmark optimiste + invalidation des queries marketplace.
  * Utilise la RPC toggle_listing_bookmark (authenticated only).
@@ -205,6 +257,8 @@ export function useToggleListingBookmark() {
     onSettled: () => {
       // Refetch les bookmarks-only view (E7-16) qui pourrait diverger.
       void queryClient.invalidateQueries({ queryKey: ['marketplace', 'bookmarks'] });
+      // La vitrine sponsorisée porte aussi bookmarked_by_me → la garder fraîche.
+      void queryClient.invalidateQueries({ queryKey: ['marketplace', 'boosted'] });
     },
   });
 }
