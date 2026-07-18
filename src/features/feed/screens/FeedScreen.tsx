@@ -251,6 +251,12 @@ export function FeedScreen() {
 
   const handleTabPress = useCallback(
     (tab: FeedTabId) => {
+      // Le Wallet est une feature LIVRÉE (E12) : l'onglet ouvre le vrai écran
+      // Portefeuille au lieu d'afficher le placeholder « bientôt disponible ».
+      if (tab === 'wallet') {
+        router.push('/wallet');
+        return;
+      }
       setActiveTab(tab);
       restoreScroll(tab);
     },
