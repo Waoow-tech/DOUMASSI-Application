@@ -1,0 +1,52 @@
+-- E13-02 (#352) — Cours : retrait des niveaux « primaire »
+--
+-- Voir ADR-008 §2.3. L'âge minimum de l'app est passé à 15 ans (E13-01) :
+-- afficher « Cours de CP » reviendrait à cibler des enfants de 6 ans, en
+-- contradiction avec les CGU. On retire donc le cycle primaire.
+--
+-- On CONSERVE le collège → supérieur : le niveau du CONTENU n'est pas l'âge de
+-- l'UTILISATEUR (un élève de 2ⁿᵈᵉ révise légitimement des bases de 3ᵉ).
+--
+-- Mécanisme : `is_active = false`, PAS de DELETE.
+--   `resources.level_code` a une clé étrangère vers `course_levels(code)` : une
+--   suppression casserait les ressources existantes. Le flag `is_active` était
+--   d'ailleurs prévu pour ça dès l'origine (cf. commentaire de la migration
+--   20260702120000 : « retirer une entrée sans casser les FK existantes »).
+--
+-- Côté app, aucun changement de code n'est nécessaire : `useCourseLevels` filtre
+-- déjà `.eq('is_active', true)`.
+--
+-- ⚠️ DÉPENDANCE D'ORDRE : le seed de la taxonomie (20260702120000) se termine par
+--    `on conflict (code) do update set ... is_active = true`. Le re-jouer SEUL
+--    réactiverait donc le primaire. Sur une base fraîche l'ordre des timestamps
+--    règle le problème (le seed passe avant cette migration). Si tu rejoues le
+--    seed manuellement, rejoue ensuite CE fichier.
+--
+-- Idempotent.
+
+update public.course_levels
+   set is_active = false
+ where cycle = 'primaire';
+
+-- ---------------------------------------------------------------------------
+-- Post-conditions attendues (dev) :
+--
+--   -- 1) Les 5 niveaux primaire sont désactivés (cp, ce1, ce2, cm1, cm2)
+--   select code, is_active from public.course_levels
+--    where cycle = 'primaire';                      -- => 5 lignes, is_active = false
+--
+--   -- 2) Le reste est intact (collège → supérieur + tout_public actifs)
+--   select count(*) from public.course_levels
+--    where is_active = true;                        -- => 12
+--
+--   -- 3) Ce que voit l'app (ce que renvoie useCourseLevels)
+--   select code, label from public.course_levels
+--    where is_active = true order by sort_order;    -- => démarre à 6ᵉ, plus de CP
+--
+--   -- AUDIT : des ressources pointent-elles encore vers un niveau désactivé ?
+--   -- (attendu : 0 hors données de test ; elles resteraient accessibles par lien
+--   --  direct mais ne seraient plus filtrables par niveau)
+--   select count(*) from public.resources r
+--     join public.course_levels l on l.code = r.level_code
+--    where l.is_active = false;
+-- ---------------------------------------------------------------------------
