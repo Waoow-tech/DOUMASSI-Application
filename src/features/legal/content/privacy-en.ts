@@ -111,8 +111,7 @@ export const privacyEnSections: LegalSection[] = [
   {
     title: '10. Minors',
     body: [
-      'DOUMASSI is not intended for children under ' +
-        '13 years of age without parental supervision.',
+      'DOUMASSI is restricted to people aged ' + '15 or over.',
       'If we discover that we have collected data from ' +
         'a minor without parental consent, we will ' +
         'delete it immediately.',

@@ -170,6 +170,7 @@ export const en: Translations = {
       invalidEmail: 'Invalid email address',
       birthdayRequired: 'Birthday is required',
       invalidDate: 'Invalid date (expected format: DD/MM/YYYY)',
+      minAge: 'You must be at least 15 to use DOUMASSI',
       passwordUppercase: 'Password must contain at least one uppercase letter',
       passwordDigit: 'Password must contain at least one number',
       confirmPasswordRequired: 'Please confirm your password',
