@@ -20,12 +20,15 @@ create table if not exists public.comment_likes (
 
 alter table public.comment_likes enable row level security;
 
+drop policy if exists "comment_likes select all" on public.comment_likes;
 create policy "comment_likes select all" on public.comment_likes
   for select to authenticated using (true);
 
+drop policy if exists "comment_likes insert own" on public.comment_likes;
 create policy "comment_likes insert own" on public.comment_likes
   for insert to authenticated with check (user_id = auth.uid());
 
+drop policy if exists "comment_likes delete own" on public.comment_likes;
 create policy "comment_likes delete own" on public.comment_likes
   for delete to authenticated using (user_id = auth.uid());
 

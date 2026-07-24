@@ -25,6 +25,7 @@ begin
     where schemaname = 'storage' and tablename = 'objects'
       and policyname = 'stories users upload own folder'
   ) then
+    drop policy if exists "stories users upload own folder" on storage.objects;
     create policy "stories users upload own folder"
       on storage.objects for insert
       to authenticated
@@ -39,6 +40,7 @@ begin
     where schemaname = 'storage' and tablename = 'objects'
       and policyname = 'stories users delete own folder'
   ) then
+    drop policy if exists "stories users delete own folder" on storage.objects;
     create policy "stories users delete own folder"
       on storage.objects for delete
       to authenticated
@@ -53,6 +55,7 @@ begin
     where schemaname = 'storage' and tablename = 'objects'
       and policyname = 'stories public read'
   ) then
+    drop policy if exists "stories public read" on storage.objects;
     create policy "stories public read"
       on storage.objects for select
       to anon, authenticated

@@ -28,6 +28,7 @@ begin
       and tablename = 'objects'
       and policyname = 'listings users upload own folder'
   ) then
+    drop policy if exists "listings users upload own folder" on storage.objects;
     create policy "listings users upload own folder"
       on storage.objects for insert
       to authenticated
@@ -44,6 +45,7 @@ begin
       and tablename = 'objects'
       and policyname = 'listings users update own folder'
   ) then
+    drop policy if exists "listings users update own folder" on storage.objects;
     create policy "listings users update own folder"
       on storage.objects for update
       to authenticated
@@ -61,6 +63,7 @@ begin
       and tablename = 'objects'
       and policyname = 'listings users delete own folder'
   ) then
+    drop policy if exists "listings users delete own folder" on storage.objects;
     create policy "listings users delete own folder"
       on storage.objects for delete
       to authenticated
@@ -79,6 +82,7 @@ begin
       and tablename = 'objects'
       and policyname = 'listings public read'
   ) then
+    drop policy if exists "listings public read" on storage.objects;
     create policy "listings public read"
       on storage.objects for select
       to anon, authenticated

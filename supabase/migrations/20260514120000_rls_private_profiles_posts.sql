@@ -64,6 +64,7 @@ grant execute on function public.can_view_post(uuid) to authenticated;
 
 drop policy if exists "posts_select_visible" on public.posts;
 
+drop policy if exists "posts_select_visibility" on public.posts;
 create policy "posts_select_visibility"
   on public.posts
   for select

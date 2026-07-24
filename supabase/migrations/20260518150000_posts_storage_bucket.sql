@@ -26,6 +26,7 @@ begin
       and tablename = 'objects'
       and policyname = 'posts users upload own folder'
   ) then
+    drop policy if exists "posts users upload own folder" on storage.objects;
     create policy "posts users upload own folder"
       on storage.objects for insert
       to authenticated
@@ -42,6 +43,7 @@ begin
       and tablename = 'objects'
       and policyname = 'posts users update own folder'
   ) then
+    drop policy if exists "posts users update own folder" on storage.objects;
     create policy "posts users update own folder"
       on storage.objects for update
       to authenticated
@@ -58,6 +60,7 @@ begin
       and tablename = 'objects'
       and policyname = 'posts users delete own folder'
   ) then
+    drop policy if exists "posts users delete own folder" on storage.objects;
     create policy "posts users delete own folder"
       on storage.objects for delete
       to authenticated
@@ -75,6 +78,7 @@ begin
       and tablename = 'objects'
       and policyname = 'posts public read'
   ) then
+    drop policy if exists "posts public read" on storage.objects;
     create policy "posts public read"
       on storage.objects for select
       to anon, authenticated

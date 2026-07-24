@@ -42,6 +42,7 @@ begin
     where schemaname = 'storage' and tablename = 'objects'
       and policyname = 'resources users upload own folder'
   ) then
+    drop policy if exists "resources users upload own folder" on storage.objects;
     create policy "resources users upload own folder"
       on storage.objects for insert to authenticated
       with check (
@@ -56,6 +57,7 @@ begin
     where schemaname = 'storage' and tablename = 'objects'
       and policyname = 'resources users update own folder'
   ) then
+    drop policy if exists "resources users update own folder" on storage.objects;
     create policy "resources users update own folder"
       on storage.objects for update to authenticated
       using (
@@ -70,6 +72,7 @@ begin
     where schemaname = 'storage' and tablename = 'objects'
       and policyname = 'resources users delete own folder'
   ) then
+    drop policy if exists "resources users delete own folder" on storage.objects;
     create policy "resources users delete own folder"
       on storage.objects for delete to authenticated
       using (
@@ -84,6 +87,7 @@ begin
     where schemaname = 'storage' and tablename = 'objects'
       and policyname = 'resources public read'
   ) then
+    drop policy if exists "resources public read" on storage.objects;
     create policy "resources public read"
       on storage.objects for select to anon, authenticated
       using (bucket_id = 'resources');

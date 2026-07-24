@@ -9,6 +9,7 @@ begin
     where schemaname = 'public' and tablename = 'stories'
       and policyname = 'stories users insert own'
   ) then
+    drop policy if exists "stories users insert own" on public.stories;
     create policy "stories users insert own"
       on public.stories for insert
       to authenticated

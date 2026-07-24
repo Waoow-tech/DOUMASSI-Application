@@ -22,6 +22,37 @@ ALTER SCHEMA "public" OWNER TO "pg_database_owner";
 COMMENT ON SCHEMA "public" IS 'standard public schema';
 
 
+-- ---------------------------------------------------------------------------
+-- EXTENSIONS (ajout manuel — T-01)
+-- ---------------------------------------------------------------------------
+-- `supabase db dump` n'émet PAS les CREATE EXTENSION : sur un projet hébergé,
+-- la plateforme les installe. Mais une base vierge (db reset, CI, pgTAP) ne les
+-- a pas, et le dump référence leurs types/opérateurs — donc il faut les
+-- recréer ici, avec EXACTEMENT le même schéma que sur dev, sinon les noms
+-- qualifiés du dump ne résolvent pas.
+--
+-- Détecté par le premier `supabase db reset` :
+--   ERROR: type "public.vector" does not exist (table post_embeddings)
+--
+-- Le schéma de chaque extension est imposé par la façon dont le dump la cite :
+--   public.vector / public.gin_trgm_ops  → vector et pg_trgm dans `public`
+--   extensions.uuid_generate_v4()        → uuid-ossp dans `extensions`
+--   cron.schedule(...)                   → pg_cron dans son schéma `cron`
+--
+-- ⚠️ pg_cron : appelé par 20260602130000_rgpd_account_deletion.sql mais activé
+-- par AUCUNE migration (il l'avait été à la main sur dev). Sans cette ligne, la
+-- reconstruction casse sur « schema "cron" does not exist ».
+
+CREATE SCHEMA IF NOT EXISTS "extensions";
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto"  WITH SCHEMA "extensions";
+CREATE EXTENSION IF NOT EXISTS "pg_net"    WITH SCHEMA "extensions";
+CREATE EXTENSION IF NOT EXISTS "vector"    WITH SCHEMA "public";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm"   WITH SCHEMA "public";
+CREATE EXTENSION IF NOT EXISTS "pg_cron";
+
+
 
 CREATE TYPE "public"."ai_conversation_category" AS ENUM (
     'general',

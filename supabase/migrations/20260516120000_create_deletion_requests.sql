@@ -22,14 +22,17 @@ create index if not exists deletion_requests_scheduled_idx
 alter table public.deletion_requests enable row level security;
 
 -- L'user peut lire/créer/annuler sa propre demande, jamais celle des autres.
+drop policy if exists "users can see their own deletion request" on public.deletion_requests;
 create policy "users can see their own deletion request"
   on public.deletion_requests for select
   using (auth.uid() = user_id);
 
+drop policy if exists "users can request their own deletion" on public.deletion_requests;
 create policy "users can request their own deletion"
   on public.deletion_requests for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "users can cancel their own deletion" on public.deletion_requests;
 create policy "users can cancel their own deletion"
   on public.deletion_requests for update
   using (auth.uid() = user_id)
