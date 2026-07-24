@@ -13,19 +13,24 @@
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
-import { ArrowLeft, SlidersHorizontal, User as UserIcon } from 'lucide-react-native';
+import { ArrowLeft, Flag, SlidersHorizontal, User as UserIcon } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Alert, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Spinner, Text, XStack, YStack } from 'tamagui';
 
 import { useCourseLevels, useCourseSubjects } from '@/features/cours/hooks/useCourseTaxonomy';
+import { MatchingReportSheet } from '@/features/matching/components/MatchingReportSheet';
 import {
   useMatchingCandidates,
   type MatchingCandidate,
   type MatchingSearchParams,
 } from '@/features/matching/hooks/useMatchingCandidates';
 import { useMyIntents, type MatchingIntent } from '@/features/matching/hooks/useMatchingIntents';
+import {
+  useReportIntent,
+  type MatchingReportReason,
+} from '@/features/matching/hooks/useReportIntent';
 import { classifyMatchingError, mapMatchingError } from '@/features/matching/lib/mapMatchingError';
 import { VerifiedBadge } from '@/features/profile/components/VerifiedBadge';
 import { useFollow } from '@/features/profile/hooks/useFollow';
@@ -69,10 +74,12 @@ function CandidateCard({
   candidate,
   subjectLabel,
   levelLabel,
+  onReport,
 }: {
   candidate: MatchingCandidate;
   subjectLabel: string;
   levelLabel: string;
+  onReport: () => void;
 }) {
   const t = useTranslations();
 
@@ -85,9 +92,19 @@ function CandidateCard({
   return (
     <YStack backgroundColor="$surface" borderRadius={14} padding={14} gap={10} marginBottom={12}>
       {/* L'intention en premier, en gros */}
-      <Text fontSize={15} fontWeight="800" color="$accentNeon">
-        {t.matching.intent.direction[candidate.direction]} · {intentLine}
-      </Text>
+      <XStack alignItems="flex-start" gap={8}>
+        <Text flex={1} fontSize={15} fontWeight="800" color="$accentNeon">
+          {t.matching.intent.direction[candidate.direction]} · {intentLine}
+        </Text>
+        <Pressable
+          onPress={onReport}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={t.matching.report.a11y}
+        >
+          <Flag size={16} color="#6B6B6B" />
+        </Pressable>
+      </XStack>
 
       {candidate.note ? (
         <Text fontSize={13} color="$textSecondary" lineHeight={18} numberOfLines={3}>
@@ -172,6 +189,35 @@ export default function MatchingDiscoveryScreen() {
   }, [selectedIntent]);
 
   const candidatesQuery = useMatchingCandidates(searchParams);
+
+  // Signalement (E13-07)
+  const reportIntent = useReportIntent();
+  const [reportingIntentId, setReportingIntentId] = useState<string | null>(null);
+
+  const handleSelectReason = useCallback(
+    (reason: MatchingReportReason) => {
+      const intentId = reportingIntentId;
+      setReportingIntentId(null);
+      if (!intentId) return;
+
+      reportIntent.mutate(
+        { intentId, reason },
+        {
+          onSuccess: () => {
+            Alert.alert(t.matching.report.successTitle, t.matching.report.successMessage);
+          },
+          onError: (err) => {
+            const own = err.message?.toLowerCase().includes('propre intention');
+            Alert.alert(
+              t.matching.report.errorTitle,
+              own ? t.matching.report.errorOwn : t.matching.report.errorGeneric
+            );
+          },
+        }
+      );
+    },
+    [reportingIntentId, reportIntent, t]
+  );
 
   const candidates = useMemo(
     () => (candidatesQuery.data?.pages ?? []).flatMap((p) => p.candidates),
@@ -298,6 +344,7 @@ export default function MatchingDiscoveryScreen() {
                 candidate={item}
                 subjectLabel={labelOf(subjectsQuery.data, item.subject_code, '—')}
                 levelLabel={labelOf(levelsQuery.data, item.level_code, t.matching.intent.levelAny)}
+                onReport={() => setReportingIntentId(item.intent_id)}
               />
             )}
             onEndReached={handleLoadMore}
@@ -370,6 +417,15 @@ export default function MatchingDiscoveryScreen() {
           />
         )}
       </YStack>
+
+      <MatchingReportSheet
+        open={reportingIntentId !== null}
+        onOpenChange={(open) => {
+          if (!open) setReportingIntentId(null);
+        }}
+        onSelect={handleSelectReason}
+        disabled={reportIntent.isPending}
+      />
     </>
   );
 }
