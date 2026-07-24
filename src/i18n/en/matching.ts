@@ -82,4 +82,20 @@ export const matchingEn: MatchingTranslations = {
       cta: 'Open my intents',
     },
   },
+
+  report: {
+    title: 'Report this intent',
+    a11y: 'Report',
+    reasons: {
+      inapproprie: 'Inappropriate content',
+      spam: 'Spam or advertising',
+      faux_profil: 'Fake profile',
+      autre: 'Other',
+    },
+    successTitle: 'Thank you',
+    successMessage: 'Report sent. Our team will review it.',
+    errorTitle: 'Could not report',
+    errorOwn: 'You cannot report your own intent.',
+    errorGeneric: 'Something went wrong. Please try again.',
+  },
 };

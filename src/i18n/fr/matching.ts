@@ -85,6 +85,23 @@ export const matchingFr = {
       cta: 'Ouvrir mes intentions',
     },
   },
+
+  // Signalement (E13-07)
+  report: {
+    title: 'Signaler cette intention',
+    a11y: 'Signaler',
+    reasons: {
+      inapproprie: 'Contenu inapproprié',
+      spam: 'Spam ou publicité',
+      faux_profil: 'Faux profil',
+      autre: 'Autre',
+    },
+    successTitle: 'Merci',
+    successMessage: 'Signalement transmis. Notre équipe va le vérifier.',
+    errorTitle: 'Signalement impossible',
+    errorOwn: 'Tu ne peux pas signaler ta propre intention.',
+    errorGeneric: 'Une erreur est survenue. Réessaie.',
+  },
 };
 
 export type MatchingTranslations = typeof matchingFr;
