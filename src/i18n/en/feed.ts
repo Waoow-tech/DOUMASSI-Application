@@ -221,6 +221,15 @@ export const feedEn: FeedTranslations = {
     retry: 'Retry',
     tooManyMentions: (max: number) => `Maximum ${max} mentions per post.`,
     imagesCount: (n: number, max: number) => `${n}/${max} images`,
+    // Video — E14-01
+    videoPermissionMessage: 'Enable photo access in Settings to add a video.',
+    videoTooLongTitle: 'Video too long',
+    videoTooLongMessage: (secs: number) => `Pick a video of ${secs} seconds or less.`,
+    videoWithImagesTitle: 'One media type only',
+    videoWithImagesMessage:
+      'A post holds either images or a video — not both. Remove the current media to switch.',
+    videoLabel: '1 video',
+    videoPreparing: 'Preparing video…',
   },
 
   bookmarks: {

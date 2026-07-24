@@ -15,6 +15,7 @@ import { Text, XStack, YStack } from 'tamagui';
 
 import { MentionsText } from '@/components/MentionsText';
 import { InternalShareOptionsSheet } from '@/components/share/InternalShareOptionsSheet';
+import { getPostImageCount, getPostPosterUrl } from '@/features/feed/lib/postMedia';
 import { getT, useTranslations } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { formatViewCount } from '@/utils/formatCount';
@@ -207,8 +208,13 @@ function PostMedia({
   thumbnail?: boolean;
 }) {
   const t = useTranslations();
-  const firstMediaUrl = post.media_urls[0];
+  // Vidéo → poster ; image → 1re image (cf. postMedia.ts pour la convention).
+  const firstMediaUrl = getPostPosterUrl(post);
   if (!firstMediaUrl) return null;
+
+  // Une vidéo occupe 2 entrées de media_urls ([poster, vidéo]) sans être 2
+  // médias : la pastille « +N » ne doit compter que les images.
+  const imageCount = getPostImageCount(post);
 
   const image = (
     <>
@@ -242,7 +248,7 @@ function PostMedia({
           </YStack>
         </YStack>
       ) : null}
-      {post.media_urls.length > 1 ? (
+      {imageCount > 1 ? (
         <YStack
           position="absolute"
           top={10}
@@ -254,7 +260,7 @@ function PostMedia({
           pointerEvents="none"
         >
           <Text color="#FFFFFF" fontSize={12} fontWeight="700">
-            1/{post.media_urls.length}
+            1/{imageCount}
           </Text>
         </YStack>
       ) : null}
