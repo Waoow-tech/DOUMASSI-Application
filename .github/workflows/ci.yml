@@ -44,21 +44,30 @@ jobs:
       - name: Typecheck (tsc)
         run: pnpm typecheck
 
-  # Job tests désactivé pour Sprint 0 — sera activé Sprint 1 quand des tests existeront
-  # test:
-  #   name: Tests unitaires
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 10
-  #   needs: quality
-  #
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: pnpm/action-setup@v4
-  #       with:
-  #         version: 10
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 22
-  #         cache: pnpm
-  #     - run: pnpm install --frozen-lockfile
-  #     - run: pnpm test
+  # Tests unitaires jest (40 tests : messagerie realtime + wallet).
+  # Activé une fois des tests existants (cf. cadrage docs/rpc-testing-scope.md).
+  test:
+    name: Tests unitaires
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: quality
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        # Version lue depuis package.json > packageManager (comme le job quality).
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Tests (jest)
+        run: pnpm test
