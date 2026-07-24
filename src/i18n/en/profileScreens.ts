@@ -171,6 +171,7 @@ export const profileScreensEn: ProfileScreensTranslations = {
     contactUs: 'Contact us',
     about: 'About',
     featureWallet: 'Wallet',
+    featureMatching: 'Connect',
     featureAi: 'AI',
     featureMarketplace: 'Marketplace',
     featureMessaging: 'Messaging',

@@ -55,4 +55,31 @@ export const matchingEn: MatchingTranslations = {
     errorTagsRequired: 'Enter at least one skill.',
     errorGeneric: 'Something went wrong. Please try again.',
   },
+
+  discovery: {
+    title: 'Connect',
+    pickIntent: 'Searching for:',
+    manageIntents: 'My intents',
+
+    resultsTitle: 'These people match',
+    connect: 'Connect',
+    pending: 'Request sent',
+    connected: 'Connected',
+
+    noIntent: {
+      title: 'Start by saying what you are looking for',
+      subtitle: 'Add an intent and we’ll show you people who match.',
+      cta: 'Add an intent',
+    },
+    empty: {
+      title: 'Nobody yet',
+      subtitle: 'Check back later, or broaden your intent (for example “any level”).',
+    },
+    errors: {
+      optInRequired: 'Turn on “Appear in Connect” to discover people.',
+      birthdayRequired: 'Add your date of birth to use Connect.',
+      generic: 'Could not load people. Please try again.',
+      cta: 'Open my intents',
+    },
+  },
 };

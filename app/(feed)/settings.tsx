@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Download,
   EyeOff,
+  Handshake,
   FileText,
   Info,
   KeyRound,
@@ -352,6 +353,11 @@ export default function SettingsScreen() {
   const doumassiFeatures = useMemo(
     () => [
       { icon: Wallet, label: t.profileScreens.settings.featureWallet, href: '/wallet' as const },
+      {
+        icon: Handshake,
+        label: t.profileScreens.settings.featureMatching,
+        href: '/matching' as const,
+      },
       { icon: Sparkles, label: t.profileScreens.settings.featureAi, href: null },
       { icon: Store, label: t.profileScreens.settings.featureMarketplace, href: null },
       { icon: MessageSquare, label: t.profileScreens.settings.featureMessaging, href: null },

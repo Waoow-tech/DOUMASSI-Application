@@ -177,6 +177,7 @@ export const profileScreensFr = {
     contactUs: 'Nous contacter',
     about: 'À propos',
     featureWallet: 'Portefeuille',
+    featureMatching: 'Mise en relation',
     featureAi: 'Intelligence Art.',
     featureMarketplace: 'Marketplace',
     featureMessaging: 'Messagerie',
