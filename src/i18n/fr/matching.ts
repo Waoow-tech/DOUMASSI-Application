@@ -57,6 +57,34 @@ export const matchingFr = {
     errorTagsRequired: 'Indique au moins une compétence.',
     errorGeneric: 'Une erreur est survenue. Réessaie.',
   },
+
+  // Écran de découverte (E13-06)
+  discovery: {
+    title: 'Mise en relation',
+    pickIntent: 'Chercher pour :',
+    manageIntents: 'Mes intentions',
+
+    resultsTitle: 'Ces personnes correspondent',
+    connect: 'Se mettre en relation',
+    pending: 'Demande envoyée',
+    connected: 'En relation',
+
+    noIntent: {
+      title: 'Commence par dire ce que tu cherches',
+      subtitle: 'Déclare une intention et on te montrera les personnes qui correspondent.',
+      cta: 'Déclarer une intention',
+    },
+    empty: {
+      title: 'Personne pour l’instant',
+      subtitle: 'Reviens plus tard, ou élargis ton intention (par exemple « tous niveaux »).',
+    },
+    errors: {
+      optInRequired: 'Active « Apparaître dans la mise en relation » pour découvrir des personnes.',
+      birthdayRequired: 'Renseigne ta date de naissance pour utiliser la mise en relation.',
+      generic: 'Impossible de charger les personnes. Réessaie.',
+      cta: 'Ouvrir mes intentions',
+    },
+  },
 };
 
 export type MatchingTranslations = typeof matchingFr;
