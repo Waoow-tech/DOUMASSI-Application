@@ -8,6 +8,8 @@ import { z } from 'zod';
 
 import type { AuthValidation } from '@/i18n';
 
+import { isAtLeastMinAge } from '../lib/age';
+
 import { createUsernameSchema } from './usernameRules';
 
 export const createCompleteAccountSchema = (v: AuthValidation) =>
@@ -27,7 +29,9 @@ export const createCompleteAccountSchema = (v: AuthValidation) =>
         return (
           date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
         );
-      }, v.invalidDate),
+      }, v.invalidDate)
+      // Âge minimum 15 ans (ADR-008 §2.2) — même règle que le signup classique.
+      .refine(isAtLeastMinAge, v.minAge),
   });
 
 export type CompleteAccountFormValues = z.infer<ReturnType<typeof createCompleteAccountSchema>>;

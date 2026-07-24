@@ -42,8 +42,9 @@ export const cgvFrSections: LegalSection[] = [
   {
     title: '5. Âge minimum',
     body: [
-      "L'utilisation de l'Application est réservée aux personnes âgées d'au moins 13 ans ou de l'âge minimum requis dans le pays de résidence de l'Utilisateur.",
-      "Les mineurs doivent utiliser l'Application sous la supervision d'un représentant légal.",
+      "L'utilisation de l'Application est réservée aux personnes âgées d'au moins 15 ans, ou de l'âge minimum requis dans le pays de résidence de l'Utilisateur s'il est supérieur.",
+      "Ce seuil correspond à l'âge de la majorité numérique en France : en dessous, le consentement d'un représentant légal serait requis.",
+      "Les Utilisateurs mineurs (15 à 17 ans) doivent utiliser l'Application sous la supervision d'un représentant légal.",
     ],
   },
   {

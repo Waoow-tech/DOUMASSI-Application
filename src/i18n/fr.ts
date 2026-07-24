@@ -174,6 +174,7 @@ export const fr = {
       invalidEmail: 'Adresse e-mail invalide',
       birthdayRequired: 'Date de naissance requise',
       invalidDate: 'Date invalide (format attendu : JJ/MM/AAAA)',
+      minAge: 'Tu dois avoir au moins 15 ans pour utiliser DOUMASSI',
       passwordUppercase: 'Le mot de passe doit contenir au moins une majuscule',
       passwordDigit: 'Le mot de passe doit contenir au moins un chiffre',
       confirmPasswordRequired: 'Confirme ton mot de passe',

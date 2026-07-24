@@ -119,7 +119,7 @@ export const privacyFrSections: LegalSection[] = [
   {
     title: '10. Mineurs',
     body: [
-      "DOUMASSI n'est pas destiné aux enfants de moins " + 'de 13 ans sans supervision parentale.',
+      "DOUMASSI est réservé aux personnes âgées d'au moins " + '15 ans.',
       'Si nous découvrons avoir collecté des données ' +
         "d'un mineur sans autorisation parentale, nous " +
         'les supprimerons immédiatement.',

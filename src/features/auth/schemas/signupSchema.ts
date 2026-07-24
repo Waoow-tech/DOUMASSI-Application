@@ -12,6 +12,8 @@ import { z } from 'zod';
 
 import type { AuthValidation } from '@/i18n';
 
+import { isAtLeastMinAge } from '../lib/age';
+
 import { createUsernameSchema } from './usernameRules';
 
 export const createSignupSchema = (v: AuthValidation) =>
@@ -36,7 +38,10 @@ export const createSignupSchema = (v: AuthValidation) =>
           return (
             date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
           );
-        }, v.invalidDate),
+        }, v.invalidDate)
+        // Âge minimum 15 ans (ADR-008 §2.2). Confort UX : la règle est réellement
+        // appliquée côté serveur par le trigger enforce_min_age sur profiles.
+        .refine(isAtLeastMinAge, v.minAge),
 
       password: z
         .string()

@@ -23,6 +23,7 @@ export const cgvEnSections: LegalSection[] = [
     title: '3. Account registration',
     body: [
       'Users may be required to create an account.',
+      'The Application is restricted to people aged 15 or over, or the minimum age required in the User’s country of residence if higher. Minor Users (15 to 17) must use the Application under the supervision of a legal guardian.',
       'Users agree to provide accurate information, keep login credentials secure, comply with applicable laws and avoid unauthorized access.',
       'DOUMASSI may suspend or terminate accounts violating these Terms.',
     ],
