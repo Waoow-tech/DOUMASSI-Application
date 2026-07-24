@@ -1,15 +1,21 @@
-// Écran « Créer un post » — E4-03.
-// Texte (≤ 500 car.) + jusqu'à 4 images (galerie ou caméra). Compresse via
-// uploadPostImage (E4-04) puis crée le post via useCreatePost (E4-05, qui
-// invalide déjà le cache feed). Modale full-screen, header custom.
+// Écran « Créer un post » — E4-03, étendu à la vidéo par E14-01.
+// Texte (≤ 500 car.) + jusqu'à 4 images OU 1 vidéo (galerie ou caméra).
+// Compresse via uploadPostImage (E4-04) puis crée le post via useCreatePost
+// (E4-05, qui invalide déjà le cache feed). Modale full-screen, header custom.
 //
-// Hors scope : vidéos, hashtags #, géoloc, audience, brouillons,
+// IMAGES ET VIDÉO SONT EXCLUSIVES. `posts.media_type` est une colonne unique :
+// un post mixte n'aurait pas de valeur correcte, et toutes les surfaces
+// d'affichage (carte, grille de profil, détail) branchent dessus. Instagram
+// applique la même règle. On refuse donc le mélange explicitement plutôt que
+// de produire un post que l'app ne saurait pas afficher.
+//
+// Hors scope : hashtags #, géoloc, audience, brouillons, montage vidéo,
 // preview plein écran d'une image (optionnel MVP du ticket).
 // Mentions @ : ajoutées via ticket #213 (PR B) — dropdown au-dessus du clavier.
 
 import * as ImagePicker from 'expo-image-picker';
 import { router, useNavigation } from 'expo-router';
-import { Camera, Image as ImageIcon, X } from 'lucide-react-native';
+import { Camera, Image as ImageIcon, Play, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -23,6 +29,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, ScrollView, Text, TextArea, XStack, YStack } from 'tamagui';
 
 import { useCreatePost } from '@/features/feed/hooks/useCreatePost';
+import { buildVideoMediaUrls } from '@/features/feed/lib/postMedia';
+import { generateVideoPoster } from '@/features/feed/lib/videoPoster';
 import { MentionSuggestionsList } from '@/features/mentions/components/MentionSuggestionsList';
 import { useMentionSuggestions } from '@/features/mentions/hooks/useMentionSuggestions';
 import {
@@ -33,24 +41,46 @@ import { useCurrentProfile } from '@/features/profile/hooks/useProfile';
 import type { SearchUserResult } from '@/features/profile/hooks/useSearchUsers';
 import { useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
-import { uploadPostImage } from '@/lib/storage';
+import { uploadPostImage, uploadPostVideo } from '@/lib/storage';
 
 // ---------------------------------------------------------------------------
 // Constantes & types
 // ---------------------------------------------------------------------------
 
 const MAX_IMAGES = 4;
+/**
+ * Durée max d'une vidéo de post (secondes).
+ *
+ * Plus généreux que les stories (15 s) : une story est éphémère et consommée
+ * d'un doigt, un post est du contenu qu'on revient voir. 60 s est la borne
+ * courante du format court.
+ *
+ * C'est la VRAIE limite produit. Le `file_size_limit` du bucket (100 Mo) est
+ * un garde-fou serveur, pas un équivalent : une vidéo très compressée peut
+ * durer dix minutes en pesant moins de 100 Mo.
+ */
+const MAX_VIDEO_SECS = 60;
 const MAX_CONTENT = 500;
 const COUNTER_THRESHOLD = 400;
 const BRAND_GREEN = '#10D970';
 const ERROR_RED = '#EF4444';
 
 interface MediaItem {
+  kind: 'image' | 'video';
   uri: string;
   width: number;
   height: number;
+  /**
+   * Vidéo uniquement — image de couverture locale, générée après sélection.
+   *   undefined → génération en cours
+   *   string    → poster prêt
+   *   null      → génération tentée puis échouée (on publiera sans poster)
+   */
+  posterUri?: string | null;
   status: 'idle' | 'uploading' | 'done' | 'failed';
   result?: { publicUrl: string; path: string };
+  /** Vidéo uniquement — résultat de l'upload du poster. */
+  posterResult?: { publicUrl: string; path: string };
   error?: string;
 }
 
@@ -90,6 +120,12 @@ export function CreatePostScreen() {
 
   const hasContent = content.trim().length > 0 || media.length > 0;
   const isAnyUploading = media.some((m) => m.status === 'uploading');
+  const hasVideo = media.some((m) => m.kind === 'video');
+  /** Vidéo → 1 média max ; images → 4. Pilote l'état grisé de la toolbar. */
+  const isMediaFull = hasVideo || media.length >= MAX_IMAGES;
+  /** Le poster se génère en tâche de fond : on ne bloque pas la publication
+   *  dessus (un post vidéo sans poster reste valide), mais on l'indique. */
+  const isPreparingVideo = media.some((m) => m.kind === 'video' && m.posterUri === undefined);
   const publishDisabled = !hasContent || isPublishing || isAnyUploading || tooManyMentions;
   const profile = profileQuery.data;
 
@@ -124,28 +160,83 @@ export function CreatePostScreen() {
 
   const handleClose = () => router.back();
 
+  /**
+   * Lance la génération du poster en tâche de fond et le range dans l'item.
+   * Volontairement non bloquant : l'utilisateur peut écrire son texte pendant
+   * ce temps. En cas d'échec on inscrit `null` — la publication continuera
+   * sans couverture plutôt que d'être refusée.
+   */
+  const attachPoster = (videoUri: string) => {
+    void generateVideoPoster(videoUri).then((posterUri) => {
+      setMedia((prev) => prev.map((m) => (m.uri === videoUri ? { ...m, posterUri } : m)));
+    });
+  };
+
+  /** Refuse un mélange images + vidéo (cf. en-tête de fichier). */
+  const rejectMixedMedia = (): boolean => {
+    if (media.length === 0) return false;
+    Alert.alert(t.feed.createPost.videoWithImagesTitle, t.feed.createPost.videoWithImagesMessage);
+    return true;
+  };
+
+  /** Contrôle de durée commun galerie/caméra. `duration` est en millisecondes. */
+  const isVideoTooLong = (durationMs: number | null | undefined): boolean => {
+    // Le picker ne renvoie pas toujours la durée (notamment sur Android). Sans
+    // information, on laisse passer : `videoMaxDuration` a déjà borné la
+    // capture, et un faux refus serait pire qu'une vidéo un peu trop longue.
+    if (!durationMs) return false;
+    if (durationMs / 1000 <= MAX_VIDEO_SECS) return false;
+    Alert.alert(
+      t.feed.createPost.videoTooLongTitle,
+      t.feed.createPost.videoTooLongMessage(MAX_VIDEO_SECS)
+    );
+    return true;
+  };
+
   const pickFromLibrary = async () => {
-    if (media.length >= MAX_IMAGES || isPublishing) return;
+    if (isMediaFull || isPublishing) return;
     let perm = await ImagePicker.getMediaLibraryPermissionsAsync();
     if (!perm.granted) perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
       logger.warn('Media library permission denied');
-      Alert.alert(t.feed.createPost.photoPermissionTitle, t.feed.createPost.photoPermissionMessage);
+      Alert.alert(t.feed.createPost.photoPermissionTitle, t.feed.createPost.videoPermissionMessage);
       return;
     }
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ['images', 'videos'],
+        videoMaxDuration: MAX_VIDEO_SECS,
         allowsMultipleSelection: true,
         selectionLimit: MAX_IMAGES - media.length,
         quality: 1, // compression côté uploadPostImage
       });
       if (result.canceled) return;
+
+      // Une vidéo dans la sélection ⇒ elle prend tout le post. On ignore les
+      // images sélectionnées en même temps plutôt que de publier un post mixte.
+      const video = result.assets.find((a) => a.type === 'video');
+      if (video) {
+        if (rejectMixedMedia()) return;
+        if (isVideoTooLong(video.duration)) return;
+        setMedia([
+          {
+            kind: 'video',
+            uri: video.uri,
+            width: video.width,
+            height: video.height,
+            status: 'idle',
+          },
+        ]);
+        attachPoster(video.uri);
+        return;
+      }
+
       const remaining = MAX_IMAGES - media.length;
       const newItems: MediaItem[] = result.assets
         .filter((a) => !media.some((m) => m.uri === a.uri))
         .slice(0, remaining)
         .map((a) => ({
+          kind: 'image' as const,
           uri: a.uri,
           width: a.width,
           height: a.height,
@@ -158,7 +249,7 @@ export function CreatePostScreen() {
   };
 
   const pickFromCamera = async () => {
-    if (media.length >= MAX_IMAGES || isPublishing) return;
+    if (isMediaFull || isPublishing) return;
     let perm = await ImagePicker.getCameraPermissionsAsync();
     if (!perm.granted) perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
@@ -171,15 +262,34 @@ export function CreatePostScreen() {
     }
     try {
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ['images', 'videos'],
+        videoMaxDuration: MAX_VIDEO_SECS,
         quality: 1,
       });
       if (result.canceled) return;
       const asset = result.assets[0];
       if (!asset) return;
+
+      if (asset.type === 'video') {
+        if (rejectMixedMedia()) return;
+        if (isVideoTooLong(asset.duration)) return;
+        setMedia([
+          {
+            kind: 'video',
+            uri: asset.uri,
+            width: asset.width,
+            height: asset.height,
+            status: 'idle',
+          },
+        ]);
+        attachPoster(asset.uri);
+        return;
+      }
+
       setMedia((prev) => [
         ...prev,
         {
+          kind: 'image' as const,
           uri: asset.uri,
           width: asset.width,
           height: asset.height,
@@ -216,6 +326,27 @@ export function CreatePostScreen() {
     const settled = await Promise.allSettled(
       media.map(async (m): Promise<MediaItem> => {
         if (m.status === 'done') return m;
+
+        if (m.kind === 'video') {
+          // Le poster passe par uploadPostImage : c'est un JPEG ordinaire, il
+          // profite donc de la même compression et du même retry/backoff.
+          let posterResult = m.posterResult;
+          if (!posterResult && m.posterUri) {
+            try {
+              posterResult = await uploadPostImage(m.posterUri, { signal });
+            } catch (err) {
+              // Un poster manquant dégrade l'affichage, il ne casse rien : on
+              // publie la vidéo sans couverture plutôt que d'échouer.
+              if (signal.aborted) throw err;
+              logger.warn('post_video_poster_upload_failed', {
+                message: err instanceof Error ? err.message : String(err),
+              });
+            }
+          }
+          const res = await uploadPostVideo(m.uri, { signal });
+          return { ...m, status: 'done' as const, result: res, posterResult };
+        }
+
         const res = await uploadPostImage(m.uri, { signal });
         return { ...m, status: 'done' as const, result: res };
       })
@@ -246,15 +377,31 @@ export function CreatePostScreen() {
       return;
     }
 
-    const publicUrls = updated
-      .map((m) => m.result?.publicUrl)
-      .filter((u): u is string => typeof u === 'string');
+    // Un post vidéo suit la convention de `postMedia.ts` : [poster, vidéo].
+    // Si le poster manque (génération ou upload en échec), on n'envoie que la
+    // vidéo — `getPostVideoUrl` sait retomber sur l'unique URL.
+    const videoItem = updated.find((m) => m.kind === 'video');
+    const videoUrl = videoItem?.result?.publicUrl;
+
+    let mediaUrls: string[];
+    let mediaType: 'text' | 'image' | 'video';
+
+    if (videoUrl) {
+      const posterUrl = videoItem?.posterResult?.publicUrl;
+      mediaUrls = posterUrl ? buildVideoMediaUrls(posterUrl, videoUrl) : [videoUrl];
+      mediaType = 'video';
+    } else {
+      mediaUrls = updated
+        .map((m) => m.result?.publicUrl)
+        .filter((u): u is string => typeof u === 'string');
+      mediaType = mediaUrls.length > 0 ? 'image' : 'text';
+    }
 
     createPost.mutate(
       {
         content: content.trim(),
-        media_urls: publicUrls,
-        media_type: publicUrls.length > 0 ? 'image' : 'text',
+        media_urls: mediaUrls,
+        media_type: mediaType,
       },
       {
         onSuccess: () => {
@@ -365,7 +512,39 @@ export function CreatePostScreen() {
               <XStack gap="$2">
                 {media.map((m) => (
                   <YStack key={m.uri} width={120} height={120} position="relative">
-                    <Image source={{ uri: m.uri }} style={styles.preview} />
+                    {/* Pour une vidéo, `m.uri` est un .mp4 : le donner à <Image>
+                        n'afficherait rien. On montre le poster dès qu'il est
+                        prêt, sur une tuile sombre en attendant. */}
+                    {m.kind === 'video' ? (
+                      <YStack style={styles.preview} backgroundColor="#111111" overflow="hidden">
+                        {m.posterUri ? (
+                          <Image source={{ uri: m.posterUri }} style={styles.preview} />
+                        ) : null}
+                        <YStack
+                          position="absolute"
+                          top={0}
+                          left={0}
+                          right={0}
+                          bottom={0}
+                          alignItems="center"
+                          justifyContent="center"
+                          pointerEvents="none"
+                        >
+                          <YStack
+                            width={36}
+                            height={36}
+                            borderRadius={18}
+                            backgroundColor="rgba(0,0,0,0.45)"
+                            alignItems="center"
+                            justifyContent="center"
+                          >
+                            <Play size={20} color="#FFFFFF" fill="#FFFFFF" />
+                          </YStack>
+                        </YStack>
+                      </YStack>
+                    ) : (
+                      <Image source={{ uri: m.uri }} style={styles.preview} />
+                    )}
                     {m.status === 'uploading' ? (
                       <YStack
                         position="absolute"
@@ -482,16 +661,16 @@ export function CreatePostScreen() {
           >
             <XStack gap="$3">
               <YStack
-                onPress={media.length >= MAX_IMAGES || isPublishing ? undefined : pickFromCamera}
-                opacity={media.length >= MAX_IMAGES || isPublishing ? 0.3 : 1}
+                onPress={isMediaFull || isPublishing ? undefined : pickFromCamera}
+                opacity={isMediaFull || isPublishing ? 0.3 : 1}
                 padding="$2"
                 pressStyle={{ opacity: 0.6 }}
               >
                 <Camera size={24} color="#FFFFFF" />
               </YStack>
               <YStack
-                onPress={media.length >= MAX_IMAGES || isPublishing ? undefined : pickFromLibrary}
-                opacity={media.length >= MAX_IMAGES || isPublishing ? 0.3 : 1}
+                onPress={isMediaFull || isPublishing ? undefined : pickFromLibrary}
+                opacity={isMediaFull || isPublishing ? 0.3 : 1}
                 padding="$2"
                 pressStyle={{ opacity: 0.6 }}
               >
@@ -500,7 +679,11 @@ export function CreatePostScreen() {
             </XStack>
             {media.length > 0 ? (
               <Text fontSize={13} color="$placeholderColor">
-                {t.feed.createPost.imagesCount(media.length, MAX_IMAGES)}
+                {hasVideo
+                  ? isPreparingVideo
+                    ? t.feed.createPost.videoPreparing
+                    : t.feed.createPost.videoLabel
+                  : t.feed.createPost.imagesCount(media.length, MAX_IMAGES)}
               </Text>
             ) : null}
           </XStack>

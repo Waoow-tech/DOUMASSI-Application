@@ -239,6 +239,15 @@ export const feedFr = {
     retry: 'Réessayer',
     tooManyMentions: (max: number) => `Maximum ${max} mentions par post.`,
     imagesCount: (n: number, max: number) => `${n}/${max} images`,
+    // Vidéo — E14-01
+    videoPermissionMessage: 'Activez l’accès aux photos dans les Réglages pour ajouter une vidéo.',
+    videoTooLongTitle: 'Vidéo trop longue',
+    videoTooLongMessage: (secs: number) => `Choisissez une vidéo de ${secs} secondes maximum.`,
+    videoWithImagesTitle: 'Un seul type de média',
+    videoWithImagesMessage:
+      'Un post contient soit des images, soit une vidéo — pas les deux. Retirez les médias déjà ajoutés pour changer.',
+    videoLabel: '1 vidéo',
+    videoPreparing: 'Préparation de la vidéo…',
   },
 
   // Écran des posts sauvegardés — BookmarksScreen.tsx

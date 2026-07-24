@@ -373,6 +373,64 @@ export async function uploadPostImage(
 }
 
 // ---------------------------------------------------------------------------
+// Vidéo de post — E14-01
+// ---------------------------------------------------------------------------
+
+export interface UploadPostVideoResult {
+  publicUrl: string;
+  path: string;
+}
+
+/**
+ * Upload une vidéo locale dans le bucket `posts`.
+ *
+ * Contrairement aux images, la vidéo n'est PAS recompressée : ré-encoder côté
+ * téléphone coûte très cher en temps et en batterie, et dégrade la qualité pour
+ * un gain incertain. On s'appuie sur la compression déjà appliquée par la
+ * caméra/le picker, et on borne le risque en amont (durée max côté écran,
+ * `file_size_limit` du bucket côté serveur).
+ *
+ * Le type MIME est déduit de l'extension : l'iPhone produit du .mov
+ * (`video/quicktime`), Android du .mp4. Les deux sont autorisés par le bucket
+ * depuis la migration 20260724120000.
+ *
+ * @throws UploadError — toujours au stade 'upload' (pas d'étape de compression).
+ */
+export async function uploadPostVideo(
+  uri: string,
+  options?: { onProgress?: (pct: number) => void; signal?: AbortSignal }
+): Promise<UploadPostVideoResult> {
+  const onProgress = options?.onProgress;
+  const signal = options?.signal;
+
+  try {
+    if (signal?.aborted) throw abortedError();
+
+    const session = await getFreshSession();
+
+    // On conserve l'extension d'origine : renommer un .mov en .mp4 ne change
+    // pas le conteneur et ferait mentir le Content-Type.
+    const isQuickTime = /\.mov$/i.test(uri);
+    const ext = isQuickTime ? 'mov' : 'mp4';
+    const contentType = isQuickTime ? 'video/quicktime' : 'video/mp4';
+    const path = `${session.user.id}/${uuidv4()}.${ext}`;
+
+    await uploadToStorage(uri, path, BUCKET, contentType, { onProgress, signal });
+
+    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    return { publicUrl: data.publicUrl, path };
+  } catch (error) {
+    const uploadError = error instanceof UploadError ? error : new UploadError('upload', error);
+    if (signal?.aborted) {
+      logger.debug('upload_post_video_cancelled');
+    } else {
+      logger.error('upload_post_video_failed', uploadError);
+    }
+    throw uploadError;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Messaging upload (#210 image + #211 voice)
 // ---------------------------------------------------------------------------
 

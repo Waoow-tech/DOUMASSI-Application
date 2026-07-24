@@ -29,6 +29,7 @@ import {
   useTogglePostBookmark,
   useTogglePostLike,
 } from '@/features/feed/hooks/useFeed';
+import { getPostPosterUrl, getPostVideoUrl } from '@/features/feed/lib/postMedia';
 import { getT, useTranslations } from '@/i18n';
 import { formatViewCount } from '@/utils/formatCount';
 
@@ -113,14 +114,16 @@ function VideoBackground({ uri }: { uri: string }) {
 }
 
 function PostBackground({ post }: { post: PostCardPost }) {
-  const mediaUrl = post.media_urls[0];
-
-  if (!mediaUrl) {
-    return <View style={styles.emptyBackground} />;
+  // Un post vidéo range [poster, vidéo] dans media_urls (cf. postMedia.ts) :
+  // il faut lire l'entrée vidéo, pas la première.
+  const videoUrl = getPostVideoUrl(post);
+  if (videoUrl) {
+    return <VideoBackground uri={videoUrl} />;
   }
 
-  if (post.media_type === 'video') {
-    return <VideoBackground uri={mediaUrl} />;
+  const mediaUrl = getPostPosterUrl(post);
+  if (!mediaUrl) {
+    return <View style={styles.emptyBackground} />;
   }
 
   return (
