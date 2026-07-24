@@ -26,6 +26,8 @@ export interface ProfileData {
   is_professional: boolean;
   is_verified: boolean;
   is_private: boolean;
+  /** E13-03 — visible dans la mise en relation (opt-in explicite). */
+  matching_opt_in: boolean;
   username_changed_at: string | null;
 }
 
@@ -58,7 +60,7 @@ async function fetchProfileById(userId: string, email: string | null = null): Pr
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, username, full_name, bio, birthday, avatar_url, cover_url, is_professional, is_verified, is_private, username_changed_at'
+      'id, username, full_name, bio, birthday, avatar_url, cover_url, is_professional, is_verified, is_private, matching_opt_in, username_changed_at'
     )
     .eq('id', userId)
     .single();
@@ -81,6 +83,7 @@ async function fetchProfileById(userId: string, email: string | null = null): Pr
     is_professional: typeof raw.is_professional === 'boolean' ? raw.is_professional : false,
     is_verified: typeof raw.is_verified === 'boolean' ? raw.is_verified : false,
     is_private: typeof raw.is_private === 'boolean' ? raw.is_private : false,
+    matching_opt_in: typeof raw.matching_opt_in === 'boolean' ? raw.matching_opt_in : false,
     username_changed_at: (raw.username_changed_at as string | null) ?? null,
   };
 }

@@ -14,6 +14,7 @@ import { coursFr } from './fr/cours';
 import { feedFr } from './fr/feed';
 import { gamesFr } from './fr/games';
 import { marketplaceFr } from './fr/marketplace';
+import { matchingFr } from './fr/matching';
 import { messagingFr } from './fr/messaging';
 import { notificationsFr } from './fr/notifications';
 import { profileScreensFr } from './fr/profileScreens';
@@ -230,6 +231,7 @@ export const fr = {
   games: gamesFr,
   common: commonFr,
   wallet: walletFr,
+  matching: matchingFr,
 };
 
 export type Translations = typeof fr;
