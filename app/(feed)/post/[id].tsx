@@ -3,97 +3,30 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { Bookmark, Heart, MessageCircle, Send, X } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Animated,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text as RNText,
-  type NativeSyntheticEvent,
-  type TextLayoutEventData,
-  View,
-} from 'react-native';
+import { X } from 'lucide-react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Pressable, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Text, XStack, YStack } from 'tamagui';
+import { Button, Text, YStack } from 'tamagui';
 
 import type { PostCardPost } from '@/components/feed/PostCard';
-import { MentionsText } from '@/components/MentionsText';
 import { InternalShareOptionsSheet } from '@/components/share/InternalShareOptionsSheet';
 import { CommentsSheet } from '@/features/comments/components/CommentsSheet';
+// Chrome partagé avec le défilement vidéo plein écran (E14-02).
+import {
+  BottomScrim,
+  HIT_SLOP,
+  PostActionRail,
+  PostFooter,
+} from '@/features/feed/components/FullScreenPostOverlay';
 import {
   useIncrementPostShare,
   usePostDetail,
   useTogglePostBookmark,
   useTogglePostLike,
 } from '@/features/feed/hooks/useFeed';
-import { getT, useTranslations } from '@/i18n';
-import { formatViewCount } from '@/utils/formatCount';
-
-const HIT_SLOP = { top: 14, right: 14, bottom: 14, left: 14 };
-const ACTION_RIGHT = 16;
-const ACTION_BOTTOM = 110;
-const ACCENT_NEON = '#10D970';
-const LIKE_RED = '#FF3B30';
-const SCRIM_BANDS = Array.from({ length: 10 }, (_, index) => {
-  const progress = index / 9;
-  return Number((progress * progress * 0.7).toFixed(3));
-});
-
-function formatRelativeTime(value: string) {
-  const t = getT();
-  const createdAt = new Date(value).getTime();
-  if (Number.isNaN(createdAt)) return t.feed.time.justNow;
-
-  const elapsedMs = Math.max(0, Date.now() - createdAt);
-  const minutes = Math.floor(elapsedMs / 60_000);
-
-  if (minutes < 1) return t.feed.time.justNow;
-  if (minutes < 60) return t.feed.time.minutes(minutes);
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return t.feed.time.hours(hours);
-
-  const days = Math.floor(hours / 24);
-  if (days < 7) return t.feed.time.days(days);
-
-  const weeks = Math.floor(days / 7);
-  if (weeks < 5) return t.feed.time.weeks(weeks);
-
-  const months = Math.floor(days / 30);
-  if (months < 12) return t.feed.time.months(months);
-
-  return t.feed.time.years(Math.floor(days / 365));
-}
-
-function ActionButton({
-  label,
-  count,
-  children,
-  onPress,
-}: {
-  label: string;
-  count: number;
-  children: React.ReactNode;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={HIT_SLOP}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={styles.actionButton}
-    >
-      {children}
-      <Text color="#FFFFFF" fontSize={12} fontWeight="700" marginTop={4} textAlign="center">
-        {formatViewCount(count)}
-      </Text>
-    </Pressable>
-  );
-}
+import { getPostPosterUrl, getPostVideoUrl } from '@/features/feed/lib/postMedia';
+import { useTranslations } from '@/i18n';
 
 function VideoBackground({ uri }: { uri: string }) {
   const player = useVideoPlayer(uri, (instance) => {
@@ -113,14 +46,16 @@ function VideoBackground({ uri }: { uri: string }) {
 }
 
 function PostBackground({ post }: { post: PostCardPost }) {
-  const mediaUrl = post.media_urls[0];
-
-  if (!mediaUrl) {
-    return <View style={styles.emptyBackground} />;
+  // Un post vidéo range [poster, vidéo] dans media_urls (cf. postMedia.ts) :
+  // il faut lire l'entrée vidéo, pas la première.
+  const videoUrl = getPostVideoUrl(post);
+  if (videoUrl) {
+    return <VideoBackground uri={videoUrl} />;
   }
 
-  if (post.media_type === 'video') {
-    return <VideoBackground uri={mediaUrl} />;
+  const mediaUrl = getPostPosterUrl(post);
+  if (!mediaUrl) {
+    return <View style={styles.emptyBackground} />;
   }
 
   return (
@@ -131,104 +66,6 @@ function PostBackground({ post }: { post: PostCardPost }) {
       recyclingKey={`${post.id}-${mediaUrl}`}
       transition={180}
     />
-  );
-}
-
-function Avatar({
-  username,
-  avatarUrl,
-  onPress,
-}: {
-  username: string;
-  avatarUrl: string | null;
-  onPress: () => void;
-}) {
-  const t = useTranslations();
-  const initial = username.trim().charAt(0).toUpperCase() || '?';
-
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={HIT_SLOP}
-      accessibilityRole="button"
-      accessibilityLabel={t.feed.postCard.viewProfileA11y(username)}
-      style={styles.avatarButton}
-    >
-      {avatarUrl ? (
-        <Image source={{ uri: avatarUrl }} style={styles.avatarImage} contentFit="cover" />
-      ) : (
-        <Text color="#FFFFFF" fontSize={16} fontWeight="700">
-          {initial}
-        </Text>
-      )}
-    </Pressable>
-  );
-}
-
-function BottomScrim() {
-  return (
-    <View pointerEvents="none" style={styles.scrim}>
-      {SCRIM_BANDS.map((opacity) => (
-        <View key={opacity} style={[styles.scrimBand, { opacity }]} />
-      ))}
-    </View>
-  );
-}
-
-function Footer({ post, onOpenProfile }: { post: PostCardPost; onOpenProfile: () => void }) {
-  const t = useTranslations();
-  const [captionTruncated, setCaptionTruncated] = useState(false);
-  const [captionMeasured, setCaptionMeasured] = useState(false);
-  const relativeTime = useMemo(() => formatRelativeTime(post.created_at), [post.created_at]);
-
-  const handleCaptionLayout = useCallback(
-    (event: NativeSyntheticEvent<TextLayoutEventData>) => {
-      if (captionMeasured) return;
-      setCaptionMeasured(true);
-      setCaptionTruncated(event.nativeEvent.lines.length > 3);
-    },
-    [captionMeasured]
-  );
-
-  return (
-    <YStack position="absolute" left={16} right={88} bottom={28} gap={10}>
-      <XStack alignItems="center" gap={10}>
-        <Avatar
-          username={post.author_username}
-          avatarUrl={post.author_avatar_url}
-          onPress={onOpenProfile}
-        />
-
-        <Pressable
-          onPress={onOpenProfile}
-          hitSlop={HIT_SLOP}
-          accessibilityRole="button"
-          accessibilityLabel={t.feed.postCard.viewProfileA11y(post.author_username)}
-          style={styles.authorButton}
-        >
-          <Text color="#FFFFFF" fontSize={15} fontWeight="700" numberOfLines={1}>
-            @{post.author_username}
-          </Text>
-          <Text color="rgba(255,255,255,0.78)" fontSize={12} marginTop={2} numberOfLines={1}>
-            {relativeTime}
-          </Text>
-        </Pressable>
-      </XStack>
-
-      {post.content.trim() ? (
-        <YStack>
-          <MentionsText
-            content={post.content}
-            style={styles.captionText}
-            numberOfLines={3}
-            onTextLayout={handleCaptionLayout}
-          />
-          {captionTruncated ? (
-            <RNText style={styles.moreText}>{t.feed.postCard.seeMore}</RNText>
-          ) : null}
-        </YStack>
-      ) : null}
-    </YStack>
   );
 }
 
@@ -428,51 +265,15 @@ export default function PostDetailRoute() {
               <X size={24} color="#FFFFFF" strokeWidth={2.5} />
             </Pressable>
 
-            <YStack position="absolute" right={ACTION_RIGHT} bottom={ACTION_BOTTOM} gap={24}>
-              <ActionButton
-                label={t.feed.postCard.likeA11y(post.author_username)}
-                count={post.like_count}
-                onPress={handleLike}
-              >
-                <Animated.View>
-                  <Heart
-                    size={32}
-                    color={post.liked_by_me ? LIKE_RED : '#FFFFFF'}
-                    fill={post.liked_by_me ? LIKE_RED : 'transparent'}
-                  />
-                </Animated.View>
-              </ActionButton>
+            <PostActionRail
+              post={post}
+              onLike={handleLike}
+              onComments={handleComments}
+              onShare={() => setShareSheetOpen(true)}
+              onBookmark={handleBookmark}
+            />
 
-              <ActionButton
-                label={t.feed.postCard.commentA11y(post.author_username)}
-                count={post.comment_count}
-                onPress={handleComments}
-              >
-                <MessageCircle size={32} color="#FFFFFF" />
-              </ActionButton>
-
-              <ActionButton
-                label={t.feed.postCard.shareA11y(post.author_username)}
-                count={post.share_count}
-                onPress={() => setShareSheetOpen(true)}
-              >
-                <Send size={32} color="#FFFFFF" />
-              </ActionButton>
-
-              <ActionButton
-                label={t.feed.postCard.bookmarkA11y(post.author_username)}
-                count={post.bookmark_count}
-                onPress={handleBookmark}
-              >
-                <Bookmark
-                  size={32}
-                  color={post.bookmarked_by_me ? ACCENT_NEON : '#FFFFFF'}
-                  fill={post.bookmarked_by_me ? ACCENT_NEON : 'transparent'}
-                />
-              </ActionButton>
-            </YStack>
-
-            <Footer post={post} onOpenProfile={handleOpenProfile} />
+            <PostFooter post={post} onOpenProfile={handleOpenProfile} />
           </>
         ) : null}
       </View>
