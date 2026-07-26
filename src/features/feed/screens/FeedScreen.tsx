@@ -340,7 +340,14 @@ export function FeedScreen() {
         post={item}
         onLike={() => likeMutation.mutate(item.id)}
         onBookmark={() => bookmarkMutation.mutate(item.id)}
-        onOpenDetail={() => router.push(`/post/${item.id}`)}
+        // Une vidéo ouvre le défilement plein écran (E14-02) et non la fiche
+        // du post : on enchaîne alors sur les vidéos suivantes. Les posts
+        // image gardent l'écran de détail classique.
+        onOpenDetail={() =>
+          item.media_type === 'video'
+            ? router.push(`/videos?postId=${item.id}`)
+            : router.push(`/post/${item.id}`)
+        }
         onOpenComments={() => router.push(`/post/${item.id}?focus=comments`)}
         onOpenProfile={() => router.push(`/profile/${item.author_id}`)}
         onMenuPress={() => handleMenuPress(item)}
