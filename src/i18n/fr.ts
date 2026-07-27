@@ -9,6 +9,7 @@
 // Les zones traduites en E11-02→09 vivent chacune dans src/i18n/fr/<zone>.ts
 // et sont agrégées ci-dessous par namespace.
 
+import { aiFr } from './fr/ai';
 import { commonFr } from './fr/common';
 import { coursFr } from './fr/cours';
 import { feedFr } from './fr/feed';
@@ -232,6 +233,7 @@ export const fr = {
   common: commonFr,
   wallet: walletFr,
   matching: matchingFr,
+  ai: aiFr,
 };
 
 export type Translations = typeof fr;
