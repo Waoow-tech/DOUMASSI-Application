@@ -251,10 +251,15 @@ export function FeedScreen() {
 
   const handleTabPress = useCallback(
     (tab: FeedTabId) => {
-      // Le Wallet est une feature LIVRÉE (E12) : l'onglet ouvre le vrai écran
-      // Portefeuille au lieu d'afficher le placeholder « bientôt disponible ».
+      // Onglets qui pointent vers une feature LIVRÉE : on ouvre le vrai écran
+      // au lieu d'un placeholder « bientôt disponible ». Wallet (E12) et
+      // Doumassi AI (E5-03, l'onglet # en bas) existent — pas de faux « bientôt ».
       if (tab === 'wallet') {
         router.push('/wallet');
+        return;
+      }
+      if (tab === 'ai') {
+        router.push('/studio-ai');
         return;
       }
       setActiveTab(tab);

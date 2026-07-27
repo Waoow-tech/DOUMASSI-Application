@@ -358,7 +358,7 @@ export default function SettingsScreen() {
         label: t.profileScreens.settings.featureMatching,
         href: '/matching' as const,
       },
-      { icon: Sparkles, label: t.profileScreens.settings.featureAi, href: null },
+      { icon: Sparkles, label: t.profileScreens.settings.featureAi, href: '/studio-ai' as const },
       { icon: Store, label: t.profileScreens.settings.featureMarketplace, href: null },
       { icon: MessageSquare, label: t.profileScreens.settings.featureMessaging, href: null },
       { icon: Phone, label: t.profileScreens.settings.featureCalls, href: null },
