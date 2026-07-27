@@ -6,6 +6,7 @@
 // Zones E11-02→09 agrégées depuis src/i18n/en/<zone>.ts (chaque fichier est typé
 // contre son homologue FR → parité de clés garantie à la compilation).
 
+import { aiEn } from './en/ai';
 import { commonEn } from './en/common';
 import { coursEn } from './en/cours';
 import { feedEn } from './en/feed';
@@ -227,4 +228,5 @@ export const en: Translations = {
   common: commonEn,
   wallet: walletEn,
   matching: matchingEn,
+  ai: aiEn,
 };
