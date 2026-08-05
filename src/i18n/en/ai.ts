@@ -32,9 +32,18 @@ export const aiEn: AiTranslations = {
 
   menu: {
     title: 'Actions',
+    addPhoto: 'Add a photo',
     history: 'History',
     learning: 'Learning',
     openA11y: 'Open actions menu',
+  },
+
+  attach: {
+    permissionTitle: 'Permission denied',
+    permissionMessage: 'Enable photo access in Settings to attach an image.',
+    removeA11y: 'Remove photo',
+    tooMany: (max: number) => `${max} photos max per message.`,
+    uploadFailed: 'Photo upload failed. Please try again.',
   },
 
   learning: {

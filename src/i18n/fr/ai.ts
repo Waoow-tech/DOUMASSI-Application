@@ -35,9 +35,19 @@ export const aiFr = {
   // Menu « + » de la barre de saisie — E5-10
   menu: {
     title: 'Actions',
+    addPhoto: 'Ajouter une photo',
     history: 'Historique',
     learning: 'Learning',
     openA11y: 'Ouvrir le menu des actions',
+  },
+
+  // Pièces jointes image — E5-06
+  attach: {
+    permissionTitle: 'Permission refusée',
+    permissionMessage: 'Active l’accès aux photos dans les Réglages pour joindre une image.',
+    removeA11y: 'Retirer la photo',
+    tooMany: (max: number) => `${max} photos maximum par message.`,
+    uploadFailed: 'Échec de l’envoi de la photo. Réessaie.',
   },
 
   // Mode Learning — E5-08

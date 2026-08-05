@@ -373,6 +373,69 @@ export async function uploadPostImage(
 }
 
 // ---------------------------------------------------------------------------
+// Pièce jointe image du chat IA — E5-06
+// ---------------------------------------------------------------------------
+
+const AI_ATTACHMENTS_BUCKET = 'ai-attachments';
+
+export interface UploadAiImageResult {
+  /** Path dans le bucket PRIVÉ ({user_id}/{uuid}.jpg). Pas d'URL publique :
+   *  le bucket est privé, on signe à la demande (serveur pour la Vision,
+   *  client pour l'affichage). */
+  path: string;
+}
+
+/**
+ * Compresse puis upload une image dans le bucket PRIVÉ `ai-attachments`.
+ * Même pipeline que uploadPostImage, mais on ne renvoie PAS d'URL publique
+ * (le bucket est privé — cf. migration 20260729120000).
+ */
+export async function uploadAiImage(
+  uri: string,
+  options?: { signal?: AbortSignal }
+): Promise<UploadAiImageResult> {
+  const signal = options?.signal;
+  try {
+    if (signal?.aborted) throw abortedError();
+
+    const session = await getFreshSession();
+    const compressedUri = await compressImage(uri, DEFAULT_QUALITY);
+    const path = `${session.user.id}/${uuidv4()}.jpg`;
+
+    try {
+      await uploadToStorage(compressedUri, path, AI_ATTACHMENTS_BUCKET, 'image/jpeg', { signal });
+    } finally {
+      await cleanupTempFiles([compressedUri]);
+    }
+
+    return { path };
+  } catch (error) {
+    const uploadError = error instanceof UploadError ? error : new UploadError('upload', error);
+    if (signal?.aborted) {
+      logger.debug('upload_ai_image_cancelled');
+    } else {
+      logger.error('upload_ai_image_failed', uploadError);
+    }
+    throw uploadError;
+  }
+}
+
+/**
+ * URL signée à courte durée pour afficher une pièce jointe (bucket privé).
+ * Retourne null en cas d'échec (l'UI affiche alors un placeholder).
+ */
+export async function signAiAttachment(path: string, expiresInSec = 3600): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from(AI_ATTACHMENTS_BUCKET)
+    .createSignedUrl(path, expiresInSec);
+  if (error) {
+    logger.warn('sign_ai_attachment_failed', { message: error.message });
+    return null;
+  }
+  return data.signedUrl;
+}
+
+// ---------------------------------------------------------------------------
 // Vidéo de post — E14-01
 // ---------------------------------------------------------------------------
 

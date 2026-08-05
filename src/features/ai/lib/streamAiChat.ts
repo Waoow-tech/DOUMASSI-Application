@@ -24,9 +24,17 @@ import { SseParser } from './sseParser';
 
 const FUNCTION_URL = `${env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/ai-chat`;
 
+/** Pièce jointe envoyée au serveur : un path dans le bucket ai-attachments. */
+export interface AiAttachmentRef {
+  path: string;
+  kind: 'image';
+}
+
 export interface StreamAiChatParams {
   conversationId: string;
   content: string;
+  /** Pièces jointes image (E5-06). */
+  attachments?: AiAttachmentRef[];
   /** Appelé à chaque fragment de texte reçu. */
   onDelta: (delta: string) => void;
   /** Appelé une fois la réponse complète. */
@@ -64,6 +72,7 @@ export class AiChatError extends Error {
 export async function streamAiChat({
   conversationId,
   content,
+  attachments,
   onDelta,
   onDone,
   signal,
@@ -81,7 +90,11 @@ export async function streamAiChat({
         Authorization: `Bearer ${data.session.access_token}`,
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ conversation_id: conversationId, content }),
+      body: JSON.stringify({
+        conversation_id: conversationId,
+        content,
+        attachments: attachments ?? [],
+      }),
       signal,
     });
   } catch (err) {

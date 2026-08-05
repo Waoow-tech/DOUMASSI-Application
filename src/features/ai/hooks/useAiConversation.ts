@@ -9,11 +9,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
+/** Pièce jointe persistée d'un message (E5-06). */
+export interface AiMessageAttachment {
+  path: string;
+  kind: string;
+}
+
 export interface AiMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   created_at: string;
+  attachments?: AiMessageAttachment[];
 }
 
 /** Entrée de la liste du drawer (E5-04). */
@@ -43,7 +50,7 @@ export function useAiMessages(conversationId: string | null) {
     queryFn: async (): Promise<AiMessage[]> => {
       const { data, error } = await supabase
         .from('ai_messages')
-        .select('id, role, content, created_at')
+        .select('id, role, content, created_at, attachments')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
