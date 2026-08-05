@@ -8,12 +8,13 @@
 // « en cours », puis on relit la conversation depuis la base (source de vérité).
 
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import { Send, Sparkles, Square, SquarePen } from 'lucide-react-native';
+import { PanelLeft, Send, Sparkles, Square, SquarePen } from 'lucide-react-native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, TextArea, XStack, YStack } from 'tamagui';
 
+import { AiConversationsDrawer } from '@/features/ai/components/AiConversationsDrawer';
 import { ChatBubble, MessageBubble, TypingBubble } from '@/features/ai/components/MessageBubble';
 import { aiErrorMessage, mergeMessages, useAiChat } from '@/features/ai/hooks/useAiChat';
 import { useAiMessages } from '@/features/ai/hooks/useAiConversation';
@@ -29,6 +30,7 @@ export default function StudioAIRoute() {
   const chat = useAiChat(null);
   const messagesQuery = useAiMessages(chat.conversationId);
   const [draft, setDraft] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const listRef = useRef<FlashListRef<ChatBubble>>(null);
 
   const messages = useMemo(
@@ -60,6 +62,16 @@ export default function StudioAIRoute() {
     setDraft('');
   }, [chat]);
 
+  const handleSelectConversation = useCallback(
+    (id: string) => {
+      if (chat.isStreaming) return;
+      chat.setConversationId(id);
+      chat.clearError();
+      setDraft('');
+    },
+    [chat]
+  );
+
   const handleSuggestion = useCallback((text: string) => {
     setDraft(text);
   }, []);
@@ -77,7 +89,15 @@ export default function StudioAIRoute() {
         borderBottomWidth={StyleSheet.hairlineWidth}
         borderBottomColor="$borderColor"
       >
-        <Sparkles size={22} color={ACCENT} />
+        <Pressable
+          onPress={() => setDrawerOpen(true)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={t.ai.header.historyA11y}
+        >
+          <PanelLeft size={22} color="#FFFFFF" />
+        </Pressable>
+        <Sparkles size={20} color={ACCENT} />
         <Text flex={1} fontSize={18} fontWeight="800" color="$color">
           {t.ai.header.title}
         </Text>
@@ -182,6 +202,14 @@ export default function StudioAIRoute() {
           </Pressable>
         </XStack>
       </KeyboardAvoidingView>
+
+      <AiConversationsDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        activeId={chat.conversationId}
+        onSelect={handleSelectConversation}
+        onNewChat={handleNewChat}
+      />
     </YStack>
   );
 }
