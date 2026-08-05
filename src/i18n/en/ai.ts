@@ -30,6 +30,14 @@ export const aiEn: AiTranslations = {
     subtitle: 'Doumassi AI can help you study, write, understand… Give it a try.',
   },
 
+  learning: {
+    badge: 'Learning mode on',
+    hint: 'Doumassi AI guides you step by step instead of giving the answer.',
+    exit: 'Exit',
+    enableA11y: 'Turn on Learning mode (tutor)',
+    disableA11y: 'Turn off Learning mode',
+  },
+
   suggestions: {
     explain: 'Explain a concept',
     summarize: 'Summarize a text',

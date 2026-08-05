@@ -73,18 +73,39 @@ function json(body: unknown, status = 200): Response {
 }
 
 /**
- * Consigne système. Volontairement ici et non côté client : un prompt système
+ * Consignes système. Volontairement ici et non côté client : un prompt système
  * modifiable par le client n'est pas une consigne, c'est une suggestion.
  *
  * Le rappel sur l'âge n'est pas cosmétique — l'app accueille des utilisateurs
  * de 15 à 17 ans (ADR-008).
  */
-const SYSTEM_PROMPT = [
+const BASE_PROMPT = [
   "Tu es l'assistant de DOUMASSI, une application sociale française.",
   "Tu réponds dans la langue de l'utilisateur, par défaut en français.",
-  'Tu es concis et direct. Tu ne prétends jamais être humain.',
+  'Tu ne prétends jamais être humain.',
   'Une partie des utilisateurs a entre 15 et 17 ans : reste approprié et refuse poliment tout contenu qui ne conviendrait pas à un mineur.',
 ].join(' ');
+
+const GENERAL_PROMPT = `${BASE_PROMPT} Tu es concis et direct.`;
+
+/**
+ * Mode Learning (E5-08) — posture de tuteur. Ne donne pas la réponse toute
+ * faite : guide par étapes, questionne, fait réfléchir. Adapté à une cible
+ * scolaire (collège / lycée).
+ */
+const LEARNING_PROMPT = [
+  BASE_PROMPT,
+  'Tu es en MODE TUTEUR.',
+  'Ton but est de faire COMPRENDRE, pas de donner la réponse toute faite.',
+  'Procède par étapes : pose des questions qui guident, propose des indices avant la solution,',
+  "et invite l'élève à formuler sa réponse. Vérifie sa compréhension au fur et à mesure.",
+  "Reste encourageant et patient. Si l'élève bloque vraiment, explique clairement puis fais-le reformuler.",
+].join(' ');
+
+/** Choix du prompt selon la catégorie persistée de la conversation. */
+function systemPromptFor(category: string | null | undefined): string {
+  return category === 'learning' ? LEARNING_PROMPT : GENERAL_PROMPT;
+}
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -170,6 +191,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: 'Conversation not found' }, 403);
   }
 
+  // Catégorie de la conversation → choix du prompt système (E5-08 Learning).
+  // Lue côté serveur : le mode ne peut donc pas être forcé par un client qui
+  // enverrait un faux prompt.
+  const { data: conversation } = await userClient
+    .from('ai_conversations')
+    .select('category')
+    .eq('id', conversationId)
+    .maybeSingle();
+  const category = (conversation as { category?: string } | null)?.category ?? 'general';
+
   const { data: history } = await userClient
     .from('ai_messages')
     .select('role, content')
@@ -180,7 +211,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // La requête remonte du plus récent au plus ancien (pour prendre les N
   // derniers) : le modèle, lui, attend l'ordre chronologique.
   const messages: StoredMessage[] = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: systemPromptFor(category) },
     ...((history ?? []) as StoredMessage[]).slice().reverse(),
   ];
 

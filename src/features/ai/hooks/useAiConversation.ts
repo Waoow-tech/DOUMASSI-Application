@@ -58,19 +58,23 @@ export function useAiMessages(conversationId: string | null) {
   });
 }
 
+/** Mode d'une conversation (E5-08). L'enum base a aussi creative/reflection. */
+export type AiChatMode = 'general' | 'learning';
+
 /**
- * Crée une conversation vide et renvoie son id. `user_id` est posé par défaut
- * à `auth.uid()` côté base ; la policy `ai_conv_insert_own` garantit qu'on ne
- * peut créer que pour soi.
+ * Crée une conversation et renvoie son id. `user_id` est posé par défaut à
+ * `auth.uid()` côté base ; la policy `ai_conv_insert_own` garantit qu'on ne peut
+ * créer que pour soi. La catégorie fixe le mode dès la création (E5-08).
  */
 export function useCreateAiConversation() {
   const queryClient = useQueryClient();
 
-  return useMutation<string, Error, void>({
-    mutationFn: async () => {
+  return useMutation<string, Error, { category?: AiChatMode } | void>({
+    mutationFn: async (vars) => {
+      const category = vars && 'category' in vars ? vars.category : undefined;
       const { data, error } = await supabase
         .from('ai_conversations')
-        .insert({})
+        .insert(category ? { category } : {})
         .select('id')
         .single();
 

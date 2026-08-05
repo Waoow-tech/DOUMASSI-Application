@@ -32,6 +32,15 @@ export const aiFr = {
     subtitle: 'Doumassi AI peut t’aider à réviser, écrire, comprendre… Lance-toi.',
   },
 
+  // Mode Learning — E5-08
+  learning: {
+    badge: 'Mode Learning activé',
+    hint: 'Doumassi AI te guide pas à pas au lieu de donner la réponse.',
+    exit: 'Quitter',
+    enableA11y: 'Activer le mode Learning (tuteur)',
+    disableA11y: 'Désactiver le mode Learning',
+  },
+
   // Suggestions de démarrage (tapées pour préremplir la saisie)
   suggestions: {
     explain: 'Explique-moi un concept',

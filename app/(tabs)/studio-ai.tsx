@@ -8,7 +8,7 @@
 // « en cours », puis on relit la conversation depuis la base (source de vérité).
 
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import { PanelLeft, Send, Sparkles, Square, SquarePen } from 'lucide-react-native';
+import { GraduationCap, PanelLeft, Send, Sparkles, Square, SquarePen } from 'lucide-react-native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -101,6 +101,18 @@ export default function StudioAIRoute() {
         <Text flex={1} fontSize={18} fontWeight="800" color="$color">
           {t.ai.header.title}
         </Text>
+        {/* Bascule du mode Learning (E5-08) */}
+        <Pressable
+          onPress={() => chat.setMode(chat.mode === 'learning' ? 'general' : 'learning')}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityState={{ selected: chat.mode === 'learning' }}
+          accessibilityLabel={
+            chat.mode === 'learning' ? t.ai.learning.disableA11y : t.ai.learning.enableA11y
+          }
+        >
+          <GraduationCap size={22} color={chat.mode === 'learning' ? ACCENT : '#FFFFFF'} />
+        </Pressable>
         {chat.conversationId ? (
           <Pressable
             onPress={handleNewChat}
@@ -114,6 +126,37 @@ export default function StudioAIRoute() {
           </Pressable>
         ) : null}
       </XStack>
+
+      {/* Bandeau « Mode Learning activé » (E5-08) */}
+      {chat.mode === 'learning' ? (
+        <XStack
+          alignItems="center"
+          gap={10}
+          paddingHorizontal={16}
+          paddingVertical={8}
+          backgroundColor="rgba(16,217,112,0.12)"
+        >
+          <GraduationCap size={16} color={ACCENT} />
+          <YStack flex={1}>
+            <Text fontSize={13} fontWeight="700" color={ACCENT}>
+              {t.ai.learning.badge}
+            </Text>
+            <Text fontSize={11} color="$textSecondary">
+              {t.ai.learning.hint}
+            </Text>
+          </YStack>
+          <Pressable
+            onPress={() => chat.setMode('general')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t.ai.learning.disableA11y}
+          >
+            <Text fontSize={13} fontWeight="700" color={ACCENT}>
+              {t.ai.learning.exit}
+            </Text>
+          </Pressable>
+        </XStack>
+      ) : null}
 
       <KeyboardAvoidingView
         style={styles.flex1}
