@@ -15,12 +15,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
+import { supabase } from '@/lib/supabase';
 
 import { generateConversationTitle } from '../lib/generateTitle';
 import { type PendingTurn } from '../lib/mergeMessages';
 import { AiChatError, streamAiChat } from '../lib/streamAiChat';
 
-import { aiConversationsKey, aiMessagesKey, useCreateAiConversation } from './useAiConversation';
+import {
+  aiConversationsKey,
+  aiMessagesKey,
+  useCreateAiConversation,
+  type AiChatMode,
+} from './useAiConversation';
 
 export type { PendingTurn } from '../lib/mergeMessages';
 export { mergeMessages } from '../lib/mergeMessages';
@@ -35,6 +41,9 @@ export interface UseAiChatResult {
   /** Id de conversation courant (créé au 1er message si besoin). */
   conversationId: string | null;
   setConversationId: (id: string | null) => void;
+  /** Mode Learning (E5-08). Persisté dans ai_conversations.category. */
+  mode: AiChatMode;
+  setMode: (mode: AiChatMode) => void;
 }
 
 export function useAiChat(initialConversationId: string | null): UseAiChatResult {
@@ -45,6 +54,7 @@ export function useAiChat(initialConversationId: string | null): UseAiChatResult
   const [pending, setPending] = useState<PendingTurn | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<AiChatError | null>(null);
+  const [mode, setModeState] = useState<AiChatMode>('general');
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -53,6 +63,49 @@ export function useAiChat(initialConversationId: string | null): UseAiChatResult
   useEffect(() => {
     return () => abortRef.current?.abort();
   }, []);
+
+  // Quand on ouvre une conversation existante (depuis le drawer), on charge son
+  // mode depuis la base pour que le badge Learning reflète la réalité. Pour une
+  // conversation qu'on vient de créer, la base renvoie le mode qu'on y a posé →
+  // pas de conflit.
+  useEffect(() => {
+    if (!conversationId) return;
+    let cancelled = false;
+    void supabase
+      .from('ai_conversations')
+      .select('category')
+      .eq('id', conversationId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const category = (data as { category?: string } | null)?.category;
+        setModeState(category === 'learning' ? 'learning' : 'general');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId]);
+
+  // Bascule de mode. Sur une conversation existante, on persiste tout de suite
+  // (le serveur lit category au prochain message). Sinon, l'état local suffit :
+  // la catégorie sera posée à la création, au 1er message.
+  const setMode = useCallback(
+    (next: AiChatMode) => {
+      setModeState(next);
+      const id = conversationId;
+      if (!id) return;
+      void supabase
+        .from('ai_conversations')
+        .update({ category: next })
+        .eq('id', id)
+        .then(({ error: updateError }) => {
+          if (updateError) {
+            logger.warn('ai_set_mode_failed', { message: updateError.message });
+          }
+        });
+    },
+    [conversationId]
+  );
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -73,7 +126,9 @@ export function useAiChat(initialConversationId: string | null): UseAiChatResult
         let convId = activeConversationId ?? conversationId;
         const isNewConversation = !convId;
         if (!convId) {
-          convId = await createConversation.mutateAsync();
+          // La catégorie fixe le mode (Learning) dès la création, pour que le
+          // serveur applique le bon prompt système au tout premier message.
+          convId = await createConversation.mutateAsync({ category: mode });
           setConversationId(convId);
         }
 
@@ -125,7 +180,7 @@ export function useAiChat(initialConversationId: string | null): UseAiChatResult
         abortRef.current = null;
       }
     },
-    [conversationId, createConversation, isStreaming, queryClient]
+    [conversationId, createConversation, isStreaming, mode, queryClient]
   );
 
   return {
@@ -136,6 +191,8 @@ export function useAiChat(initialConversationId: string | null): UseAiChatResult
     clearError,
     conversationId,
     setConversationId,
+    mode,
+    setMode,
   };
 }
 
