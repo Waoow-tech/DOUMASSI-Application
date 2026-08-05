@@ -30,6 +30,13 @@ export const aiEn: AiTranslations = {
     subtitle: 'Doumassi AI can help you study, write, understand… Give it a try.',
   },
 
+  menu: {
+    title: 'Actions',
+    history: 'History',
+    learning: 'Learning',
+    openA11y: 'Open actions menu',
+  },
+
   learning: {
     badge: 'Learning mode on',
     hint: 'Doumassi AI guides you step by step instead of giving the answer.',

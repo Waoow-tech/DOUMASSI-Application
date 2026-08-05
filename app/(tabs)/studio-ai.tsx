@@ -8,13 +8,14 @@
 // « en cours », puis on relit la conversation depuis la base (source de vérité).
 
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import { GraduationCap, PanelLeft, Send, Sparkles, Square, SquarePen } from 'lucide-react-native';
+import { GraduationCap, Plus, Send, Sparkles, Square, SquarePen } from 'lucide-react-native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, TextArea, XStack, YStack } from 'tamagui';
 
 import { AiConversationsDrawer } from '@/features/ai/components/AiConversationsDrawer';
+import { AiPlusMenu } from '@/features/ai/components/AiPlusMenu';
 import { ChatBubble, MessageBubble, TypingBubble } from '@/features/ai/components/MessageBubble';
 import { aiErrorMessage, mergeMessages, useAiChat } from '@/features/ai/hooks/useAiChat';
 import { useAiMessages } from '@/features/ai/hooks/useAiConversation';
@@ -31,6 +32,7 @@ export default function StudioAIRoute() {
   const messagesQuery = useAiMessages(chat.conversationId);
   const [draft, setDraft] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [plusMenuOpen, setPlusMenuOpen] = useState(false);
   const listRef = useRef<FlashListRef<ChatBubble>>(null);
 
   const messages = useMemo(
@@ -89,30 +91,13 @@ export default function StudioAIRoute() {
         borderBottomWidth={StyleSheet.hairlineWidth}
         borderBottomColor="$borderColor"
       >
-        <Pressable
-          onPress={() => setDrawerOpen(true)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityRole="button"
-          accessibilityLabel={t.ai.header.historyA11y}
-        >
-          <PanelLeft size={22} color="#FFFFFF" />
-        </Pressable>
         <Sparkles size={20} color={ACCENT} />
         <Text flex={1} fontSize={18} fontWeight="800" color="$color">
           {t.ai.header.title}
         </Text>
-        {/* Bascule du mode Learning (E5-08) */}
-        <Pressable
-          onPress={() => chat.setMode(chat.mode === 'learning' ? 'general' : 'learning')}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityRole="button"
-          accessibilityState={{ selected: chat.mode === 'learning' }}
-          accessibilityLabel={
-            chat.mode === 'learning' ? t.ai.learning.disableA11y : t.ai.learning.enableA11y
-          }
-        >
-          <GraduationCap size={22} color={chat.mode === 'learning' ? ACCENT : '#FFFFFF'} />
-        </Pressable>
+        {/* Historique et Learning sont désormais dans le menu ⊕ de la barre de
+            saisie (maquette Canva). L'en-tête ne garde que « nouvelle
+            conversation », l'action la plus fréquente. */}
         {chat.conversationId ? (
           <Pressable
             onPress={handleNewChat}
@@ -212,6 +197,15 @@ export default function StudioAIRoute() {
           borderTopColor="$borderColor"
           backgroundColor="$background"
         >
+          {/* Bouton ⊕ — menu des actions (maquette Canva). Ouvre AiPlusMenu. */}
+          <Pressable
+            onPress={() => setPlusMenuOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t.ai.menu.openA11y}
+            style={styles.plusButton}
+          >
+            <Plus size={22} color="#FFFFFF" />
+          </Pressable>
           <TextArea
             flex={1}
             value={draft}
@@ -252,6 +246,14 @@ export default function StudioAIRoute() {
         activeId={chat.conversationId}
         onSelect={handleSelectConversation}
         onNewChat={handleNewChat}
+      />
+
+      <AiPlusMenu
+        open={plusMenuOpen}
+        onOpenChange={setPlusMenuOpen}
+        learningActive={chat.mode === 'learning'}
+        onOpenHistory={() => setDrawerOpen(true)}
+        onToggleLearning={() => chat.setMode(chat.mode === 'learning' ? 'general' : 'learning')}
       />
     </YStack>
   );
@@ -304,6 +306,13 @@ function EmptyState({ onPickSuggestion }: { onPickSuggestion: (text: string) => 
 
 const styles = StyleSheet.create({
   flex1: { flex: 1 },
+  plusButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sendButton: {
     width: 40,
     height: 40,

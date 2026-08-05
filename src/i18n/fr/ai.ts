@@ -32,6 +32,14 @@ export const aiFr = {
     subtitle: 'Doumassi AI peut t’aider à réviser, écrire, comprendre… Lance-toi.',
   },
 
+  // Menu « + » de la barre de saisie — E5-10
+  menu: {
+    title: 'Actions',
+    history: 'Historique',
+    learning: 'Learning',
+    openA11y: 'Ouvrir le menu des actions',
+  },
+
   // Mode Learning — E5-08
   learning: {
     badge: 'Mode Learning activé',
