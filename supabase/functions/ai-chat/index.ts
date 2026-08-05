@@ -47,14 +47,32 @@ const HISTORY_LIMIT = 20;
 /** Longueur max d'un message utilisateur (garde-fou de coût et d'abus). */
 const MAX_CONTENT_LENGTH = 4000;
 
+/** Max de pièces jointes image par message (garde-fou coût Vision). */
+const MAX_ATTACHMENTS = 4;
+
+/** Durée de vie de l'URL signée envoyée au fournisseur Vision (secondes). */
+const SIGNED_URL_TTL = 300;
+
+interface ChatAttachment {
+  path?: string;
+  kind?: string;
+}
+
 interface ChatRequest {
   conversation_id?: string;
   content?: string;
+  attachments?: ChatAttachment[];
 }
+
+// Contenu d'un message : soit du texte simple, soit un tableau multimodal
+// (texte + images) au format OpenAI-compatible pour la Vision.
+type MessageContent =
+  | string
+  | ({ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } })[];
 
 interface StoredMessage {
   role: 'user' | 'assistant' | 'system';
-  content: string;
+  content: MessageContent;
 }
 
 function corsHeaders(): Record<string, string> {
@@ -127,6 +145,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const baseUrl = Deno.env.get('AI_BASE_URL');
   const apiKey = Deno.env.get('AI_API_KEY');
   const model = Deno.env.get('AI_MODEL');
+  // Modèle Vision optionnel (E5-06). Utilisé UNIQUEMENT quand le message porte
+  // une image. À défaut, on retombe sur AI_MODEL — qui peut ne pas savoir lire
+  // les images ; c'est alors une erreur de config à corriger (poser
+  // AI_VISION_MODEL sur un modèle Vision du fournisseur, cf. ADR-009).
+  const visionModel = Deno.env.get('AI_VISION_MODEL') ?? model;
 
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
     return json({ error: 'Server misconfigured' }, 500);
@@ -153,6 +176,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (content.length > MAX_CONTENT_LENGTH) {
     return json({ error: 'Message too long' }, 400);
   }
+
+  // Pièces jointes image (E5-06). On ne garde que les entrées bien formées, et
+  // on plafonne le nombre (coût Vision).
+  const attachments = (body.attachments ?? [])
+    .filter((a): a is { path: string; kind: string } => typeof a?.path === 'string')
+    .filter((a) => a.kind === 'image')
+    .slice(0, MAX_ATTACHMENTS);
 
   // Client « utilisateur » : porte le JWT du caller, donc soumis à la RLS.
   // C'est lui qui garantit qu'on ne peut écrire que dans SES conversations.
@@ -183,9 +213,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // L'INSERT passe par le client utilisateur : si la conversation ne lui
   // appartient pas, la RLS le rejette. On n'a donc pas à revérifier nous-mêmes
   // la propriété de la conversation.
-  const { error: insertError } = await userClient
-    .from('ai_messages')
-    .insert({ conversation_id: conversationId, role: 'user', content });
+  const { error: insertError } = await userClient.from('ai_messages').insert({
+    conversation_id: conversationId,
+    role: 'user',
+    content,
+    attachments: attachments.length > 0 ? attachments : [],
+  });
 
   if (insertError) {
     return json({ error: 'Conversation not found' }, 403);
@@ -209,11 +242,34 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .limit(HISTORY_LIMIT);
 
   // La requête remonte du plus récent au plus ancien (pour prendre les N
-  // derniers) : le modèle, lui, attend l'ordre chronologique.
+  // derniers) : le modèle, lui, attend l'ordre chronologique. L'historique est
+  // du texte : seule l'image du tour COURANT est envoyée au modèle Vision.
   const messages: StoredMessage[] = [
     { role: 'system', content: systemPromptFor(category) },
     ...((history ?? []) as StoredMessage[]).slice().reverse(),
   ];
+
+  // Vision (E5-06) : si le message courant porte des images, on transforme le
+  // DERNIER message (celui qu'on vient d'insérer) en contenu multimodal. Les
+  // URLs sont signées à courte durée (bucket privé) — le fournisseur les
+  // récupère pendant la requête, puis elles expirent.
+  let requestModel = model;
+  if (attachments.length > 0) {
+    const imageParts: { type: 'image_url'; image_url: { url: string } }[] = [];
+    for (const att of attachments) {
+      const { data: signed } = await userClient.storage
+        .from('ai-attachments')
+        .createSignedUrl(att.path, SIGNED_URL_TTL);
+      if (signed?.signedUrl) {
+        imageParts.push({ type: 'image_url', image_url: { url: signed.signedUrl } });
+      }
+    }
+    const last = messages[messages.length - 1];
+    if (imageParts.length > 0 && last?.role === 'user') {
+      last.content = [{ type: 'text', text: content }, ...imageParts];
+      requestModel = visionModel;
+    }
+  }
 
   // -------------------------------------------------------------------------
   // Appel au fournisseur, en streaming
@@ -226,7 +282,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${apiKey}`,
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ model, messages, stream: true }),
+      body: JSON.stringify({ model: requestModel, messages, stream: true }),
     });
   } catch {
     return json({ error: 'AI provider unreachable' }, 502);

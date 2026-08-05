@@ -8,7 +8,7 @@
 //
 // Aujourd'hui : Historique (E5-04) + Learning (E5-08).
 
-import { Check, GraduationCap, History } from 'lucide-react-native';
+import { Check, GraduationCap, History, ImagePlus } from 'lucide-react-native';
 import { Sheet, Text, XStack } from 'tamagui';
 
 import { useTranslations } from '@/i18n';
@@ -22,6 +22,7 @@ export interface AiPlusMenuProps {
   learningActive: boolean;
   onOpenHistory: () => void;
   onToggleLearning: () => void;
+  onAddPhoto: () => void;
 }
 
 export function AiPlusMenu({
@@ -30,13 +31,14 @@ export function AiPlusMenu({
   learningActive,
   onOpenHistory,
   onToggleLearning,
+  onAddPhoto,
 }: AiPlusMenuProps) {
   const t = useTranslations();
 
   const close = () => onOpenChange(false);
 
   return (
-    <Sheet modal open={open} onOpenChange={onOpenChange} snapPoints={[38]} dismissOnSnapToBottom>
+    <Sheet modal open={open} onOpenChange={onOpenChange} snapPoints={[48]} dismissOnSnapToBottom>
       <Sheet.Overlay
         animation="lazy"
         enterStyle={{ opacity: 0 }}
@@ -61,6 +63,16 @@ export function AiPlusMenu({
         >
           {t.ai.menu.title}
         </Text>
+
+        {/* Ajouter une photo (E5-06) */}
+        <MenuRow
+          icon={<ImagePlus size={20} color="#FFFFFF" />}
+          label={t.ai.menu.addPhoto}
+          onPress={() => {
+            close();
+            onAddPhoto();
+          }}
+        />
 
         {/* Historique (E5-04) */}
         <MenuRow

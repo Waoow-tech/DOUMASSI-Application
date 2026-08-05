@@ -70,3 +70,47 @@ describe('mergeMessages — tour en cours', () => {
     expect(persistedKeys).toEqual(['m1', 'm2']);
   });
 });
+
+describe('mergeMessages — images (E5-06)', () => {
+  it('expose les images persistées comme des paths (à signer)', () => {
+    const withImage: AiMessage[] = [
+      {
+        id: 'm1',
+        role: 'user',
+        content: 'regarde',
+        created_at: '2026-07-24T10:00:00Z',
+        attachments: [{ path: 'user/a.jpg', kind: 'image' }],
+      },
+    ];
+    const [msg] = mergeMessages(withImage, null);
+    expect(msg?.images).toEqual([{ path: 'user/a.jpg' }]);
+  });
+
+  it('ignore les attachments non-image', () => {
+    const withPdf: AiMessage[] = [
+      {
+        id: 'm1',
+        role: 'user',
+        content: 'doc',
+        created_at: '2026-07-24T10:00:00Z',
+        attachments: [{ path: 'user/x.pdf', kind: 'pdf' }],
+      },
+    ];
+    expect(mergeMessages(withPdf, null)[0]?.images).toEqual([]);
+  });
+
+  it('affiche les URIs locales du tour optimiste', () => {
+    const result = mergeMessages([], {
+      userContent: 'photo',
+      assistantContent: '',
+      isWaitingFirstChunk: true,
+      attachmentUris: ['file:///tmp/photo.jpg'],
+    });
+    const pendingUser = result.find((m) => m.key === 'pending-user');
+    expect(pendingUser?.images).toEqual([{ localUri: 'file:///tmp/photo.jpg' }]);
+  });
+
+  it('un message sans attachments a une liste d’images vide', () => {
+    expect(mergeMessages(persisted, null).every((m) => m.images.length === 0)).toBe(true);
+  });
+});

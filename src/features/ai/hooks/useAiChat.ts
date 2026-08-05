@@ -19,7 +19,7 @@ import { supabase } from '@/lib/supabase';
 
 import { generateConversationTitle } from '../lib/generateTitle';
 import { type PendingTurn } from '../lib/mergeMessages';
-import { AiChatError, streamAiChat } from '../lib/streamAiChat';
+import { AiChatError, streamAiChat, type AiAttachmentRef } from '../lib/streamAiChat';
 
 import {
   aiConversationsKey,
@@ -31,8 +31,16 @@ import {
 export type { PendingTurn } from '../lib/mergeMessages';
 export { mergeMessages } from '../lib/mergeMessages';
 
+/** Options d'un envoi : pièces jointes image (E5-06). */
+export interface SendOptions {
+  /** Refs serveur (path dans le bucket privé). */
+  attachments?: AiAttachmentRef[];
+  /** URIs locales des mêmes images, pour l'affichage optimiste. */
+  attachmentUris?: string[];
+}
+
 export interface UseAiChatResult {
-  send: (content: string, conversationId: string | null) => Promise<void>;
+  send: (content: string, conversationId: string | null, options?: SendOptions) => Promise<void>;
   /** Tour en cours, ou null si aucune requête active. */
   pending: PendingTurn | null;
   isStreaming: boolean;
@@ -110,13 +118,21 @@ export function useAiChat(initialConversationId: string | null): UseAiChatResult
   const clearError = useCallback(() => setError(null), []);
 
   const send = useCallback(
-    async (content: string, activeConversationId: string | null) => {
+    async (content: string, activeConversationId: string | null, options?: SendOptions) => {
       const trimmed = content.trim();
       if (!trimmed || isStreaming) return;
 
+      const attachments = options?.attachments ?? [];
+      const attachmentUris = options?.attachmentUris ?? [];
+
       setError(null);
       setIsStreaming(true);
-      setPending({ userContent: trimmed, assistantContent: '', isWaitingFirstChunk: true });
+      setPending({
+        userContent: trimmed,
+        assistantContent: '',
+        isWaitingFirstChunk: true,
+        attachmentUris,
+      });
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -136,6 +152,7 @@ export function useAiChat(initialConversationId: string | null): UseAiChatResult
         await streamAiChat({
           conversationId: convId,
           content: trimmed,
+          attachments,
           signal: controller.signal,
           onDelta: (delta) => {
             assistant += delta;
@@ -143,6 +160,7 @@ export function useAiChat(initialConversationId: string | null): UseAiChatResult
               userContent: trimmed,
               assistantContent: assistant,
               isWaitingFirstChunk: false,
+              attachmentUris,
             });
           },
           onDone: () => {

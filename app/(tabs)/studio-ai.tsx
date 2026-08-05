@@ -8,15 +8,24 @@
 // « en cours », puis on relit la conversation depuis la base (source de vérité).
 
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import { GraduationCap, Plus, Send, Sparkles, Square, SquarePen } from 'lucide-react-native';
+import { Image } from 'expo-image';
+import { GraduationCap, Plus, Send, Sparkles, Square, SquarePen, X } from 'lucide-react-native';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, Pressable, StyleSheet } from 'react-native';
+import {
+  ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, TextArea, XStack, YStack } from 'tamagui';
 
 import { AiConversationsDrawer } from '@/features/ai/components/AiConversationsDrawer';
 import { AiPlusMenu } from '@/features/ai/components/AiPlusMenu';
 import { ChatBubble, MessageBubble, TypingBubble } from '@/features/ai/components/MessageBubble';
+import { useAiAttachments } from '@/features/ai/hooks/useAiAttachments';
 import { aiErrorMessage, mergeMessages, useAiChat } from '@/features/ai/hooks/useAiChat';
 import { useAiMessages } from '@/features/ai/hooks/useAiConversation';
 import { useTranslations } from '@/i18n';
@@ -30,6 +39,7 @@ export default function StudioAIRoute() {
 
   const chat = useAiChat(null);
   const messagesQuery = useAiMessages(chat.conversationId);
+  const attach = useAiAttachments();
   const [draft, setDraft] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
@@ -50,19 +60,24 @@ export default function StudioAIRoute() {
 
   const handleSend = useCallback(() => {
     const content = draft.trim();
-    if (!content || chat.isStreaming) return;
+    // On bloque l'envoi tant qu'un upload de photo est en cours (sinon la ref
+    // serveur n'existe pas encore).
+    if (!content || chat.isStreaming || attach.isUploading) return;
+    const options = { attachments: attach.refs, attachmentUris: attach.uris };
     setDraft('');
+    attach.clear();
     Keyboard.dismiss();
-    void chat.send(content, chat.conversationId).then(scrollToEnd);
+    void chat.send(content, chat.conversationId, options).then(scrollToEnd);
     scrollToEnd();
-  }, [draft, chat, scrollToEnd]);
+  }, [draft, chat, attach, scrollToEnd]);
 
   const handleNewChat = useCallback(() => {
     if (chat.isStreaming) return;
     chat.setConversationId(null);
     chat.clearError();
     setDraft('');
-  }, [chat]);
+    attach.clear();
+  }, [chat, attach]);
 
   const handleSelectConversation = useCallback(
     (id: string) => {
@@ -78,7 +93,7 @@ export default function StudioAIRoute() {
     setDraft(text);
   }, []);
 
-  const canSend = draft.trim().length > 0 && !chat.isStreaming;
+  const canSend = draft.trim().length > 0 && !chat.isStreaming && !attach.isUploading;
 
   return (
     <YStack flex={1} backgroundColor="$background" paddingTop={insets.top}>
@@ -186,6 +201,42 @@ export default function StudioAIRoute() {
           </XStack>
         ) : null}
 
+        {/* Rangée des photos jointes (E5-06) — au-dessus de la barre de saisie */}
+        {attach.attachments.length > 0 ? (
+          <XStack
+            gap={8}
+            paddingHorizontal={12}
+            paddingTop={8}
+            flexWrap="wrap"
+            backgroundColor="$background"
+          >
+            {attach.attachments.map((a) => (
+              <YStack key={a.localUri} width={64} height={64} position="relative">
+                <Image source={{ uri: a.localUri }} style={styles.chip} contentFit="cover" />
+                {a.status === 'uploading' ? (
+                  <YStack style={styles.chipOverlay}>
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  </YStack>
+                ) : null}
+                {a.status === 'failed' ? (
+                  <YStack style={[styles.chipOverlay, styles.chipFailed]}>
+                    <Text fontSize={20}>⚠️</Text>
+                  </YStack>
+                ) : null}
+                <Pressable
+                  onPress={() => attach.remove(a.localUri)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.ai.attach.removeA11y}
+                  style={styles.chipRemove}
+                >
+                  <X size={12} color="#FFFFFF" />
+                </Pressable>
+              </YStack>
+            ))}
+          </XStack>
+        ) : null}
+
         {/* Barre de saisie */}
         <XStack
           alignItems="flex-end"
@@ -254,6 +305,7 @@ export default function StudioAIRoute() {
         learningActive={chat.mode === 'learning'}
         onOpenHistory={() => setDrawerOpen(true)}
         onToggleLearning={() => chat.setMode(chat.mode === 'learning' ? 'general' : 'learning')}
+        onAddPhoto={() => void attach.pickAndUpload()}
       />
     </YStack>
   );
@@ -317,6 +369,32 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chip: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+  },
+  chipOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  chipFailed: {
+    backgroundColor: 'rgba(239,68,68,0.4)',
+  },
+  chipRemove: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(0,0,0,0.75)',
     alignItems: 'center',
     justifyContent: 'center',
   },
