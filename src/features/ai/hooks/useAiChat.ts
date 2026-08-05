@@ -16,10 +16,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getT } from '@/i18n';
 import { logger } from '@/lib/logger';
 
+import { generateConversationTitle } from '../lib/generateTitle';
 import { type PendingTurn } from '../lib/mergeMessages';
 import { AiChatError, streamAiChat } from '../lib/streamAiChat';
 
-import { aiMessagesKey, useCreateAiConversation } from './useAiConversation';
+import { aiConversationsKey, aiMessagesKey, useCreateAiConversation } from './useAiConversation';
 
 export type { PendingTurn } from '../lib/mergeMessages';
 export { mergeMessages } from '../lib/mergeMessages';
@@ -70,6 +71,7 @@ export function useAiChat(initialConversationId: string | null): UseAiChatResult
       try {
         // Conversation créée au tout premier message seulement.
         let convId = activeConversationId ?? conversationId;
+        const isNewConversation = !convId;
         if (!convId) {
           convId = await createConversation.mutateAsync();
           setConversationId(convId);
@@ -94,6 +96,16 @@ export function useAiChat(initialConversationId: string | null): UseAiChatResult
             void queryClient.invalidateQueries({ queryKey: aiMessagesKey(convId) });
           },
         });
+
+        // Titre auto (E5-05) après le PREMIER échange d'une conversation neuve.
+        // Best-effort et non bloquant : on ne fait pas attendre l'utilisateur
+        // pour un titre. Au retour, on rafraîchit la liste du drawer.
+        if (isNewConversation) {
+          const titleConvId = convId;
+          void generateConversationTitle(titleConvId).then((title) => {
+            if (title) void queryClient.invalidateQueries({ queryKey: aiConversationsKey });
+          });
+        }
       } catch (err) {
         if (controller.signal.aborted) {
           // Démontage / annulation : on ne montre pas d'erreur.
