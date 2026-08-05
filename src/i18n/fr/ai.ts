@@ -8,6 +8,22 @@ export const aiFr = {
     title: 'Doumassi AI',
     newChat: 'Nouvelle conversation',
     newChatA11y: 'Démarrer une nouvelle conversation',
+    historyA11y: 'Ouvrir l’historique des conversations',
+  },
+
+  // Drawer latéral de l'historique — AiConversationsDrawer.tsx (E5-04)
+  drawer: {
+    title: 'Conversations',
+    newChat: 'Nouvelle conversation',
+    empty: 'Aucune conversation pour l’instant.',
+    untitled: 'Conversation',
+    messageCount: (n: number) => `${n} message${n > 1 ? 's' : ''}`,
+    closeA11y: 'Fermer l’historique',
+    deleteA11y: 'Supprimer la conversation',
+    deleteTitle: 'Supprimer la conversation ?',
+    deleteMessage: 'Cette conversation et tous ses messages seront définitivement supprimés.',
+    cancel: 'Annuler',
+    delete: 'Supprimer',
   },
 
   // État vide (aucun message)

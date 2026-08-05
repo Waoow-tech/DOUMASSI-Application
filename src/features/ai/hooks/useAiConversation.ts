@@ -1,8 +1,8 @@
-// Chargement d'une conversation IA + création à la demande — E5-03.
+// Chargement d'une conversation IA + création à la demande — E5-03,
+// étendu à la liste multi-conversations par E5-04.
 //
-// L'historique multi-conversations (drawer) est le ticket E5-04 : ici on gère
-// UNE conversation, celle affichée à l'écran. Elle est créée paresseusement au
-// premier message pour ne pas remplir la base de conversations vides.
+// `useAiMessages` / `useCreateAiConversation` gèrent LA conversation affichée.
+// `useAiConversations` / `useDeleteAiConversation` alimentent le drawer.
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -15,6 +15,18 @@ export interface AiMessage {
   content: string;
   created_at: string;
 }
+
+/** Entrée de la liste du drawer (E5-04). */
+export interface AiConversationSummary {
+  id: string;
+  title: string | null;
+  updated_at: string;
+  message_count: number;
+  /** 1er message utilisateur — sert de libellé tant que `title` est null. */
+  preview: string | null;
+}
+
+export const aiConversationsKey = ['ai', 'conversations'] as const;
 
 export function aiMessagesKey(conversationId: string | null) {
   return ['ai', 'messages', conversationId] as const;
@@ -69,8 +81,46 @@ export function useCreateAiConversation() {
       return (data as { id: string }).id;
     },
     onSuccess: () => {
-      // E5-04 (drawer) écoutera cette clé.
-      void queryClient.invalidateQueries({ queryKey: ['ai', 'conversations'] });
+      void queryClient.invalidateQueries({ queryKey: aiConversationsKey });
+    },
+  });
+}
+
+/**
+ * Liste des conversations de l'utilisateur (drawer E5-04), plus récente d'abord.
+ * S'appuie sur la RPC `get_ai_conversations` (aperçu + compteur en une requête).
+ */
+export function useAiConversations() {
+  return useQuery({
+    queryKey: aiConversationsKey,
+    queryFn: async (): Promise<AiConversationSummary[]> => {
+      const { data, error } = await supabase.rpc('get_ai_conversations');
+      if (error) {
+        logger.warn('ai_conversations_fetch_failed', { message: error.message });
+        throw error;
+      }
+      return (data ?? []) as AiConversationSummary[];
+    },
+  });
+}
+
+/** Supprime une conversation (cascade sur ses messages via la FK). */
+export function useDeleteAiConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<string, Error, string>({
+    mutationFn: async (conversationId) => {
+      const { error } = await supabase.from('ai_conversations').delete().eq('id', conversationId);
+
+      if (error) {
+        logger.warn('ai_conversation_delete_failed', { message: error.message });
+        throw error;
+      }
+      return conversationId;
+    },
+    onSuccess: (conversationId) => {
+      void queryClient.invalidateQueries({ queryKey: aiConversationsKey });
+      queryClient.removeQueries({ queryKey: aiMessagesKey(conversationId) });
     },
   });
 }

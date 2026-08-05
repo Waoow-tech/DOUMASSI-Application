@@ -8,6 +8,21 @@ export const aiEn: AiTranslations = {
     title: 'Doumassi AI',
     newChat: 'New chat',
     newChatA11y: 'Start a new chat',
+    historyA11y: 'Open conversation history',
+  },
+
+  drawer: {
+    title: 'Conversations',
+    newChat: 'New chat',
+    empty: 'No conversations yet.',
+    untitled: 'Chat',
+    messageCount: (n: number) => `${n} message${n > 1 ? 's' : ''}`,
+    closeA11y: 'Close history',
+    deleteA11y: 'Delete conversation',
+    deleteTitle: 'Delete conversation?',
+    deleteMessage: 'This conversation and all its messages will be permanently deleted.',
+    cancel: 'Cancel',
+    delete: 'Delete',
   },
 
   empty: {
