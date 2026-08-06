@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   importBtn: {
-    backgroundColor: '#10D970',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 14,
     borderRadius: 9999,
     alignItems: 'center',

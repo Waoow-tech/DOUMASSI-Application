@@ -179,7 +179,7 @@ export default function QuizPlayScreen() {
               gap={6}
               marginBottom={16}
             >
-              <Trophy size={32} color="#10D970" />
+              <Trophy size={32} color="#FFFFFF" />
               <Text fontSize={32} fontWeight="900" color="$accentNeon">
                 {result.score_pct}%
               </Text>
@@ -199,7 +199,7 @@ export default function QuizPlayScreen() {
               </Text>
               {best != null ? (
                 <XStack alignItems="center" gap={4}>
-                  <Trophy size={13} color="#10D970" />
+                  <Trophy size={13} color="#FFFFFF" />
                   <Text fontSize={12} color="$textSecondary">
                     {t.cours.quizPlay.bestScoreShort(best)}
                   </Text>
@@ -231,7 +231,7 @@ export default function QuizPlayScreen() {
                   </Text>
                   {correction ? (
                     correction.is_correct ? (
-                      <Check size={18} color="#10D970" strokeWidth={2.5} />
+                      <Check size={18} color="#FFFFFF" strokeWidth={2.5} />
                     ) : (
                       <X size={18} color="#FF6B6B" strokeWidth={2.5} />
                     )
@@ -254,14 +254,14 @@ export default function QuizPlayScreen() {
                       const isCorrectOpt = correction.correct_option_ids.includes(opt.id);
                       if (isCorrectOpt) {
                         bg = '#12291D';
-                        borderColor = '#10D970';
+                        borderColor = '#FFFFFF';
                       } else if (isSelected) {
                         bg = '#2E1522';
                         borderColor = '#FF6B6B';
                       }
                     } else if (isSelected) {
                       bg = '#12291D';
-                      borderColor = '#10D970';
+                      borderColor = '#FFFFFF';
                     }
                     return (
                       <Pressable
@@ -335,12 +335,12 @@ export default function QuizPlayScreen() {
               style={[
                 styles.cta,
                 {
-                  backgroundColor: allAnswered && !submitAttempt.isPending ? '#10D970' : '#1A1A1A',
+                  backgroundColor: allAnswered && !submitAttempt.isPending ? '#FFFFFF' : '#1A1A1A',
                 },
               ]}
             >
               {submitAttempt.isPending ? (
-                <ActivityIndicator color="#10D970" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text fontSize={15} fontWeight="800" color={allAnswered ? '#000000' : '#666'}>
                   {allAnswered ? t.cours.quizPlay.submitCta : t.cours.quizPlay.submitDisabled}
@@ -370,8 +370,8 @@ const styles = StyleSheet.create({
     borderColor: '#555',
   },
   markerOn: {
-    backgroundColor: '#10D970',
-    borderColor: '#10D970',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
   },
   option: {
     borderRadius: 10,

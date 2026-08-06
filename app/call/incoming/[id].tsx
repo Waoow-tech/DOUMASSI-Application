@@ -183,7 +183,7 @@ export default function IncomingCallScreen() {
             borderRadius={9999}
             backgroundColor="#1A1A1A"
             borderWidth={3}
-            borderColor="#10D970"
+            borderColor="#FFFFFF"
             alignItems="center"
             justifyContent="center"
           >
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: '#10D970',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },

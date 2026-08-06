@@ -32,7 +32,7 @@ import { getT, useTranslations } from '@/i18n';
 import { formatViewCount } from '@/utils/formatCount';
 
 export const HIT_SLOP = { top: 14, right: 14, bottom: 14, left: 14 };
-export const ACCENT_NEON = '#10D970';
+export const ACCENT_NEON = '#FFFFFF';
 export const LIKE_RED = '#FF3B30';
 
 const ACTION_RIGHT = 16;

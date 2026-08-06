@@ -251,12 +251,12 @@ export default function ResourceCommentsScreen() {
                 styles.sendBtn,
                 {
                   backgroundColor:
-                    draft.trim().length > 0 && !addComment.isPending ? '#10D970' : '#1A1A1A',
+                    draft.trim().length > 0 && !addComment.isPending ? '#FFFFFF' : '#1A1A1A',
                 },
               ]}
             >
               {addComment.isPending ? (
-                <ActivityIndicator color="#10D970" size="small" />
+                <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
                 <Send
                   size={18}

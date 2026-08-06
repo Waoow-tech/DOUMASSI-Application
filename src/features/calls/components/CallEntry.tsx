@@ -18,7 +18,7 @@ const COLORS = {
   background: '#1A1A1A',
   text: '#FFFFFF',
   textMuted: '#A0A0A0',
-  iconNormal: '#10D970',
+  iconNormal: '#FFFFFF',
   iconMissed: '#FF3B30',
 };
 

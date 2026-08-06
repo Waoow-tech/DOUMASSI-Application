@@ -23,7 +23,7 @@ import {
 } from '../hooks/useAiConversation';
 import { conversationLabel } from '../lib/conversationLabel';
 
-const ACCENT = '#10D970';
+const ACCENT = '#FFFFFF';
 const DRAWER_WIDTH = Math.min(Dimensions.get('window').width * 0.84, 360);
 
 export interface AiConversationsDrawerProps {

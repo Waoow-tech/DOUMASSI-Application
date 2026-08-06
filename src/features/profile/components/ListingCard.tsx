@@ -27,8 +27,8 @@ interface ListingCardProps {
 
 const BADGE_COLORS: Record<string, { bg: string; text: string }> = {
   offre_speciale: { bg: '#E53935', text: '#FFFFFF' },
-  nouveaute: { bg: '#10D970', text: '#000000' },
-  recommandation: { bg: '#10D970', text: '#000000' },
+  nouveaute: { bg: '#FFFFFF', text: '#000000' },
+  recommandation: { bg: '#FFFFFF', text: '#000000' },
 };
 
 export function ListingCard({ item, size, gap, isLastColumn }: ListingCardProps) {

@@ -330,7 +330,7 @@ export default function QuizCreateScreen() {
               style={styles.importRow}
             >
               <XStack alignItems="center" justifyContent="center" gap={8}>
-                <Sparkles size={16} color="#10D970" />
+                <Sparkles size={16} color="#FFFFFF" />
                 <Text fontSize={13} fontWeight="700" color="$color">
                   {t.cours.quizCreate.importCta}
                 </Text>
@@ -490,10 +490,10 @@ export default function QuizCreateScreen() {
               accessibilityRole="button"
               accessibilityLabel={t.cours.quizCreate.submitA11y}
               accessibilityState={{ disabled: isBusy }}
-              style={[styles.cta, { backgroundColor: isBusy ? '#1A1A1A' : '#10D970' }]}
+              style={[styles.cta, { backgroundColor: isBusy ? '#1A1A1A' : '#FFFFFF' }]}
             >
               {isBusy ? (
-                <ActivityIndicator color="#10D970" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text fontSize={15} fontWeight="800" color="#000000">
                   {t.cours.quizCreate.submitCta}
@@ -535,8 +535,8 @@ const styles = StyleSheet.create({
     borderColor: '#555',
   },
   correctToggleOn: {
-    backgroundColor: '#10D970',
-    borderColor: '#10D970',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
   },
   cta: {
     borderRadius: 9999,

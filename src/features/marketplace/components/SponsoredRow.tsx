@@ -31,7 +31,7 @@ export function SponsoredRow() {
   return (
     <YStack paddingTop={8} paddingBottom={4} gap={8}>
       <XStack alignItems="center" gap={6} paddingHorizontal={16}>
-        <Sparkles size={16} color="#10D970" />
+        <Sparkles size={16} color="#FFFFFF" />
         <Text fontSize={14} fontWeight="800" color="$color">
           {t.marketplace.boost.sponsoredTitle}
         </Text>

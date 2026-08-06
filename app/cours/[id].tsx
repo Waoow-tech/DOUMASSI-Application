@@ -187,8 +187,8 @@ export default function ResourceDetailScreen() {
         >
           <Bookmark
             size={22}
-            color={resource.bookmarked_by_me ? '#10D970' : '#FFFFFF'}
-            fill={resource.bookmarked_by_me ? '#10D970' : 'transparent'}
+            color={resource.bookmarked_by_me ? '#FFFFFF' : '#FFFFFF'}
+            fill={resource.bookmarked_by_me ? '#FFFFFF' : 'transparent'}
             strokeWidth={2.2}
           />
         </Pressable>
@@ -343,7 +343,7 @@ export default function ResourceDetailScreen() {
                     alignItems="center"
                     justifyContent="center"
                   >
-                    <GraduationCap size={20} color="#10D970" />
+                    <GraduationCap size={20} color="#FFFFFF" />
                   </View>
                   <YStack flex={1} minWidth={0}>
                     <Text fontSize={14} fontWeight="700" color="$color" numberOfLines={1}>
@@ -353,7 +353,7 @@ export default function ResourceDetailScreen() {
                       {t.cours.detail.questionCount(quiz.question_count)}
                     </Text>
                   </YStack>
-                  <ChevronRight size={18} color="#10D970" />
+                  <ChevronRight size={18} color="#FFFFFF" />
                 </XStack>
               </Pressable>
             ) : isMine ? (
@@ -374,7 +374,7 @@ export default function ResourceDetailScreen() {
                 style={styles.quizAddCard}
               >
                 <XStack alignItems="center" justifyContent="center" gap={8}>
-                  <GraduationCap size={18} color="#10D970" />
+                  <GraduationCap size={18} color="#FFFFFF" />
                   <Text fontSize={14} fontWeight="700" color="$color">
                     {t.cours.detail.addQuiz}
                   </Text>
@@ -453,7 +453,7 @@ export default function ResourceDetailScreen() {
                   fontSize={14}
                   height={44}
                   borderRadius="$10"
-                  icon={<Coins size={18} color="#10D970" />}
+                  icon={<Coins size={18} color="#FFFFFF" />}
                   pressStyle={{ opacity: 0.8 }}
                 >
                   {t.wallet.tip.cta}
@@ -477,7 +477,7 @@ export default function ResourceDetailScreen() {
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <MessageCircle size={20} color="#10D970" />
+                  <MessageCircle size={20} color="#FFFFFF" />
                 </View>
                 <YStack flex={1} minWidth={0}>
                   <Text fontSize={14} fontWeight="700" color="$color">
@@ -550,11 +550,11 @@ export default function ResourceDetailScreen() {
               accessibilityState={{ disabled: getOrCreateDm.isPending }}
               style={[
                 styles.cta,
-                { backgroundColor: getOrCreateDm.isPending ? '#1A1A1A' : '#10D970' },
+                { backgroundColor: getOrCreateDm.isPending ? '#1A1A1A' : '#FFFFFF' },
               ]}
             >
               {getOrCreateDm.isPending ? (
-                <ActivityIndicator color="#10D970" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text fontSize={15} fontWeight="800" color="#000000">
                   {t.cours.detail.contactAuthor}

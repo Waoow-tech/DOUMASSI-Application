@@ -14,12 +14,12 @@ export const GAME_ENVOL_HTML = `<!DOCTYPE html>
   html,body{margin:0;height:100%;background:#000;color:#fff;font-family:-apple-system,system-ui,Roboto,sans-serif;overflow:hidden;}
   #wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;}
   #hud{width:100%;max-width:440px;text-align:center;font-size:15px;font-weight:800;}
-  #hud span{color:#10D970;}
+  #hud span{color:#FFFFFF;}
   #board{position:relative;width:94vw;max-width:440px;aspect-ratio:.66;background:#0b1622;border-radius:12px;touch-action:none;overflow:hidden;}
   canvas{width:100%;height:100%;display:block;}
   #ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(0,0,0,.55);z-index:2;}
   #ov.hide{display:none;}
-  .btn{background:#10D970;color:#000;font-weight:800;border:none;border-radius:999px;padding:14px 28px;font-size:16px;}
+  .btn{background:#FFFFFF;color:#000;font-weight:800;border:none;border-radius:999px;padding:14px 28px;font-size:16px;}
   #ov p{margin:0;font-size:14px;color:#cfe;}
 </style></head><body>
 <div id="wrap">
@@ -50,7 +50,7 @@ export const GAME_ENVOL_HTML = `<!DOCTYPE html>
   }
   function draw(){
     ctx.clearRect(0,0,W,H);
-    ctx.fillStyle='#10D970';
+    ctx.fillStyle='#FFFFFF';
     for(var i=0;i<pipes.length;i++){var p=pipes[i];ctx.fillRect(p.x,0,42,p.top);ctx.fillRect(p.x,p.top+gap,42,H-p.top-gap);}
     ctx.fillStyle='#FFD54A';ctx.beginPath();ctx.arc(bird.x,bird.y,bird.r,0,7);ctx.fill();
     ctx.fillStyle='#111';ctx.beginPath();ctx.arc(bird.x+bird.r*0.35,bird.y-bird.r*0.2,bird.r*0.2,0,7);ctx.fill();

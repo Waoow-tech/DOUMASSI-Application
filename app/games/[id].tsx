@@ -107,7 +107,7 @@ export default function GamePlayScreen() {
             accessibilityRole="button"
             accessibilityLabel={t.games.play.leaderboardLabel}
           >
-            <Trophy size={22} color="#10D970" />
+            <Trophy size={22} color="#FFFFFF" />
           </Pressable>
         </XStack>
 
@@ -139,7 +139,7 @@ export default function GamePlayScreen() {
           paddingBottom={insets.bottom + 16}
         >
           <XStack alignItems="center" gap={8} marginBottom={12}>
-            <Trophy size={20} color="#10D970" />
+            <Trophy size={20} color="#FFFFFF" />
             <Text fontSize={18} fontWeight="800" color="$color">
               {t.games.play.leaderboardTitle(game.title)}
             </Text>
@@ -169,7 +169,7 @@ export default function GamePlayScreen() {
                     width={26}
                     fontSize={14}
                     fontWeight="800"
-                    color={i < 3 ? '#10D970' : '$textSecondary'}
+                    color={i < 3 ? '#FFFFFF' : '$textSecondary'}
                   >
                     {i + 1}
                   </Text>

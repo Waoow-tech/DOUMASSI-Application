@@ -60,7 +60,7 @@ export function ShopEmptyState({ onCreatePress }: ShopEmptyStateProps = {}) {
 
 const styles = StyleSheet.create({
   cta: {
-    backgroundColor: '#10D970',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 9999,

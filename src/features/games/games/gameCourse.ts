@@ -12,12 +12,12 @@ export const GAME_COURSE_HTML = `<!DOCTYPE html>
   html,body{margin:0;height:100%;background:#000;color:#fff;font-family:-apple-system,system-ui,Roboto,sans-serif;overflow:hidden;}
   #wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;}
   #hud{width:100%;max-width:440px;text-align:center;font-size:15px;font-weight:800;}
-  #hud span{color:#10D970;}
+  #hud span{color:#FFFFFF;}
   #board{position:relative;width:94vw;max-width:440px;aspect-ratio:.6;background:#20232a;border-radius:12px;touch-action:none;overflow:hidden;}
   canvas{width:100%;height:100%;display:block;}
   #ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(0,0,0,.6);}
   #ov.hide{display:none;}
-  .btn{background:#10D970;color:#000;font-weight:800;border:none;border-radius:999px;padding:12px 22px;font-size:15px;}
+  .btn{background:#FFFFFF;color:#000;font-weight:800;border:none;border-radius:999px;padding:12px 22px;font-size:15px;}
   #ov p{margin:0;font-size:14px;color:#cfe;}
 </style></head><body>
 <div id="wrap">
@@ -53,7 +53,7 @@ export const GAME_COURSE_HTML = `<!DOCTYPE html>
     for(var i=1;i<LANES;i++){ctx.beginPath();ctx.moveTo(i*(W/LANES),0);ctx.lineTo(i*(W/LANES),H);ctx.stroke();}
     ctx.setLineDash([]);
     for(var j=0;j<traffic.length;j++)car(traffic[j].x,traffic[j].y,traffic[j].c);
-    car(player.x,player.y,'#10D970');
+    car(player.x,player.y,'#FFFFFF');
   }
   function over(){dead=true;document.getElementById('t').textContent='Crash !';document.getElementById('msg').textContent='Distance : '+(score|0)+' m';document.getElementById('go').textContent='Rejouer';ov.classList.remove('hide');try{window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'score',value:score|0}));}catch(e){}}
   var sx=null;

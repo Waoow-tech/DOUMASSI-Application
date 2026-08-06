@@ -21,7 +21,7 @@ export interface ChatBubble {
   images: MessageImage[];
 }
 
-const ACCENT = '#10D970';
+const ACCENT = '#FFFFFF';
 
 function MessageBubbleBase({ message }: { message: ChatBubble }) {
   const t = useTranslations();

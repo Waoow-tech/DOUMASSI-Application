@@ -45,8 +45,8 @@ import { supabase } from '@/lib/supabase';
 
 const BADGE_COLORS: Record<string, { bg: string; text: string }> = {
   offre_speciale: { bg: '#E53935', text: '#FFFFFF' },
-  nouveaute: { bg: '#10D970', text: '#000000' },
-  recommandation: { bg: '#10D970', text: '#000000' },
+  nouveaute: { bg: '#FFFFFF', text: '#000000' },
+  recommandation: { bg: '#FFFFFF', text: '#000000' },
 };
 
 function formatPrice(cents: number, currency: string): string {
@@ -257,8 +257,8 @@ export default function ListingDetailScreen() {
         >
           <Bookmark
             size={22}
-            color={listing.bookmarked_by_me ? '#10D970' : '#FFFFFF'}
-            fill={listing.bookmarked_by_me ? '#10D970' : 'transparent'}
+            color={listing.bookmarked_by_me ? '#FFFFFF' : '#FFFFFF'}
+            fill={listing.bookmarked_by_me ? '#FFFFFF' : 'transparent'}
             strokeWidth={2.2}
           />
         </Pressable>
@@ -474,10 +474,10 @@ export default function ListingDetailScreen() {
               accessibilityRole="button"
               accessibilityLabel={t.marketplace.boost.cta}
               accessibilityState={{ disabled: boost.isPending }}
-              style={[styles.cta, { backgroundColor: boost.isPending ? '#1A1A1A' : '#10D970' }]}
+              style={[styles.cta, { backgroundColor: boost.isPending ? '#1A1A1A' : '#FFFFFF' }]}
             >
               {boost.isPending ? (
-                <ActivityIndicator color="#10D970" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <XStack alignItems="center" gap={8}>
                   <Rocket size={18} color="#000000" />
@@ -497,11 +497,11 @@ export default function ListingDetailScreen() {
               accessibilityState={{ disabled: getOrCreateDm.isPending }}
               style={[
                 styles.cta,
-                { backgroundColor: getOrCreateDm.isPending ? '#1A1A1A' : '#10D970' },
+                { backgroundColor: getOrCreateDm.isPending ? '#1A1A1A' : '#FFFFFF' },
               ]}
             >
               {getOrCreateDm.isPending ? (
-                <ActivityIndicator color="#10D970" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text fontSize={15} fontWeight="800" color="#000000">
                   {t.marketplace.detail.contactSellerCta}

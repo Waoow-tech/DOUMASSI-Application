@@ -228,11 +228,11 @@ export function MessageInput({
           paddingVertical="$2"
           gap="$3"
           alignItems="center"
-          backgroundColor="rgba(16,217,112,0.10)"
+          backgroundColor="rgba(255,255,255,0.10)"
           borderTopWidth={StyleSheet.hairlineWidth}
           borderTopColor="$borderColor"
         >
-          <CornerUpLeft size={16} color="#10D970" />
+          <CornerUpLeft size={16} color="#FFFFFF" />
           <YStack flex={1} minWidth={0}>
             <Text fontSize={12} color="$accentNeon" fontWeight="700">
               {t.messaging.input.replyingTo(replyingTo.authorLabel)}
@@ -302,7 +302,7 @@ export function MessageInput({
             accessibilityState={{ disabled: isAttaching || disabled }}
           >
             {isAttaching ? (
-              <ActivityIndicator size="small" color="#10D970" />
+              <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <Plus size={22} color="#FFFFFF" />
             )}
@@ -340,7 +340,7 @@ export function MessageInput({
                   ? '#FF3B30'
                   : isSendingVoice || disabled
                     ? '#2A2A2A'
-                    : '#10D970',
+                    : '#FFFFFF',
               },
             ]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -367,7 +367,7 @@ export function MessageInput({
             disabled={!canSend || disabled}
             style={[
               styles.sendButton,
-              { backgroundColor: canSend && !disabled ? '#10D970' : '#2A2A2A' },
+              { backgroundColor: canSend && !disabled ? '#FFFFFF' : '#2A2A2A' },
             ]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
