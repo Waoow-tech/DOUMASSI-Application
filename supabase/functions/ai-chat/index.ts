@@ -274,6 +274,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // -------------------------------------------------------------------------
   // Appel au fournisseur, en streaming
   // -------------------------------------------------------------------------
+  const requestBody: Record<string, unknown> = { model: requestModel, messages, stream: true };
+
+  // Le modèle Vision (Qwen) est aussi un modèle de RAISONNEMENT : par défaut il
+  // streame son « thinking » avant la réponse, ce qui pollue le chat. On demande
+  // à Groq de MASQUER ce bloc pour ne renvoyer que la réponse finale.
+  // Appliqué seulement quand on a basculé sur le modèle vision/raisonnement
+  // (requestModel != model) — le modèle texte, lui, n'est pas concerné.
+  // NB : le Mode Reflection (E5-13) voudra au contraire AFFICHER ce bloc — ce
+  // sera un choix explicite là-bas, pas ici.
+  if (requestModel !== model) {
+    requestBody.reasoning_format = 'hidden';
+  }
+
   let upstream: Response;
   try {
     upstream = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
@@ -282,7 +295,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${apiKey}`,
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ model: requestModel, messages, stream: true }),
+      body: JSON.stringify(requestBody),
     });
   } catch {
     return json({ error: 'AI provider unreachable' }, 502);
