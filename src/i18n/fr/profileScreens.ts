@@ -133,6 +133,22 @@ export const profileScreensFr = {
     blockErrorMessage: 'Impossible de bloquer cet utilisateur. Réessaie.',
     report: 'Signaler',
     reportMessage: 'La fonction de signalement arrive bientôt.',
+    // Signalement de profil — Sécu B2
+    reportSheet: {
+      title: 'Signaler ce profil',
+      reasons: {
+        inapproprie: 'Contenu inapproprié',
+        harcelement: 'Harcèlement ou intimidation',
+        spam: 'Spam ou arnaque',
+        faux_profil: 'Faux profil / usurpation',
+        autre: 'Autre',
+      },
+      successTitle: 'Merci',
+      successMessage: 'Ton signalement a été transmis à la modération.',
+      errorTitle: 'Signalement impossible',
+      errorOwn: 'Tu ne peux pas signaler ton propre profil.',
+      errorGeneric: 'Une erreur est survenue. Réessaie.',
+    },
     shareMessage: (username: string) =>
       `Découvre le profil de @${username} sur DOUMASSI ! 🚀\nhttps://doumassi.app/u/${username}`,
     messageButton: 'Message',

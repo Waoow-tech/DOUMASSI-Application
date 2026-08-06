@@ -24,6 +24,7 @@ import { ListingCard } from '@/features/profile/components/ListingCard';
 import { ProfileEmptyState } from '@/features/profile/components/ProfileEmptyState';
 import { ProfileGridItem } from '@/features/profile/components/ProfileGridItem';
 import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
+import { ProfileReportSheet } from '@/features/profile/components/ProfileReportSheet';
 import { ProfileSkeleton } from '@/features/profile/components/ProfileSkeleton';
 import { ProfileStats } from '@/features/profile/components/ProfileStats';
 import { ProfileTabs, type ProfileTab } from '@/features/profile/components/ProfileTabs';
@@ -33,6 +34,10 @@ import { useBlock } from '@/features/profile/hooks/useBlock';
 import { useFollow } from '@/features/profile/hooks/useFollow';
 import { useListings, type ListingItem } from '@/features/profile/hooks/useListings';
 import { useUserProfile, type PostGridItem } from '@/features/profile/hooks/useProfile';
+import {
+  useReportProfile,
+  type ProfileReportReason,
+} from '@/features/profile/hooks/useReportProfile';
 import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
@@ -68,6 +73,8 @@ export default function OtherUserProfileScreen() {
   const [isUnfollowModalOpen, setIsUnfollowModalOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [blockChecked, setBlockChecked] = useState(false);
+  const [isReportSheetOpen, setIsReportSheetOpen] = useState(false);
+  const reportProfile = useReportProfile();
 
   // --- Vérification de blocage au mount ---
   useEffect(() => {
@@ -203,10 +210,30 @@ export default function OtherUserProfileScreen() {
 
   const handleReport = useCallback(() => {
     setIsMenuOpen(false);
-    // TODO: Implémenter le report (Sprint futur)
-    const t = getT();
-    Alert.alert(t.profileScreens.otherProfile.report, t.profileScreens.otherProfile.reportMessage);
+    setIsReportSheetOpen(true);
   }, []);
+
+  const handleSelectReportReason = useCallback(
+    (reason: ProfileReportReason) => {
+      setIsReportSheetOpen(false);
+      if (!targetUserId) return;
+      reportProfile.mutate(
+        { userId: targetUserId, reason },
+        {
+          onSuccess: () => {
+            const tt = getT().profileScreens.otherProfile.reportSheet;
+            Alert.alert(tt.successTitle, tt.successMessage);
+          },
+          onError: (err) => {
+            const tt = getT().profileScreens.otherProfile.reportSheet;
+            const own = err.message?.toLowerCase().includes('propre profil');
+            Alert.alert(tt.errorTitle, own ? tt.errorOwn : tt.errorGeneric);
+          },
+        }
+      );
+    },
+    [targetUserId, reportProfile]
+  );
 
   const handleFollowers = useCallback(() => {
     if (targetUserId) router.push(`/profile/${targetUserId}/followers`);
@@ -508,6 +535,13 @@ export default function OtherUserProfileScreen() {
         onOpenChange={setShareSheetOpen}
         onShareOutside={() => void handleShareProfileOutside()}
         onShareInside={handleShareProfileInside}
+      />
+
+      <ProfileReportSheet
+        open={isReportSheetOpen}
+        onOpenChange={setIsReportSheetOpen}
+        onSelect={handleSelectReportReason}
+        disabled={reportProfile.isPending}
       />
 
       {/* Toast "User blocked" — E3-09 */}

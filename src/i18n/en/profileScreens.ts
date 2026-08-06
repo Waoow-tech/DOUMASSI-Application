@@ -127,6 +127,21 @@ export const profileScreensEn: ProfileScreensTranslations = {
     blockErrorMessage: 'Could not block this user. Please try again.',
     report: 'Report',
     reportMessage: 'Report feature coming soon.',
+    reportSheet: {
+      title: 'Report this profile',
+      reasons: {
+        inapproprie: 'Inappropriate content',
+        harcelement: 'Harassment or bullying',
+        spam: 'Spam or scam',
+        faux_profil: 'Fake profile / impersonation',
+        autre: 'Other',
+      },
+      successTitle: 'Thank you',
+      successMessage: 'Your report has been sent to moderation.',
+      errorTitle: 'Report failed',
+      errorOwn: 'You cannot report your own profile.',
+      errorGeneric: 'Something went wrong. Please try again.',
+    },
     shareMessage: (username: string) =>
       `Check out @${username}’s profile on DOUMASSI! 🚀\nhttps://doumassi.app/u/${username}`,
     messageButton: 'Message',
