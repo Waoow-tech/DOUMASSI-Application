@@ -274,7 +274,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // -------------------------------------------------------------------------
   // Appel au fournisseur, en streaming
   // -------------------------------------------------------------------------
-  const requestBody: Record<string, unknown> = { model: requestModel, messages, stream: true };
+  const requestBody: Record<string, unknown> = {
+    model: requestModel,
+    messages,
+    stream: true,
+    // Demande à Groq/OpenAI d'inclure le décompte de tokens dans le DERNIER
+    // chunk du flux (chunk à `choices: []` + `usage: {...}`). C'est la base du
+    // monitoring des coûts (E1-15) : sans ça, aucun token n'est mesuré.
+    stream_options: { include_usage: true },
+  };
 
   // Le modèle Vision (Qwen) est aussi un modèle de RAISONNEMENT : par défaut il
   // streame son « thinking » avant la réponse, ce qui pollue le chat. On demande
@@ -320,6 +328,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const reader = upstream.body!.getReader();
       let buffer = '';
       let fullText = '';
+      // Décompte de tokens (E1-15). Rempli par le chunk final `usage`.
+      let promptTokens = 0;
+      let completionTokens = 0;
 
       const send = (payload: unknown) =>
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
@@ -351,6 +362,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
                 fullText += delta;
                 send({ delta });
               }
+              // Chunk d'usage (E1-15) : arrive en fin de flux, choices vide.
+              if (parsed?.usage) {
+                promptTokens = parsed.usage.prompt_tokens ?? promptTokens;
+                completionTokens = parsed.usage.completion_tokens ?? completionTokens;
+              }
             } catch {
               // Fragment non-JSON (commentaire de keep-alive, ligne vide) :
               // on l'ignore plutôt que d'interrompre le flux.
@@ -359,15 +375,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
         }
 
         // Persistance de la réponse complète. Faite APRÈS le flux : on ne peut
-        // pas écrire un message qu'on n'a pas fini de recevoir.
+        // pas écrire un message qu'on n'a pas fini de recevoir. On y joint le
+        // décompte de tokens (E1-15) pour un suivi de coût par message.
         if (fullText.length > 0) {
           const { error } = await adminClient.from('ai_messages').insert({
             conversation_id: conversationId,
             role: 'assistant',
             content: fullText,
-            model_used: model,
+            model_used: requestModel,
+            tokens_input: promptTokens,
+            tokens_output: completionTokens,
           });
           if (error) console.error('ai_assistant_persist_failed', error.message);
+        }
+
+        // Monitoring des coûts (E1-15) : on cumule les tokens du jour pour cet
+        // user via la RPC (qui écrit dans ai_rate_limits.tokens_used). Best
+        // effort — un échec ici ne doit pas casser la réponse déjà streamée.
+        const totalTokens = promptTokens + completionTokens;
+        if (totalTokens > 0) {
+          const { error } = await userClient.rpc('ai_record_tokens', { p_tokens: totalTokens });
+          if (error) console.error('ai_record_tokens_failed', error.message);
         }
 
         send({ done: true });
