@@ -68,6 +68,10 @@ async function createDailyRoom(apiKey: string): Promise<DailyRoom> {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
+      // privacy=private : un meeting TOKEN est OBLIGATOIRE pour rejoindre.
+      // Sans ça (room publique par défaut), n'importe qui avec l'URL entre —
+      // c'était le trou de sécurité pré-durcissement (cf. join-daily-call).
+      privacy: 'private',
       properties: {
         exp: expiresAt,
         enable_chat: false,
