@@ -27,7 +27,7 @@ const HIT_SLOP = { top: 10, right: 10, bottom: 10, left: 10 };
 
 // Icône + couleur d'accent par type de ressource.
 const TYPE_VISUAL: Record<ResourceType, { Icon: LucideIcon; color: string; bg: string }> = {
-  cours: { Icon: BookOpen, color: '#10D970', bg: '#12291D' },
+  cours: { Icon: BookOpen, color: '#FFFFFF', bg: '#12291D' },
   fiche_revision: { Icon: FileText, color: '#3B82F6', bg: '#12203A' },
   exercices: { Icon: PenLine, color: '#F59E0B', bg: '#2E2410' },
   annale: { Icon: ScrollText, color: '#EC4899', bg: '#2E1522' },
@@ -149,8 +149,8 @@ function ResourceCardComponent({
         >
           <Bookmark
             size={20}
-            color={resource.bookmarked_by_me ? '#10D970' : '#A0A0A0'}
-            fill={resource.bookmarked_by_me ? '#10D970' : 'transparent'}
+            color={resource.bookmarked_by_me ? '#FFFFFF' : '#A0A0A0'}
+            fill={resource.bookmarked_by_me ? '#FFFFFF' : 'transparent'}
             strokeWidth={2.1}
           />
         </Pressable>

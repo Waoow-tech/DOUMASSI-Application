@@ -27,7 +27,7 @@ import type { MessageRow } from '../hooks/useConversationMessages';
 import { VoiceMessage } from './VoiceMessage';
 
 const COLORS = {
-  myBubble: '#10D970', // accent neon
+  myBubble: '#FFFFFF', // accent neon
   myText: '#000000',
   otherBubble: '#1A1A1A',
   otherText: '#FFFFFF',
@@ -179,13 +179,13 @@ function MessageBubbleComponent({
                   styles.replyEmbed,
                   {
                     backgroundColor: isMine ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.06)',
-                    borderLeftColor: isMine ? '#000000' : '#10D970',
+                    borderLeftColor: isMine ? '#000000' : '#FFFFFF',
                   },
                 ]}
               >
                 <XStack alignItems="center" gap={6}>
-                  <CornerUpLeft size={12} color={isMine ? '#000000' : '#10D970'} />
-                  <Text fontSize={12} fontWeight="700" color={isMine ? COLORS.myText : '#10D970'}>
+                  <CornerUpLeft size={12} color={isMine ? '#000000' : '#FFFFFF'} />
+                  <Text fontSize={12} fontWeight="700" color={isMine ? COLORS.myText : '#FFFFFF'}>
                     {replyParent.authorLabel}
                   </Text>
                 </XStack>
@@ -236,7 +236,7 @@ function MessageBubbleComponent({
                         : undefined
                     }
                     textColor={isMine ? COLORS.myText : COLORS.otherText}
-                    iconColor={isMine ? COLORS.myText : '#10D970'}
+                    iconColor={isMine ? COLORS.myText : '#FFFFFF'}
                   />
                 ) : null}
                 {message.attachment_type !== 'voice' && message.content ? (
@@ -247,7 +247,7 @@ function MessageBubbleComponent({
                       lineHeight: 20,
                       color: isMine ? COLORS.myText : COLORS.otherText,
                     }}
-                    mentionColor={isMine ? COLORS.myText : '#10D970'}
+                    mentionColor={isMine ? COLORS.myText : '#FFFFFF'}
                     mentionUnderline={isMine}
                   />
                 ) : null}

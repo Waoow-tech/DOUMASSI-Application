@@ -94,7 +94,7 @@ export function QuickFiltersBar({
             width={10}
             height={10}
             borderRadius={5}
-            backgroundColor="#10D970"
+            backgroundColor="#FFFFFF"
           />
         ) : null}
       </Pressable>
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   advancedButtonActive: {
-    backgroundColor: '#10D970',
+    backgroundColor: '#FFFFFF',
   },
   pill: {
     flexDirection: 'row',

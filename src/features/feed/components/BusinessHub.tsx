@@ -61,7 +61,7 @@ const CATEGORIES: CategoryDef[] = [
     id: 'marketplace',
     Icon: ShoppingBag,
     bgColor: '#1F1F1F',
-    accentColor: '#10D970',
+    accentColor: '#FFFFFF',
     href: '/shop',
   },
   {

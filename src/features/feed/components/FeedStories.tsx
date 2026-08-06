@@ -47,7 +47,7 @@ export function FeedStories({ stories, onStoryPress }: FeedStoriesProps) {
             height={72}
             borderRadius={9999}
             padding={story.hasUnseenStory ? 2 : 0}
-            backgroundColor={story.hasUnseenStory ? '#10D970' : 'transparent'}
+            backgroundColor={story.hasUnseenStory ? '#FFFFFF' : 'transparent'}
             alignItems="center"
             justifyContent="center"
           >

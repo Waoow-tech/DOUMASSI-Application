@@ -557,7 +557,7 @@ export function ConversationScreen() {
             {header?.display_name ?? '...'}
           </Text>
           {header?.display_is_verified ? (
-            <CheckCircle2 size={14} color="#10D970" fill="#10D970" />
+            <CheckCircle2 size={14} color="#FFFFFF" fill="#FFFFFF" />
           ) : null}
         </XStack>
 
@@ -576,7 +576,7 @@ export function ConversationScreen() {
               accessibilityState={{ disabled: startCall.isPending }}
             >
               {startCall.isPending && startCall.variables?.callType === 'audio' ? (
-                <ActivityIndicator color="#10D970" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Phone size={22} color="#FFFFFF" />
               )}
@@ -593,7 +593,7 @@ export function ConversationScreen() {
               accessibilityState={{ disabled: startCall.isPending }}
             >
               {startCall.isPending && startCall.variables?.callType === 'video' ? (
-                <ActivityIndicator color="#10D970" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Video size={22} color="#FFFFFF" />
               )}
@@ -641,8 +641,8 @@ export function ConversationScreen() {
                 <RefreshControl
                   refreshing={isManualRefreshing}
                   onRefresh={() => void handlePullToRefresh()}
-                  tintColor="#10D970"
-                  colors={['#10D970']}
+                  tintColor="#FFFFFF"
+                  colors={['#FFFFFF']}
                 />
               }
               ListFooterComponent={

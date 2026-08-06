@@ -16,7 +16,7 @@ const TIER_STYLE: Record<
 > = {
   contributeur: { bg: '#1A1A1A', color: '#A0A0A0', Icon: Star },
   confirme: { bg: '#12203A', color: '#3B82F6', Icon: Award },
-  expert: { bg: '#12291D', color: '#10D970', Icon: Sparkles },
+  expert: { bg: '#12291D', color: '#FFFFFF', Icon: Sparkles },
 };
 
 export interface ReputationBadgeProps {

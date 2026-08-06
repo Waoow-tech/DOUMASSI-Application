@@ -11,24 +11,24 @@ export const GAME_MEMORY_HTML = `<!DOCTYPE html>
   html,body{margin:0;height:100%;background:#000;color:#fff;font-family:-apple-system,system-ui,Roboto,sans-serif;overflow:hidden;}
   #wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;}
   #hud{width:100%;max-width:420px;display:flex;justify-content:space-between;font-size:15px;font-weight:800;}
-  #hud span{color:#10D970;}
+  #hud span{color:#FFFFFF;}
   #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:92vw;max-width:400px;aspect-ratio:1;}
   .card{position:relative;border-radius:10px;cursor:pointer;}
   .inner{position:absolute;inset:0;border-radius:10px;transition:transform .3s;transform-style:preserve-3d;}
   .card.flip .inner{transform:rotateY(180deg);}
   .face{position:absolute;inset:0;border-radius:10px;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;font-size:30px;}
   .back{background:#1A1A1A;border:2px solid #262626;}
-  .front{background:#12291D;border:2px solid #10D970;transform:rotateY(180deg);}
+  .front{background:#12291D;border:2px solid #FFFFFF;transform:rotateY(180deg);}
   .card.done .inner{opacity:.35;}
   #win{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
   #win.show{display:flex;}
-  .btn{background:#10D970;color:#000;font-weight:800;border:none;border-radius:999px;padding:12px 22px;font-size:15px;}
+  .btn{background:#FFFFFF;color:#000;font-weight:800;border:none;border-radius:999px;padding:12px 22px;font-size:15px;}
 </style></head><body>
 <div id="wrap">
   <div id="hud"><div>Coups <span id="m">0</span></div><div style="color:#A0A0A0;font-weight:600;">Paires <b id="p">0</b>/8</div></div>
   <div id="grid"></div>
 </div>
-<div id="win"><h2 style="margin:0;">Bravo !</h2><div id="ws" style="color:#10D970;font-size:22px;font-weight:900;"></div><button class="btn" id="again">Rejouer</button></div>
+<div id="win"><h2 style="margin:0;">Bravo !</h2><div id="ws" style="color:#FFFFFF;font-size:22px;font-weight:900;"></div><button class="btn" id="again">Rejouer</button></div>
 <script>(function(){
   var EMO=['🍎','🚀','⚽','🎸','🐱','🌙','⭐','🔥'];
   var grid=document.getElementById('grid'),moves=0,pairs=0,first=null,lock=false;

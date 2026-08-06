@@ -280,7 +280,7 @@ export default function CallScreen() {
         </Text>
         {status === 'connecting' ? (
           <XStack alignItems="center" gap={8} marginTop={2}>
-            <ActivityIndicator size="small" color="#10D970" />
+            <ActivityIndicator size="small" color="#FFFFFF" />
             <Text color="#A0A0A0" fontSize={12}>
               {t.messaging.calls.active.connectingToRoom}
             </Text>

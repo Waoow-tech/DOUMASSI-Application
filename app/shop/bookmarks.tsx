@@ -189,8 +189,8 @@ export default function BookmarksScreen() {
                 <RefreshControl
                   refreshing={isManualRefreshing}
                   onRefresh={() => void handlePullToRefresh()}
-                  tintColor="#10D970"
-                  colors={['#10D970']}
+                  tintColor="#FFFFFF"
+                  colors={['#FFFFFF']}
                 />
               }
               ListFooterComponent={
@@ -211,7 +211,7 @@ export default function BookmarksScreen() {
 const styles = StyleSheet.create({
   cta: {
     marginTop: 8,
-    backgroundColor: '#10D970',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 9999,

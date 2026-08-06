@@ -27,7 +27,7 @@ export const fr = {
   },
   auth: {
     welcome: {
-      tagline: 'La super-app française.',
+      tagline: 'Réseau social, IA, marketplace. Une seule application.',
       signIn: 'Se connecter',
       createAccount: 'Créer un compte',
     },

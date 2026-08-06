@@ -27,8 +27,8 @@ const HIT_SLOP = { top: 12, right: 12, bottom: 12, left: 12 };
 
 const BADGE_COLORS: Record<NonNullable<ListingCardData['badge']>, { bg: string; text: string }> = {
   offre_speciale: { bg: '#E53935', text: '#FFFFFF' }, // rouge contrast ~5.6:1 sur blanc
-  nouveaute: { bg: '#10D970', text: '#000000' }, // accent neon + texte noir
-  recommandation: { bg: '#10D970', text: '#000000' },
+  nouveaute: { bg: '#FFFFFF', text: '#000000' }, // accent neon + texte noir
+  recommandation: { bg: '#FFFFFF', text: '#000000' },
 };
 
 function formatPriceFromCents(cents: number, currency: string): string {
@@ -168,8 +168,8 @@ function ListingCardComponent({
         >
           <Bookmark
             size={20}
-            color={listing.bookmarked_by_me ? '#10D970' : '#FFFFFF'}
-            fill={listing.bookmarked_by_me ? '#10D970' : 'transparent'}
+            color={listing.bookmarked_by_me ? '#FFFFFF' : '#FFFFFF'}
+            fill={listing.bookmarked_by_me ? '#FFFFFF' : 'transparent'}
             strokeWidth={2.2}
           />
         </Pressable>
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   cta: {
     marginTop: 6,
-    backgroundColor: '#10D970',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 9999,

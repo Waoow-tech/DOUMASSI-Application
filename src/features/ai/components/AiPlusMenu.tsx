@@ -13,7 +13,7 @@ import { Sheet, Text, XStack } from 'tamagui';
 
 import { useTranslations } from '@/i18n';
 
-const ACCENT = '#10D970';
+const ACCENT = '#FFFFFF';
 
 export interface AiPlusMenuProps {
   open: boolean;

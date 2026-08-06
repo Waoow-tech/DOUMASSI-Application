@@ -317,8 +317,8 @@ export default function MarketplaceGridScreen() {
                 <RefreshControl
                   refreshing={isManualRefreshing}
                   onRefresh={() => void handlePullToRefresh()}
-                  tintColor="#10D970"
-                  colors={['#10D970']}
+                  tintColor="#FFFFFF"
+                  colors={['#FFFFFF']}
                 />
               }
               ListFooterComponent={
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#10D970',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },

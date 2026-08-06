@@ -254,7 +254,7 @@ export default function InternalShareRoute() {
             alignItems="center"
             gap="$2"
           >
-            <CheckCircle2 size={16} color="#10D970" />
+            <CheckCircle2 size={16} color="#FFFFFF" />
             <Text color="$color" fontSize={13} fontWeight="700">
               {toast.message}
             </Text>
