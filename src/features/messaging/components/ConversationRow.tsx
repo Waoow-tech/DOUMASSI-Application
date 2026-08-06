@@ -106,7 +106,7 @@ export function ConversationRow({
                 height={22}
                 paddingHorizontal={6}
                 borderRadius={9999}
-                backgroundColor="#10D970"
+                backgroundColor="#FFFFFF"
                 alignItems="center"
                 justifyContent="center"
               >

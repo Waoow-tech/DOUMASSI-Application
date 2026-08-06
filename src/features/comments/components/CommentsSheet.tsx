@@ -262,7 +262,7 @@ export function CommentsSheet({ postId, open, onOpenChange }: CommentsSheetProps
                 padding={0}
                 alignItems="center"
                 justifyContent="center"
-                backgroundColor={trimmedContent ? '#10D970' : '$surfaceElevated'}
+                backgroundColor={trimmedContent ? '#FFFFFF' : '$surfaceElevated'}
                 disabled={!trimmedContent || createComment.isPending}
                 onPress={() => void handleSend()}
                 pressStyle={{ opacity: 0.86, scale: 0.98 }}

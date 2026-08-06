@@ -22,7 +22,7 @@ import { logger } from '@/lib/logger';
 // Constantes
 // ---------------------------------------------------------------------------
 
-const BRAND_GREEN = '#10D970';
+const BRAND_GREEN = '#FFFFFF';
 const MAX_VIDEO_SECS = 15;
 
 type CameraMode = 'image' | 'video';

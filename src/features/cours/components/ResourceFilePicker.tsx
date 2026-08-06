@@ -87,7 +87,7 @@ export function ResourceFilePicker({
               alignItems="center"
               justifyContent="center"
             >
-              <Icon size={18} color="#10D970" strokeWidth={2} />
+              <Icon size={18} color="#FFFFFF" strokeWidth={2} />
             </View>
             <Text flex={1} fontSize={13} color="$color" numberOfLines={1}>
               {f.name ?? t.cours.filePicker.fileFallback(i + 1)}

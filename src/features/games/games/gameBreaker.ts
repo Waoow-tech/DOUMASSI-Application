@@ -11,12 +11,12 @@ export const GAME_BREAKER_HTML = `<!DOCTYPE html>
   html,body{margin:0;height:100%;background:#000;color:#fff;font-family:-apple-system,system-ui,Roboto,sans-serif;overflow:hidden;}
   #wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;}
   #hud{width:100%;max-width:440px;display:flex;justify-content:space-between;font-size:15px;font-weight:800;}
-  #hud span{color:#10D970;}
+  #hud span{color:#FFFFFF;}
   #board{position:relative;width:94vw;max-width:440px;aspect-ratio:.72;background:#111;border-radius:12px;touch-action:none;}
   canvas{width:100%;height:100%;border-radius:12px;display:block;}
   #over{position:absolute;inset:0;background:rgba(0,0,0,.82);border-radius:12px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
   #over.show{display:flex;}
-  .btn{background:#10D970;color:#000;font-weight:800;border:none;border-radius:999px;padding:12px 22px;font-size:15px;}
+  .btn{background:#FFFFFF;color:#000;font-weight:800;border:none;border-radius:999px;padding:12px 22px;font-size:15px;}
   #hint{font-size:12px;color:#666;}
 </style></head><body>
 <div id="wrap">
@@ -37,7 +37,7 @@ export const GAME_BREAKER_HTML = `<!DOCTYPE html>
     document.getElementById('over').classList.remove('show');
     pad={w:W*0.24,h:12,x:W/2};
     ball={x:W/2,y:H-40,r:8,vx:0,vy:0};
-    bricks=[];for(var r=0;r<ROWS;r++)for(var col=0;col<COLS;col++)bricks.push({x:10+col*bw,y:50+r*(bh+6),alive:true,c:['#10D970','#3B82F6','#8B5CF6','#F59E0B','#EC4899'][r]});
+    bricks=[];for(var r=0;r<ROWS;r++)for(var col=0;col<COLS;col++)bricks.push({x:10+col*bw,y:50+r*(bh+6),alive:true,c:['#FFFFFF','#3B82F6','#8B5CF6','#F59E0B','#EC4899'][r]});
     draw();
   }
   function launch(){if(started)return;started=true;ball.vx=(Math.random()<.5?-1:1)*4;ball.vy=-5;loop();}
@@ -54,7 +54,7 @@ export const GAME_BREAKER_HTML = `<!DOCTYPE html>
     ctx.clearRect(0,0,W,H);
     for(var i=0;i<bricks.length;i++){var b=bricks[i];if(!b.alive)continue;ctx.fillStyle=b.c;rr(b.x,b.y,bw-4,bh,4);}
     ctx.fillStyle='#fff';rr(pad.x-pad.w/2,H-18-pad.h,pad.w,pad.h,6);
-    ctx.fillStyle='#10D970';ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,7);ctx.fill();
+    ctx.fillStyle='#FFFFFF';ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,7);ctx.fill();
   }
   function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.fill();}
   function over(t){dead=true;document.getElementById('ot').textContent=t;document.getElementById('over').classList.add('show');try{window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'score',value:score}));}catch(e){}}

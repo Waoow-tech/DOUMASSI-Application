@@ -30,7 +30,7 @@ import { aiErrorMessage, mergeMessages, useAiChat } from '@/features/ai/hooks/us
 import { useAiMessages } from '@/features/ai/hooks/useAiConversation';
 import { useTranslations } from '@/i18n';
 
-const ACCENT = '#10D970';
+const ACCENT = '#FFFFFF';
 const MAX_INPUT_LENGTH = 4000;
 
 export default function StudioAIRoute() {
@@ -134,7 +134,7 @@ export default function StudioAIRoute() {
           gap={10}
           paddingHorizontal={16}
           paddingVertical={8}
-          backgroundColor="rgba(16,217,112,0.12)"
+          backgroundColor="rgba(255,255,255,0.12)"
         >
           <GraduationCap size={16} color={ACCENT} />
           <YStack flex={1}>

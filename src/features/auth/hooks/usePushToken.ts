@@ -47,7 +47,7 @@ async function registerPushToken(userId: string): Promise<void> {
       name: 'DOUMASSI',
       importance: Notifications.AndroidImportance.DEFAULT,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#10D970',
+      lightColor: '#FFFFFF',
     });
   }
 

@@ -286,7 +286,7 @@ export function AdvancedFiltersSheet({
             fontSize={15}
             fontWeight="800"
             color="#000000"
-            backgroundColor="#10D970"
+            backgroundColor="#FFFFFF"
             paddingVertical={14}
             textAlign="center"
             borderRadius={9999}

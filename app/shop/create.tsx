@@ -441,10 +441,10 @@ export default function CreateListingScreen() {
               accessibilityRole="button"
               accessibilityLabel={t.marketplace.create.submitA11y}
               accessibilityState={{ disabled: isBusy }}
-              style={[styles.cta, { backgroundColor: isBusy ? '#1A1A1A' : '#10D970' }]}
+              style={[styles.cta, { backgroundColor: isBusy ? '#1A1A1A' : '#FFFFFF' }]}
             >
               {isBusy ? (
-                <ActivityIndicator color="#10D970" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text fontSize={15} fontWeight="800" color="#000000">
                   {t.marketplace.create.submitCta}
@@ -476,7 +476,7 @@ function Section({
           {title}
         </Text>
         {required ? (
-          <Text fontSize={12} color="#10D970" fontWeight="700">
+          <Text fontSize={12} color="#FFFFFF" fontWeight="700">
             *
           </Text>
         ) : null}

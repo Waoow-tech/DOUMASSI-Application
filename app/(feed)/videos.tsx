@@ -260,7 +260,7 @@ export default function VideoFeedRoute() {
             {t.feed.postDetail.errorTitle}
           </Text>
           <Pressable onPress={handleClose} hitSlop={HIT_SLOP} accessibilityRole="button">
-            <Text color="#10D970" fontSize={15} fontWeight="700">
+            <Text color="#FFFFFF" fontSize={15} fontWeight="700">
               {t.feed.postDetail.back}
             </Text>
           </Pressable>

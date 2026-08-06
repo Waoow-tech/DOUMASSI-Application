@@ -483,8 +483,8 @@ export const PostCard = memo(function PostCard({
               <Animated.View style={{ transform: [{ rotate: bookmarkRotation }] }}>
                 <Bookmark
                   size={22}
-                  color={post.bookmarked_by_me ? '#10D970' : '#FFFFFF'}
-                  fill={post.bookmarked_by_me ? '#10D970' : 'transparent'}
+                  color={post.bookmarked_by_me ? '#FFFFFF' : '#FFFFFF'}
+                  fill={post.bookmarked_by_me ? '#FFFFFF' : 'transparent'}
                 />
               </Animated.View>
             </CountAction>

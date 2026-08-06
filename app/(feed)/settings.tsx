@@ -56,7 +56,7 @@ const COLORS = {
   border: '#2A2A2A',
   text: '#FFFFFF',
   textSecondary: '#A0A0A0',
-  accentNeon: '#10D970',
+  accentNeon: '#FFFFFF',
   danger: '#FF3B30',
   placeholder: '#6B6B6B',
 };

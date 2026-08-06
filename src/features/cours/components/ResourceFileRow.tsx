@@ -68,7 +68,7 @@ export function ResourceFileRow({ url, index, onOpen }: ResourceFileRowProps) {
           alignItems="center"
           justifyContent="center"
         >
-          <Icon size={20} color="#10D970" strokeWidth={2} />
+          <Icon size={20} color="#FFFFFF" strokeWidth={2} />
         </View>
         <View flex={1} minWidth={0}>
           <Text fontSize={14} fontWeight="600" color="$color" numberOfLines={1}>

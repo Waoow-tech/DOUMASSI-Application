@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#10D970',
+    backgroundColor: '#FFFFFF',
     borderRadius: 9999,
   },
   chipsScroll: {
@@ -409,6 +409,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   toggleChipActive: {
-    backgroundColor: '#10D970',
+    backgroundColor: '#FFFFFF',
   },
 });

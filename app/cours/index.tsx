@@ -292,7 +292,7 @@ export default function ApprendreScreen() {
                 {isFollowingActive ? (
                   <Check size={14} color="#000000" strokeWidth={2.6} />
                 ) : (
-                  <Rss size={14} color="#10D970" strokeWidth={2.4} />
+                  <Rss size={14} color="#FFFFFF" strokeWidth={2.4} />
                 )}
                 <Text
                   fontSize={13}
@@ -359,8 +359,8 @@ export default function ApprendreScreen() {
                 <RefreshControl
                   refreshing={isManualRefreshing}
                   onRefresh={() => void handlePullToRefresh()}
-                  tintColor="#10D970"
-                  colors={['#10D970']}
+                  tintColor="#FFFFFF"
+                  colors={['#FFFFFF']}
                 />
               }
               ListFooterComponent={
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#10D970',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     borderColor: '#2A3F33',
   },
   followPillOn: {
-    backgroundColor: '#10D970',
-    borderColor: '#10D970',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
   },
 });

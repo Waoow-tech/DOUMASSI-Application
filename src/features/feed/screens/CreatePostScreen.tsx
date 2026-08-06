@@ -62,7 +62,7 @@ const MAX_IMAGES = 4;
 const MAX_VIDEO_SECS = 60;
 const MAX_CONTENT = 500;
 const COUNTER_THRESHOLD = 400;
-const BRAND_GREEN = '#10D970';
+const BRAND_GREEN = '#FFFFFF';
 const ERROR_RED = '#EF4444';
 
 interface MediaItem {

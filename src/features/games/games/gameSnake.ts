@@ -11,12 +11,12 @@ export const GAME_SNAKE_HTML = `<!DOCTYPE html>
   html,body{margin:0;height:100%;background:#000;color:#fff;font-family:-apple-system,system-ui,Roboto,sans-serif;overflow:hidden;}
   #wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;}
   #hud{width:100%;max-width:420px;display:flex;justify-content:space-between;font-size:15px;font-weight:800;}
-  #hud span{color:#10D970;}
+  #hud span{color:#FFFFFF;}
   #board{position:relative;width:92vw;max-width:400px;aspect-ratio:1;background:#1A1A1A;border-radius:12px;touch-action:none;}
   canvas{width:100%;height:100%;border-radius:12px;display:block;}
   #over{position:absolute;inset:0;background:rgba(0,0,0,.8);border-radius:12px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
   #over.show{display:flex;}
-  .btn{background:#10D970;color:#000;font-weight:800;border:none;border-radius:999px;padding:12px 22px;font-size:15px;}
+  .btn{background:#FFFFFF;color:#000;font-weight:800;border:none;border-radius:999px;padding:12px 22px;font-size:15px;}
   #hint{font-size:12px;color:#666;}
 </style></head><body>
 <div id="wrap">
@@ -45,7 +45,7 @@ export const GAME_SNAKE_HTML = `<!DOCTYPE html>
     ctx.clearRect(0,0,cv.width,cv.height);
     ctx.fillStyle='#E53935';var pad=cell*0.15;
     ctx.beginPath();ctx.arc(food.x*cell+cell/2,food.y*cell+cell/2,cell/2-pad,0,7);ctx.fill();
-    for(var i=0;i<snake.length;i++){ctx.fillStyle=i===0?'#10D970':'#0e9e54';var s=snake[i];roundRect(s.x*cell+1,s.y*cell+1,cell-2,cell-2,4);}
+    for(var i=0;i<snake.length;i++){ctx.fillStyle=i===0?'#FFFFFF':'#0e9e54';var s=snake[i];roundRect(s.x*cell+1,s.y*cell+1,cell-2,cell-2,4);}
   }
   function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.fill();}
   function loop(){clearTimeout(tick);if(dead)return;step();tick=setTimeout(loop,speed);}

@@ -34,9 +34,9 @@ import { useTranslations } from '@/i18n';
 // pour récupérer tous les matches via `matchAll`.
 const MENTION_REGEX = /@([A-Za-z0-9_]{3,30})/g;
 
-// Couleur accent DOUMASSI (#10D970). On garde l'hex en dur pour ne pas
+// Couleur accent DOUMASSI (#FFFFFF). On garde l'hex en dur pour ne pas
 // dépendre du theme Tamagui depuis un `Text` natif RN.
-const DEFAULT_MENTION_COLOR = '#10D970';
+const DEFAULT_MENTION_COLOR = '#FFFFFF';
 
 type Fragment = { kind: 'text'; value: string } | { kind: 'mention'; username: string };
 

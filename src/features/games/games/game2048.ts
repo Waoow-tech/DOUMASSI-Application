@@ -20,7 +20,7 @@ export const GAME_2048_HTML = `<!DOCTYPE html>
     justify-content: center; gap: 14px; padding: 16px; }
   #top { width: 100%; max-width: 420px; display: flex; align-items: center; justify-content: space-between; }
   #score { font-size: 15px; font-weight: 800; }
-  #score span { color: #10D970; }
+  #score span { color: #FFFFFF; }
   #best { font-size: 13px; color: #A0A0A0; }
   #board { position: relative; width: 90vw; max-width: 380px; aspect-ratio: 1;
     background: #1A1A1A; border-radius: 12px; padding: 8px; touch-action: none; }
@@ -35,7 +35,7 @@ export const GAME_2048_HTML = `<!DOCTYPE html>
     display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
   #over.show { display: flex; }
   #over h2 { margin: 0; font-size: 24px; }
-  .btn { background: #10D970; color: #000; font-weight: 800; border: none;
+  .btn { background: #FFFFFF; color: #000; font-weight: 800; border: none;
     border-radius: 999px; padding: 12px 22px; font-size: 15px; }
   #hint { font-size: 12px; color: #666; }
 </style>
@@ -67,7 +67,7 @@ export const GAME_2048_HTML = `<!DOCTYPE html>
 
   var COLORS = {
     2:'#3a3a3a',4:'#4a463a',8:'#8a5a2a',16:'#9a5320',32:'#a5431f',64:'#b5321a',
-    128:'#2b6e4a',256:'#2b7e50',512:'#10995f',1024:'#10b06a',2048:'#10D970'
+    128:'#2b6e4a',256:'#2b7e50',512:'#10995f',1024:'#10b06a',2048:'#FFFFFF'
   };
 
   function gridEl(){
@@ -87,7 +87,7 @@ export const GAME_2048_HTML = `<!DOCTYPE html>
       var t=document.createElement('div'); t.className='tile';
       t.style.width=size+'px'; t.style.height=size+'px';
       t.style.transform='translate('+(c*(size+8))+'px,'+(r*(size+8))+'px)';
-      t.style.background=COLORS[v]||'#10D970';
+      t.style.background=COLORS[v]||'#FFFFFF';
       t.style.fontSize=(v<100?size*0.42:v<1000?size*0.34:size*0.26)+'px';
       t.textContent=v;
       tilesEl.appendChild(t);
