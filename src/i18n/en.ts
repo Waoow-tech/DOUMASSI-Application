@@ -25,7 +25,7 @@ export const en: Translations = {
   },
   auth: {
     welcome: {
-      tagline: 'The French super-app.',
+      tagline: 'Social network, AI, marketplace. One app.',
       signIn: 'Sign in',
       createAccount: 'Create an account',
     },
