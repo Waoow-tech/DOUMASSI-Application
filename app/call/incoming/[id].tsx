@@ -6,19 +6,11 @@
 // Pour MVP : pas de son ringtone (à ajouter follow-up si gros besoin UX).
 // Vibration nope non plus — éviter de demander une perm de plus pour MVP.
 //
-// Pour générer un token client : on rappelle l'Edge Function create-daily-call
-// ?? NON — la room et le token initiator existent côté serveur, mais le
-// destinataire a besoin de SON propre meeting token. Pour MVP, on rappelle
-// l'Edge Function en passant le conversation_id ET un flag `join_existing`...
-// MAIS simplifié : on génère juste un meeting token à part via une 2e Edge
-// Function `join-daily-call` (TODO follow-up). En attendant, on accepte
-// l'appel en navigant vers /call/[id] avec le roomUrl partagé et un token
-// vide → Daily.co accepte les rooms publiques sans token aussi (selon le
-// niveau de sécu config en serveur).
-//
-// LIMITE MVP : on passe le roomUrl directement (room créée publique côté
-// Edge Function — pas de protection token strict pour le destinataire).
-// À renforcer post-bêta avec Edge Function `join-daily-call`.
+// SÉCURITÉ (durci) : la room est PRIVÉE côté create-daily-call, donc rejoindre
+// exige un meeting token. À l'accept, on demande NOTRE token via l'Edge
+// Function `join-daily-call`, qui vérifie d'abord (RLS) qu'on est bien
+// participant de la conversation. Plus de room publique joignable par n'importe
+// qui avec l'URL.
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -123,17 +115,39 @@ export default function IncomingCallScreen() {
       return;
     }
     setDecided(true);
-    // On marque le call accepted, puis on navigue vers le screen call
-    // standard avec le roomUrl reçu. Note MVP : pas de token destinataire
-    // (room créée sans token strict — limite documentée dans le commentaire
-    // de header). À renforcer post-bêta.
+
+    // Durcissement sécu : la room est PRIVÉE (create-daily-call), donc il faut
+    // un token. On demande NOTRE token au serveur via join-daily-call, qui
+    // vérifie d'abord (RLS) qu'on est bien participant de la conversation.
+    let joinToken: string;
+    let joinRoomUrl = roomUrl;
+    try {
+      const { data, error } = await supabase.functions.invoke<{
+        room_url: string;
+        token: string;
+      }>('join-daily-call', { body: { call_id: callId } });
+      if (error || !data?.token) throw error ?? new Error('no token');
+      joinToken = data.token;
+      joinRoomUrl = data.room_url ?? roomUrl;
+    } catch (err) {
+      // Sans token, on ne peut pas rejoindre une room privée : on abandonne
+      // proprement plutôt que d'ouvrir un écran d'appel qui échouera.
+      logger.warn('join_daily_call_failed', {
+        message: err instanceof Error ? err.message : String(err),
+      });
+      void updateCallStatus('rejected');
+      if (router.canGoBack()) router.back();
+      else router.replace('/(tabs)/messages');
+      return;
+    }
+
     void updateCallStatus('accepted');
     router.replace({
       pathname: '/call/[id]',
       params: {
         id: callId,
-        roomUrl,
-        token: '', // MVP : pas de token destinataire (cf header note)
+        roomUrl: joinRoomUrl,
+        token: joinToken,
         callType,
         isInitiator: '0',
       },
