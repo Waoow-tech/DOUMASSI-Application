@@ -14,6 +14,7 @@ import {
   type ConversationListRow,
   useMyConversations,
 } from '@/features/messaging/hooks/useMyConversations';
+import { useRealtimeConversationList } from '@/features/messaging/hooks/useRealtimeConversationList';
 import { useTranslations } from '@/i18n';
 
 function MessagesEmptyState() {
@@ -49,6 +50,9 @@ export default function MessagesRoute() {
   const t = useTranslations();
   const insets = useSafeAreaInsets();
   const conversationsQuery = useMyConversations();
+  // Rafraîchit la liste en temps réel à l'arrivée d'un message (sinon une
+  // nouvelle conversation n'apparaît pas tant qu'on ne refetch pas).
+  useRealtimeConversationList();
 
   const conversations = useMemo(() => {
     return (conversationsQuery.data ?? []).filter((conversation) => !conversation.is_group);
