@@ -28,6 +28,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, ScrollView, Text, TextArea, XStack, YStack } from 'tamagui';
 
+import { useSuggestCaption } from '@/features/ai/hooks/useSuggestCaption';
+import { CaptionSuggestionsSheet } from '@/features/feed/components/CaptionSuggestionsSheet';
 import { useCreatePost } from '@/features/feed/hooks/useCreatePost';
 import { buildVideoMediaUrls } from '@/features/feed/lib/postMedia';
 import { generateVideoPoster } from '@/features/feed/lib/videoPoster';
@@ -99,6 +101,10 @@ export function CreatePostScreen() {
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+
+  // E5-14 — suggestion de légende IA (visible dès qu'une image est présente).
+  const suggestCaption = useSuggestCaption();
+  const [captionSheetOpen, setCaptionSheetOpen] = useState(false);
 
   const { activeQuery, suggestions, isLoading, replaceMention } = useMentionSuggestions(
     content,
@@ -303,6 +309,23 @@ export function CreatePostScreen() {
 
   const removeMedia = (uri: string) => {
     setMedia((prev) => prev.filter((m) => m.uri !== uri));
+  };
+
+  // -------------------------------------------------------------------------
+  // Suggestion de légende IA (E5-14)
+  // -------------------------------------------------------------------------
+  // La suggestion se base sur la 1ère image du composer (pas les vidéos).
+  const firstImageUri = media.find((m) => m.kind === 'image')?.uri ?? null;
+
+  const handleSuggestCaption = () => {
+    if (!firstImageUri || suggestCaption.isPending) return;
+    setCaptionSheetOpen(true);
+    suggestCaption.mutate({ imageUri: firstImageUri, context: content.trim() });
+  };
+
+  const handlePickCaption = (caption: string) => {
+    setContent(caption);
+    setCaptionSheetOpen(false);
   };
 
   // -------------------------------------------------------------------------
@@ -676,6 +699,28 @@ export function CreatePostScreen() {
               >
                 <ImageIcon size={24} color="#FFFFFF" />
               </YStack>
+
+              {/* Suggestion de légende IA (E5-14) — dès qu'une image est présente */}
+              {firstImageUri ? (
+                <YStack
+                  onPress={
+                    isPublishing || suggestCaption.isPending ? undefined : handleSuggestCaption
+                  }
+                  opacity={isPublishing || suggestCaption.isPending ? 0.4 : 1}
+                  paddingHorizontal="$2"
+                  paddingVertical="$2"
+                  justifyContent="center"
+                  pressStyle={{ opacity: 0.6 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.feed.createPost.aiCaption.button}
+                >
+                  <Text fontSize={14} fontWeight="700" color="$color">
+                    {suggestCaption.isPending
+                      ? t.feed.createPost.aiCaption.loading
+                      : t.feed.createPost.aiCaption.button}
+                  </Text>
+                </YStack>
+              ) : null}
             </XStack>
             {media.length > 0 ? (
               <Text fontSize={13} color="$placeholderColor">
@@ -687,6 +732,18 @@ export function CreatePostScreen() {
               </Text>
             ) : null}
           </XStack>
+
+          {/* Modal des suggestions de légende IA (E5-14) */}
+          <CaptionSuggestionsSheet
+            open={captionSheetOpen}
+            onOpenChange={setCaptionSheetOpen}
+            isPending={suggestCaption.isPending}
+            isError={suggestCaption.isError}
+            errorCode={suggestCaption.error instanceof Error ? suggestCaption.error.message : null}
+            suggestions={suggestCaption.data ?? []}
+            onPick={handlePickCaption}
+            onRegenerate={handleSuggestCaption}
+          />
         </YStack>
       </KeyboardAvoidingView>
     </SafeAreaView>
