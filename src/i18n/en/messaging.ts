@@ -18,6 +18,9 @@ export const messagingEn: MessagingTranslations = {
     title: 'Messages',
     emptyState: 'No conversations yet, start one with the +',
     newConversationA11y: 'New conversation',
+    errorTitle: 'Couldn’t load your conversations',
+    errorSubtitle: 'Check your connection and try again.',
+    errorRetry: 'Retry',
   },
 
   conversationRow: {
