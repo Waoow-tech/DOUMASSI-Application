@@ -230,6 +230,19 @@ export const feedEn: FeedTranslations = {
       'A post holds either images or a video — not both. Remove the current media to switch.',
     videoLabel: '1 video',
     videoPreparing: 'Preparing video…',
+    // AI caption suggestion — E5-14
+    aiCaption: {
+      button: '✨ Suggest with AI',
+      loading: 'Generating…',
+      sheetTitle: 'Caption suggestions',
+      sheetSubtitle: 'Tap a suggestion to use it.',
+      regenerate: 'Regenerate',
+      close: 'Close',
+      errorTitle: 'Couldn’t suggest',
+      errorGeneric: 'Couldn’t generate a caption right now. Try again.',
+      errorQuota: 'You’ve hit your daily AI limit. Try again tomorrow.',
+      a11ySuggestion: (text: string) => `Use caption: ${text}`,
+    },
   },
 
   bookmarks: {

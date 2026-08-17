@@ -248,6 +248,19 @@ export const feedFr = {
       'Un post contient soit des images, soit une vidéo — pas les deux. Retirez les médias déjà ajoutés pour changer.',
     videoLabel: '1 vidéo',
     videoPreparing: 'Préparation de la vidéo…',
+    // Suggestion de légende IA — E5-14
+    aiCaption: {
+      button: '✨ Suggérer avec l’IA',
+      loading: 'Génération…',
+      sheetTitle: 'Suggestions de légende',
+      sheetSubtitle: 'Tape une suggestion pour l’utiliser.',
+      regenerate: 'Régénérer',
+      close: 'Fermer',
+      errorTitle: 'Suggestion impossible',
+      errorGeneric: 'Impossible de générer une légende pour le moment. Réessaie.',
+      errorQuota: 'Tu as atteint ta limite d’IA du jour. Réessaie demain.',
+      a11ySuggestion: (text: string) => `Utiliser la légende : ${text}`,
+    },
   },
 
   // Écran des posts sauvegardés — BookmarksScreen.tsx
