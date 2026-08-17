@@ -19,6 +19,9 @@ export const messagingFr = {
     title: 'Messages',
     emptyState: 'Aucune conversation, démarrez-en une avec le +',
     newConversationA11y: 'Nouvelle conversation',
+    errorTitle: 'Impossible de charger tes conversations',
+    errorSubtitle: 'Vérifie ta connexion et réessaie.',
+    errorRetry: 'Réessayer',
   },
 
   // Ligne de conversation dans la liste — ConversationRow.tsx

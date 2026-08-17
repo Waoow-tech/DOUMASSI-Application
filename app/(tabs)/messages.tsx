@@ -46,6 +46,42 @@ function MessagesSkeleton() {
   );
 }
 
+// État d'erreur EXPLICITE : sans lui, une requête qui échoue (ex. la RPC qui
+// plantait) affichait « aucune conversation » — un faux vide qui masque le vrai
+// problème. Ici on distingue une liste vide d'une liste en erreur.
+function MessagesErrorState({ onRetry }: { onRetry: () => void }) {
+  const t = useTranslations();
+  return (
+    <YStack
+      flex={1}
+      minHeight={360}
+      alignItems="center"
+      justifyContent="center"
+      gap="$3"
+      padding="$6"
+    >
+      <MessageCircle size={36} color="#EF4444" strokeWidth={1.7} />
+      <Text color="$color" fontSize={16} fontWeight="700" textAlign="center">
+        {t.messaging.list.errorTitle}
+      </Text>
+      <Text color="$textSecondary" fontSize={14} textAlign="center">
+        {t.messaging.list.errorSubtitle}
+      </Text>
+      <Button
+        marginTop="$2"
+        size="$3"
+        backgroundColor="$color"
+        color="$background"
+        fontWeight="700"
+        onPress={onRetry}
+        pressStyle={{ opacity: 0.85 }}
+      >
+        {t.messaging.list.errorRetry}
+      </Button>
+    </YStack>
+  );
+}
+
 export default function MessagesRoute() {
   const t = useTranslations();
   const insets = useSafeAreaInsets();
@@ -101,6 +137,8 @@ export default function MessagesRoute() {
 
       {conversationsQuery.isLoading ? (
         <MessagesSkeleton />
+      ) : conversationsQuery.isError ? (
+        <MessagesErrorState onRetry={() => void conversationsQuery.refetch()} />
       ) : (
         <FlashList<ConversationListRow>
           data={conversations}
