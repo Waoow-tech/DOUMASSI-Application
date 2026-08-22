@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.doumassi.app",
+      "sha256_cert_fingerprints": [
+        "F1:B0:DE:D0:E3:31:39:55:FF:75:0B:6E:27:3E:DD:1F:76:F2:A2:5A:9C:04:75:3A:26:41:78:BB:7A:D5:C7:E5"
+      ]
+    }
+  }
+]
