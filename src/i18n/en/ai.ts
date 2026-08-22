@@ -1,0 +1,83 @@
+// ENGLISH dictionary — `ai` namespace (E5-03).
+// Same keys as fr/ai.ts (typed as AiTranslations).
+
+import type { AiTranslations } from '../fr/ai';
+
+export const aiEn: AiTranslations = {
+  header: {
+    title: 'Doumassi AI',
+    newChat: 'New chat',
+    newChatA11y: 'Start a new chat',
+    historyA11y: 'Open conversation history',
+  },
+
+  drawer: {
+    title: 'Conversations',
+    newChat: 'New chat',
+    empty: 'No conversations yet.',
+    untitled: 'Chat',
+    messageCount: (n: number) => `${n} message${n > 1 ? 's' : ''}`,
+    closeA11y: 'Close history',
+    deleteA11y: 'Delete conversation',
+    deleteTitle: 'Delete conversation?',
+    deleteMessage: 'This conversation and all its messages will be permanently deleted.',
+    cancel: 'Cancel',
+    delete: 'Delete',
+  },
+
+  empty: {
+    title: 'Ask anything',
+    subtitle: 'Doumassi AI can help you study, write, understand… Give it a try.',
+  },
+
+  menu: {
+    title: 'Actions',
+    addPhoto: 'Add a photo',
+    history: 'History',
+    learning: 'Learning',
+    openA11y: 'Open actions menu',
+  },
+
+  attach: {
+    permissionTitle: 'Permission denied',
+    permissionMessage: 'Enable photo access in Settings to attach an image.',
+    removeA11y: 'Remove photo',
+    tooMany: (max: number) => `${max} photos max per message.`,
+    uploadFailed: 'Photo upload failed. Please try again.',
+  },
+
+  learning: {
+    badge: 'Learning mode on',
+    hint: 'Doumassi AI guides you step by step instead of giving the answer.',
+    exit: 'Exit',
+    enableA11y: 'Turn on Learning mode (tutor)',
+    disableA11y: 'Turn off Learning mode',
+  },
+
+  suggestions: {
+    explain: 'Explain a concept',
+    summarize: 'Summarize a text',
+    ideas: 'Give me ideas',
+  },
+
+  input: {
+    placeholder: 'Type your message…',
+    sendA11y: 'Send message',
+    stopA11y: 'Stop generating',
+  },
+
+  bubble: {
+    typing: 'Doumassi AI is typing…',
+    assistantLabel: 'Doumassi AI',
+  },
+
+  errors: {
+    quota: (quota: number) =>
+      `You've reached your limit of ${quota} messages for today. Come back tomorrow.`,
+    auth: 'Your session has expired. Please sign in again.',
+    provider: 'The assistant is momentarily unavailable. Try again in a moment.',
+    network: 'Connection failed. Check your connection and try again.',
+    generic: 'Something went wrong. Please try again.',
+    retry: 'Retry',
+  },
+};

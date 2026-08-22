@@ -1,0 +1,13 @@
+node_modules
+.expo
+android
+ios
+dist
+web-build
+pnpm-lock.yaml
+*.log
+.env*
+
+# Doc maintenue manuellement (mise en forme volontaire)
+CLAUDE.md
+docs/adr/**/*.md

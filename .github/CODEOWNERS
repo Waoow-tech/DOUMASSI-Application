@@ -1,0 +1,21 @@
+# Code owners DOUMASSI VISION
+# Voir https://docs.github.com/en/repositories/managing-your-repositories-settings-and-security/customizing-your-repository/about-code-owners
+#
+# Le user listé ici est automatiquement requested for review sur les PR
+# qui touchent les fichiers concernés.
+
+# Par défaut : CTO review tout
+*  @Adminabd
+
+# Sécurité, auth, DB, infra → CTO obligatoire (label needs-cto-review aussi)
+/supabase/                @Adminabd
+/.github/                  @Adminabd
+/app/_layout.tsx           @Adminabd
+/src/lib/supabase.ts       @Adminabd
+/src/lib/sentry.ts         @Adminabd
+/src/lib/env.ts            @Adminabd
+/babel.config.js           @Adminabd
+/metro.config.js           @Adminabd
+/eslint.config.js          @Adminabd
+/tsconfig.json             @Adminabd
+/eas.json                  @Adminabd
