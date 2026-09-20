@@ -138,6 +138,9 @@ export const en: Translations = {
       expiredLink: 'Link expired. Please request a new reset email.',
       network: 'Network issue. Check your connection and try again.',
       unknown: 'An unexpected error occurred. Please try again.',
+      // Client-side rate limit (E2-13) — {time} = "M:SS" countdown
+      tooManyAttempts: (time: string) => `Too many attempts. Try again in ${time}.`,
+      justBlocked: 'Too many login attempts. Please wait a few minutes.',
     },
     pendingDeletion: {
       title: 'Deletion scheduled',

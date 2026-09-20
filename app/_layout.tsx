@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TamaguiProvider } from 'tamagui';
 
+import { Toast } from '@/components/Toast';
 import { AnalyticsProvider } from '@/lib/posthog';
 import { initSentry } from '@/lib/sentry';
 
@@ -78,6 +79,8 @@ export default function RootLayout() {
                   contentStyle: { backgroundColor: '#000000' },
                 }}
               />
+              {/* Toast global — couvre aussi les écrans d'auth (E2-13) */}
+              <Toast />
             </AnalyticsProvider>
           </QueryClientProvider>
         </TamaguiProvider>

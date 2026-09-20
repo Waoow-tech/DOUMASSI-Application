@@ -35,7 +35,7 @@ function DoumassLogo() {
 
 export default function LoginScreen() {
   const t = useTranslations();
-  const { form, isLoading, loginError, onSubmit } = useLogin();
+  const { form, isLoading, loginError, isBlocked, remainingLabel, onSubmit } = useLogin();
   const {
     signIn: signInWithGoogle,
     isLoading: isGoogleLoading,
@@ -180,10 +180,18 @@ export default function LoginScreen() {
             ) : null}
           </YStack>
 
-          {/* Erreur globale de connexion (Supabase) */}
-          {loginError ? (
+          {/* Erreur globale de connexion (Supabase) — masquée pendant un blocage,
+              car le décompte de blocage prend le relais juste en dessous. */}
+          {loginError && !isBlocked ? (
             <Text fontSize={13} color="$danger" textAlign="center">
               {loginError}
+            </Text>
+          ) : null}
+
+          {/* Blocage anti-spam (E2-13) — décompte vivant avant nouvelle tentative */}
+          {isBlocked ? (
+            <Text fontSize={13} color="$danger" textAlign="center">
+              {t.auth.errors.tooManyAttempts(remainingLabel)}
             </Text>
           ) : null}
 
@@ -191,7 +199,8 @@ export default function LoginScreen() {
           <Button
             id="login-submit-button"
             onPress={onSubmit}
-            disabled={isLoading}
+            disabled={isLoading || isBlocked}
+            opacity={isBlocked ? 0.5 : 1}
             backgroundColor="$color"
             color="$background"
             borderRadius="$4"
