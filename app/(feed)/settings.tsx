@@ -31,7 +31,7 @@ import {
   Wallet,
 } from 'lucide-react-native';
 import { type ReactNode, useMemo, useState } from 'react';
-import { Alert, Linking, Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { Button, ScrollView, Sheet, Spinner, Switch, Text, XStack, YStack } from 'tamagui';
 
 import { useExportMyData } from '@/features/auth/hooks/useExportMyData';
@@ -382,8 +382,8 @@ export default function SettingsScreen() {
     privacyToggle.mutate({ profileId: profile.id, isPrivate });
   };
 
-  const openSupportEmail = () => {
-    void Linking.openURL('mailto:contact@doumassi.com?subject=DOUMASSI%20Support');
+  const openContactForm = () => {
+    router.push('/(feed)/settings/contact');
   };
 
   if (profileQuery.isLoading) {
@@ -556,7 +556,7 @@ export default function SettingsScreen() {
             <SettingRow
               icon={MessageCircle}
               label={t.profileScreens.settings.contactUs}
-              onPress={openSupportEmail}
+              onPress={openContactForm}
             />
             <SettingRow
               icon={Info}

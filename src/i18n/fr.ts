@@ -11,6 +11,7 @@
 
 import { aiFr } from './fr/ai';
 import { commonFr } from './fr/common';
+import { contactFr } from './fr/contact';
 import { coursFr } from './fr/cours';
 import { feedFr } from './fr/feed';
 import { gamesFr } from './fr/games';
@@ -234,6 +235,7 @@ export const fr = {
   wallet: walletFr,
   matching: matchingFr,
   ai: aiFr,
+  contact: contactFr,
 };
 
 export type Translations = typeof fr;
