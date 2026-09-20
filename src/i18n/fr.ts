@@ -140,6 +140,9 @@ export const fr = {
       expiredLink: 'Lien expiré. Demande un nouvel e-mail de réinitialisation.',
       network: 'Problème réseau. Vérifie ta connexion et réessaie.',
       unknown: 'Une erreur inattendue est survenue. Réessaie.',
+      // Rate limit client (E2-13) — {time} = décompte "M:SS"
+      tooManyAttempts: (time: string) => `Trop de tentatives. Réessaie dans ${time}.`,
+      justBlocked: 'Trop de tentatives de connexion. Patiente quelques minutes.',
     },
     pendingDeletion: {
       title: 'Suppression programmée',

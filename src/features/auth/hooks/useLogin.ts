@@ -10,10 +10,12 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { useLoginRateLimit } from '@/features/auth/hooks/useLoginRateLimit';
 import { mapAuthError } from '@/features/auth/lib/mapAuthError';
 import { getT, useTranslations } from '@/i18n';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
+import { showToast } from '@/stores/toastStore';
 
 import {
   createLoginSchema,
@@ -26,6 +28,7 @@ export function useLogin() {
   const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const { isBlocked, remainingLabel, recordFailure, recordSuccess } = useLoginRateLimit();
 
   const loginSchema = useMemo(() => createLoginSchema(t.auth.validation), [t]);
 
@@ -39,6 +42,14 @@ export function useLogin() {
 
   const submitLogin = async (values: LoginFormValues) => {
     const t = getT();
+
+    // Garde anti-spam : si l'utilisateur est bloqué, on ne tape même pas Supabase.
+    // (Le bouton est déjà désactivé côté écran ; ceci est une seconde barrière.)
+    if (isBlocked) {
+      setLoginError(t.auth.errors.tooManyAttempts(remainingLabel));
+      return;
+    }
+
     setIsLoading(true);
     setLoginError(null);
 
@@ -62,11 +73,19 @@ export function useLogin() {
 
       if (error) {
         logger.warn('Échec de connexion Supabase', { message: error.message });
-        setLoginError(mapAuthError(error.message));
+        // Comptabilise l'échec ; `justBlocked` = on vient de franchir le seuil.
+        const justBlocked = recordFailure();
+        if (justBlocked) {
+          showToast(t.auth.errors.justBlocked, 'error');
+          setLoginError(t.auth.errors.justBlocked);
+        } else {
+          setLoginError(mapAuthError(error.message));
+        }
         return;
       }
 
       logger.info('Connexion réussie');
+      recordSuccess();
       router.replace('/feed');
     } catch (err: unknown) {
       logger.error('Erreur inattendue lors du login', err);
@@ -80,6 +99,10 @@ export function useLogin() {
     form,
     isLoading,
     loginError,
+    /** L'utilisateur est temporairement bloqué (trop d'échecs). */
+    isBlocked,
+    /** Décompte "M:SS" restant avant déblocage (vivant, se met à jour). */
+    remainingLabel,
     onSubmit: form.handleSubmit(submitLogin),
   };
 }
