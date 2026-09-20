@@ -38,7 +38,23 @@ export const aiFr = {
     addPhoto: 'Ajouter une photo',
     history: 'Historique',
     learning: 'Learning',
+    tools: 'Outils',
     openA11y: 'Ouvrir le menu des actions',
+  },
+
+  // Outils IA (calculatrice + traducteur) — E5-18
+  tools: {
+    calcTitle: 'Calculatrice',
+    calcPlaceholder: 'Ex. (3 + 5) * 2, sqrt(16)…',
+    calcErrorInvalid: 'Expression invalide',
+    translateTitle: 'Traducteur',
+    translatePlaceholder: 'Texte à traduire…',
+    translateTargetLabel: 'Vers :',
+    translateAction: 'Traduire',
+    translateLoading: 'Traduction…',
+    translateErrorGeneric: 'Traduction impossible pour le moment. Réessaie.',
+    translateErrorQuota: 'Tu as atteint ta limite d’IA du jour. Réessaie demain.',
+    langs: { en: 'Anglais', es: 'Espagnol', ar: 'Arabe', de: 'Allemand', fr: 'Français' },
   },
 
   // Pièces jointes image — E5-06
