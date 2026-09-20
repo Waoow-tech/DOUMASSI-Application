@@ -8,7 +8,7 @@
 //
 // Aujourd'hui : Historique (E5-04) + Learning (E5-08).
 
-import { Check, GraduationCap, History, ImagePlus } from 'lucide-react-native';
+import { Check, GraduationCap, History, ImagePlus, Wrench } from 'lucide-react-native';
 import { Sheet, Text, XStack } from 'tamagui';
 
 import { useTranslations } from '@/i18n';
@@ -23,6 +23,7 @@ export interface AiPlusMenuProps {
   onOpenHistory: () => void;
   onToggleLearning: () => void;
   onAddPhoto: () => void;
+  onOpenTools: () => void;
 }
 
 export function AiPlusMenu({
@@ -32,6 +33,7 @@ export function AiPlusMenu({
   onOpenHistory,
   onToggleLearning,
   onAddPhoto,
+  onOpenTools,
 }: AiPlusMenuProps) {
   const t = useTranslations();
 
@@ -93,6 +95,16 @@ export function AiPlusMenu({
           onPress={() => {
             close();
             onToggleLearning();
+          }}
+        />
+
+        {/* Outils : calculatrice + traducteur (E5-18) */}
+        <MenuRow
+          icon={<Wrench size={20} color="#FFFFFF" />}
+          label={t.ai.menu.tools}
+          onPress={() => {
+            close();
+            onOpenTools();
           }}
         />
       </Sheet.Frame>
