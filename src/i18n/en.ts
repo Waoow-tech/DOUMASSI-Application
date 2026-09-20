@@ -8,6 +8,7 @@
 
 import { aiEn } from './en/ai';
 import { commonEn } from './en/common';
+import { contactEn } from './en/contact';
 import { coursEn } from './en/cours';
 import { feedEn } from './en/feed';
 import { gamesEn } from './en/games';
@@ -229,4 +230,5 @@ export const en: Translations = {
   wallet: walletEn,
   matching: matchingEn,
   ai: aiEn,
+  contact: contactEn,
 };
