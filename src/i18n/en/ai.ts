@@ -35,7 +35,23 @@ export const aiEn: AiTranslations = {
     addPhoto: 'Add a photo',
     history: 'History',
     learning: 'Learning',
+    tools: 'Tools',
     openA11y: 'Open actions menu',
+  },
+
+  // AI tools (calculator + translator) — E5-18
+  tools: {
+    calcTitle: 'Calculator',
+    calcPlaceholder: 'e.g. (3 + 5) * 2, sqrt(16)…',
+    calcErrorInvalid: 'Invalid expression',
+    translateTitle: 'Translator',
+    translatePlaceholder: 'Text to translate…',
+    translateTargetLabel: 'To:',
+    translateAction: 'Translate',
+    translateLoading: 'Translating…',
+    translateErrorGeneric: 'Couldn’t translate right now. Try again.',
+    translateErrorQuota: 'You’ve hit your daily AI limit. Try again tomorrow.',
+    langs: { en: 'English', es: 'Spanish', ar: 'Arabic', de: 'German', fr: 'French' },
   },
 
   attach: {
