@@ -37,6 +37,8 @@
 // eslint-disable-next-line import/no-unresolved
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
+import { extractPdfText } from './extract-pdf.ts';
+
 // Deno globals — résolus à l'exécution sur Supabase Edge Runtime.
 // @ts-expect-error - Deno global, fourni à l'exécution
 const Deno = (globalThis as { Deno?: { env: { get: (k: string) => string | undefined } } }).Deno!;
@@ -177,12 +179,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: 'Message too long' }, 400);
   }
 
-  // Pièces jointes image (E5-06). On ne garde que les entrées bien formées, et
-  // on plafonne le nombre (coût Vision).
+  // Pièces jointes (E5-06 images + E5-07 PDF). On ne garde que les entrées bien
+  // formées, on plafonne le nombre (coût). Les IMAGES vont au modèle Vision ; le
+  // TEXTE des PDF est extrait côté serveur et injecté dans le prompt.
   const attachments = (body.attachments ?? [])
     .filter((a): a is { path: string; kind: string } => typeof a?.path === 'string')
-    .filter((a) => a.kind === 'image')
+    .filter((a) => a.kind === 'image' || a.kind === 'pdf')
     .slice(0, MAX_ATTACHMENTS);
+  const imageAttachments = attachments.filter((a) => a.kind === 'image');
+  const pdfAttachments = attachments.filter((a) => a.kind === 'pdf');
 
   // Client « utilisateur » : porte le JWT du caller, donc soumis à la RLS.
   // C'est lui qui garantit qu'on ne peut écrire que dans SES conversations.
@@ -249,14 +254,29 @@ Deno.serve(async (req: Request): Promise<Response> => {
     ...((history ?? []) as StoredMessage[]).slice().reverse(),
   ];
 
-  // Vision (E5-06) : si le message courant porte des images, on transforme le
-  // DERNIER message (celui qu'on vient d'insérer) en contenu multimodal. Les
-  // URLs sont signées à courte durée (bucket privé) — le fournisseur les
-  // récupère pendant la requête, puis elles expirent.
+  // Pièces jointes du tour COURANT (E5-06 Vision + E5-07 PDF). On transforme le
+  // DERNIER message (celui qu'on vient d'insérer). Les URLs sont signées à
+  // courte durée (bucket privé) — le fournisseur / l'extraction les consomment
+  // pendant la requête, puis elles expirent.
   let requestModel = model;
-  if (attachments.length > 0) {
+  const last = messages[messages.length - 1];
+  if (last?.role === 'user' && attachments.length > 0) {
+    // 1) PDF : on extrait le TEXTE côté serveur et on l'injecte dans le message
+    //    (avec délimiteurs). Fallback explicite si un PDF est illisible (PDF
+    //    scanné = image) — ça ne casse pas la requête.
+    let pdfText = '';
+    for (const att of pdfAttachments) {
+      const { data: signed } = await userClient.storage
+        .from('ai-attachments')
+        .createSignedUrl(att.path, SIGNED_URL_TTL);
+      const extracted = signed?.signedUrl ? await extractPdfText(signed.signedUrl) : null;
+      pdfText += `\n\n--- Document PDF joint ---\n${extracted ?? '[PDF non exploitable]'}\n---`;
+    }
+    const textPart = pdfText ? `${content}${pdfText}` : content;
+
+    // 2) Images : parts multimodales pour le modèle Vision.
     const imageParts: { type: 'image_url'; image_url: { url: string } }[] = [];
-    for (const att of attachments) {
+    for (const att of imageAttachments) {
       const { data: signed } = await userClient.storage
         .from('ai-attachments')
         .createSignedUrl(att.path, SIGNED_URL_TTL);
@@ -264,10 +284,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
         imageParts.push({ type: 'image_url', image_url: { url: signed.signedUrl } });
       }
     }
-    const last = messages[messages.length - 1];
-    if (imageParts.length > 0 && last?.role === 'user') {
-      last.content = [{ type: 'text', text: content }, ...imageParts];
+
+    if (imageParts.length > 0) {
+      // Au moins une image → modèle Vision, contenu multimodal (texte + images).
+      last.content = [{ type: 'text', text: textPart }, ...imageParts];
       requestModel = visionModel;
+    } else if (pdfText) {
+      // PDF seul = texte pur → le modèle texte suffit, pas besoin de Vision.
+      last.content = textPart;
     }
   }
 
