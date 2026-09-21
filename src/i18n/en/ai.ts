@@ -36,7 +36,22 @@ export const aiEn: AiTranslations = {
     history: 'History',
     learning: 'Learning',
     tools: 'Tools',
+    webSearch: 'Web search',
     openA11y: 'Open actions menu',
+  },
+
+  // Web search (Tavily) — E5-17
+  webSearch: {
+    title: 'Web search',
+    subtitle: 'Ask a question: the AI searches the web and cites its sources.',
+    placeholder: 'Your question…',
+    action: 'Search',
+    loading: 'Searching…',
+    sourcesTitle: 'Sources',
+    noResults: 'No results found for this search.',
+    openSourceA11y: 'Open source',
+    errorQuota: 'You’ve hit your daily AI limit. Try again tomorrow.',
+    errorGeneric: 'Couldn’t search right now. Try again.',
   },
 
   // AI tools (calculator + translator) — E5-18
