@@ -39,7 +39,22 @@ export const aiFr = {
     history: 'Historique',
     learning: 'Learning',
     tools: 'Outils',
+    webSearch: 'Recherche web',
     openA11y: 'Ouvrir le menu des actions',
+  },
+
+  // Recherche web (Tavily) — E5-17
+  webSearch: {
+    title: 'Recherche web',
+    subtitle: 'Pose une question : l’IA cherche sur le web et cite ses sources.',
+    placeholder: 'Ta question…',
+    action: 'Rechercher',
+    loading: 'Recherche…',
+    sourcesTitle: 'Sources',
+    noResults: 'Aucun résultat trouvé pour cette recherche.',
+    openSourceA11y: 'Ouvrir la source',
+    errorQuota: 'Tu as atteint ta limite d’IA du jour. Réessaie demain.',
+    errorGeneric: 'Recherche impossible pour le moment. Réessaie.',
   },
 
   // Outils IA (calculatrice + traducteur) — E5-18

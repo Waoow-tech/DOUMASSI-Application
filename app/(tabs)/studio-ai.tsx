@@ -34,6 +34,7 @@ import { Text, TextArea, XStack, YStack } from 'tamagui';
 import { AiConversationsDrawer } from '@/features/ai/components/AiConversationsDrawer';
 import { AiPlusMenu } from '@/features/ai/components/AiPlusMenu';
 import { AiToolsSheet } from '@/features/ai/components/AiToolsSheet';
+import { AiWebSearchSheet } from '@/features/ai/components/AiWebSearchSheet';
 import { ChatBubble, MessageBubble, TypingBubble } from '@/features/ai/components/MessageBubble';
 import { VoiceRecordingBar } from '@/features/ai/components/VoiceRecordingBar';
 import { useAiAttachments } from '@/features/ai/hooks/useAiAttachments';
@@ -58,6 +59,7 @@ export default function StudioAIRoute() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [webSearchOpen, setWebSearchOpen] = useState(false);
   const listRef = useRef<FlashListRef<ChatBubble>>(null);
 
   // Entrée vocale (E5-12) — la transcription est ajoutée à la saisie (éditable).
@@ -370,9 +372,12 @@ export default function StudioAIRoute() {
         onToggleLearning={() => chat.setMode(chat.mode === 'learning' ? 'general' : 'learning')}
         onAddPhoto={() => void attach.pickAndUpload()}
         onOpenTools={() => setToolsOpen(true)}
+        onOpenWebSearch={() => setWebSearchOpen(true)}
       />
 
       <AiToolsSheet open={toolsOpen} onOpenChange={setToolsOpen} />
+
+      <AiWebSearchSheet open={webSearchOpen} onOpenChange={setWebSearchOpen} />
     </YStack>
   );
 }

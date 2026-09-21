@@ -8,7 +8,7 @@
 //
 // Aujourd'hui : Historique (E5-04) + Learning (E5-08).
 
-import { Check, GraduationCap, History, ImagePlus, Wrench } from 'lucide-react-native';
+import { Check, Globe, GraduationCap, History, ImagePlus, Wrench } from 'lucide-react-native';
 import { Sheet, Text, XStack } from 'tamagui';
 
 import { useTranslations } from '@/i18n';
@@ -24,6 +24,7 @@ export interface AiPlusMenuProps {
   onToggleLearning: () => void;
   onAddPhoto: () => void;
   onOpenTools: () => void;
+  onOpenWebSearch: () => void;
 }
 
 export function AiPlusMenu({
@@ -34,13 +35,14 @@ export function AiPlusMenu({
   onToggleLearning,
   onAddPhoto,
   onOpenTools,
+  onOpenWebSearch,
 }: AiPlusMenuProps) {
   const t = useTranslations();
 
   const close = () => onOpenChange(false);
 
   return (
-    <Sheet modal open={open} onOpenChange={onOpenChange} snapPoints={[48]} dismissOnSnapToBottom>
+    <Sheet modal open={open} onOpenChange={onOpenChange} snapPoints={[56]} dismissOnSnapToBottom>
       <Sheet.Overlay
         animation="lazy"
         enterStyle={{ opacity: 0 }}
@@ -105,6 +107,16 @@ export function AiPlusMenu({
           onPress={() => {
             close();
             onOpenTools();
+          }}
+        />
+
+        {/* Recherche web via Tavily (E5-17) */}
+        <MenuRow
+          icon={<Globe size={20} color="#FFFFFF" />}
+          label={t.ai.menu.webSearch}
+          onPress={() => {
+            close();
+            onOpenWebSearch();
           }}
         />
       </Sheet.Frame>
