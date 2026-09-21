@@ -89,6 +89,20 @@ export const aiFr = {
     stopA11y: 'Arrêter la génération',
   },
 
+  // Entrée vocale — E5-12
+  voice: {
+    micA11y: 'Dicter un message vocal',
+    recording: 'Enregistrement…',
+    transcribing: 'Transcription…',
+    stopA11y: 'Arrêter et transcrire',
+    cancelA11y: 'Annuler l’enregistrement',
+    cancel: 'Annuler',
+    permission: 'Autorise le micro dans les Réglages pour dicter.',
+    tooShort: 'Enregistrement trop court, réessaie.',
+    quota: 'Tu as atteint ta limite d’IA pour aujourd’hui. Reviens demain.',
+    failed: 'Transcription impossible. Réessaie.',
+  },
+
   // Bulle assistant
   bubble: {
     typing: 'Doumassi AI écrit…',
