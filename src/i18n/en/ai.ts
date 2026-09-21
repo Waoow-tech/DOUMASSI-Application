@@ -97,6 +97,20 @@ export const aiEn: AiTranslations = {
     stopA11y: 'Stop generating',
   },
 
+  // Voice input — E5-12
+  voice: {
+    micA11y: 'Dictate a voice message',
+    recording: 'Recording…',
+    transcribing: 'Transcribing…',
+    stopA11y: 'Stop and transcribe',
+    cancelA11y: 'Cancel recording',
+    cancel: 'Cancel',
+    permission: 'Enable the microphone in Settings to dictate.',
+    tooShort: 'Recording too short, please try again.',
+    quota: 'You’ve reached your AI limit for today. Come back tomorrow.',
+    failed: 'Transcription failed. Please try again.',
+  },
+
   bubble: {
     typing: 'Doumassi AI is typing…',
     assistantLabel: 'Doumassi AI',

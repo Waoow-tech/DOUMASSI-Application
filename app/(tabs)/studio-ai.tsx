@@ -9,7 +9,16 @@
 
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { Image } from 'expo-image';
-import { GraduationCap, Plus, Send, Sparkles, Square, SquarePen, X } from 'lucide-react-native';
+import {
+  GraduationCap,
+  Mic,
+  Plus,
+  Send,
+  Sparkles,
+  Square,
+  SquarePen,
+  X,
+} from 'lucide-react-native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -27,10 +36,14 @@ import { AiPlusMenu } from '@/features/ai/components/AiPlusMenu';
 import { AiToolsSheet } from '@/features/ai/components/AiToolsSheet';
 import { AiWebSearchSheet } from '@/features/ai/components/AiWebSearchSheet';
 import { ChatBubble, MessageBubble, TypingBubble } from '@/features/ai/components/MessageBubble';
+import { VoiceRecordingBar } from '@/features/ai/components/VoiceRecordingBar';
 import { useAiAttachments } from '@/features/ai/hooks/useAiAttachments';
 import { aiErrorMessage, mergeMessages, useAiChat } from '@/features/ai/hooks/useAiChat';
 import { useAiMessages } from '@/features/ai/hooks/useAiConversation';
+import { useVoiceInput } from '@/features/ai/hooks/useVoiceInput';
+import { formatDuration, type VoiceInputErrorKind } from '@/features/ai/lib/voiceInput';
 import { useTranslations } from '@/i18n';
+import { showToast } from '@/stores/toastStore';
 
 const ACCENT = '#FFFFFF';
 const MAX_INPUT_LENGTH = 4000;
@@ -48,6 +61,25 @@ export default function StudioAIRoute() {
   const [toolsOpen, setToolsOpen] = useState(false);
   const [webSearchOpen, setWebSearchOpen] = useState(false);
   const listRef = useRef<FlashListRef<ChatBubble>>(null);
+
+  // Entrée vocale (E5-12) — la transcription est ajoutée à la saisie (éditable).
+  const handleVoiceError = useCallback(
+    (kind: VoiceInputErrorKind) => {
+      const messages: Record<VoiceInputErrorKind, string> = {
+        permission: t.ai.voice.permission,
+        too_short: t.ai.voice.tooShort,
+        quota: t.ai.voice.quota,
+        failed: t.ai.voice.failed,
+      };
+      showToast(messages[kind], 'error');
+    },
+    [t]
+  );
+  const voice = useVoiceInput({
+    onTranscribed: (text) => setDraft((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text)),
+    onError: handleVoiceError,
+  });
+  const voiceActive = voice.isRecording || voice.isTranscribing;
 
   const messages = useMemo(
     () => mergeMessages(messagesQuery.data ?? [], chat.pending),
@@ -252,46 +284,75 @@ export default function StudioAIRoute() {
           borderTopColor="$borderColor"
           backgroundColor="$background"
         >
-          {/* Bouton ⊕ — menu des actions (maquette Canva). Ouvre AiPlusMenu. */}
-          <Pressable
-            onPress={() => setPlusMenuOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel={t.ai.menu.openA11y}
-            style={styles.plusButton}
-          >
-            <Plus size={22} color="#FFFFFF" />
-          </Pressable>
-          <TextArea
-            flex={1}
-            value={draft}
-            onChangeText={setDraft}
-            maxLength={MAX_INPUT_LENGTH}
-            placeholder={t.ai.input.placeholder}
-            placeholderTextColor="$placeholderColor"
-            fontSize={15}
-            lineHeight={20}
-            color="$color"
-            backgroundColor="$surface"
-            borderWidth={0}
-            borderRadius={20}
-            paddingHorizontal={14}
-            paddingVertical={10}
-            maxHeight={120}
-            multiline
-          />
-          <Pressable
-            onPress={handleSend}
-            disabled={!canSend}
-            accessibilityRole="button"
-            accessibilityLabel={chat.isStreaming ? t.ai.input.stopA11y : t.ai.input.sendA11y}
-            style={[styles.sendButton, { backgroundColor: canSend ? ACCENT : '#2A2A2A' }]}
-          >
-            {chat.isStreaming ? (
-              <Square size={18} color="#FFFFFF" fill="#FFFFFF" />
-            ) : (
-              <Send size={18} color={canSend ? '#000000' : '#6B6B6B'} />
-            )}
-          </Pressable>
+          {voiceActive ? (
+            // Mode dictée (E5-12) — remplace ⊕ + saisie + envoi.
+            <VoiceRecordingBar
+              isTranscribing={voice.isTranscribing}
+              durationLabel={formatDuration(voice.durationMs)}
+              recordingLabel={t.ai.voice.recording}
+              transcribingLabel={t.ai.voice.transcribing}
+              cancelLabel={t.ai.voice.cancel}
+              cancelA11y={t.ai.voice.cancelA11y}
+              stopA11y={t.ai.voice.stopA11y}
+              onCancel={voice.cancel}
+              onStop={voice.stopAndTranscribe}
+            />
+          ) : (
+            <>
+              {/* Bouton ⊕ — menu des actions (maquette Canva). Ouvre AiPlusMenu. */}
+              <Pressable
+                onPress={() => setPlusMenuOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel={t.ai.menu.openA11y}
+                style={styles.plusButton}
+              >
+                <Plus size={22} color="#FFFFFF" />
+              </Pressable>
+              <TextArea
+                flex={1}
+                value={draft}
+                onChangeText={setDraft}
+                maxLength={MAX_INPUT_LENGTH}
+                placeholder={t.ai.input.placeholder}
+                placeholderTextColor="$placeholderColor"
+                fontSize={15}
+                lineHeight={20}
+                color="$color"
+                backgroundColor="$surface"
+                borderWidth={0}
+                borderRadius={20}
+                paddingHorizontal={14}
+                paddingVertical={10}
+                maxHeight={120}
+                multiline
+              />
+              {/* Micro quand la saisie est vide (natif) ; sinon Envoyer. */}
+              {voice.supported && !chat.isStreaming && draft.trim().length === 0 ? (
+                <Pressable
+                  onPress={voice.start}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.ai.voice.micA11y}
+                  style={[styles.sendButton, { backgroundColor: '#2A2A2A' }]}
+                >
+                  <Mic size={20} color="#FFFFFF" />
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={handleSend}
+                  disabled={!canSend}
+                  accessibilityRole="button"
+                  accessibilityLabel={chat.isStreaming ? t.ai.input.stopA11y : t.ai.input.sendA11y}
+                  style={[styles.sendButton, { backgroundColor: canSend ? ACCENT : '#2A2A2A' }]}
+                >
+                  {chat.isStreaming ? (
+                    <Square size={18} color="#FFFFFF" fill="#FFFFFF" />
+                  ) : (
+                    <Send size={18} color={canSend ? '#000000' : '#6B6B6B'} />
+                  )}
+                </Pressable>
+              )}
+            </>
+          )}
         </XStack>
       </KeyboardAvoidingView>
 
